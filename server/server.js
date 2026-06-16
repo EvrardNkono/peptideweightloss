@@ -18,16 +18,19 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Enable CORS
+// ✅ ENABLE CORS - AVEC VOTRE URL FRONTEND
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: [
+    'http://localhost:5173',
+    'https://peptideweightloss-pqw6-glhlq3orm-lahotte.vercel.app'
+  ],
   credentials: true
 }));
 
 // Serve static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ✅ AJOUTEZ CETTE ROUTE ICI (après les middlewares, avant les autres routes)
+// Route racine
 app.get('/', (req, res) => {
   res.json({
     success: true,
