@@ -4,7 +4,18 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { FileText, Clock, CheckCircle, AlertCircle, Eye, X } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000/api';
+// ✅ CONFIGURATION AUTOMATIQUE DE L'URL BACKEND
+const getApiUrl = () => {
+  // En production (Vercel), on utilise l'URL du backend déployé
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://peptideweightloss.vercel.app/api';
+  }
+  // En développement (local), on utilise localhost
+  return 'http://localhost:5000/api';
+};
+
+const API_URL = getApiUrl();
+console.log(`🔧 MyPrescriptions - API URL: ${API_URL}`); // Pour vérifier en console
 
 const MyPrescriptions = ({ token }) => {
   const [prescriptions, setPrescriptions] = useState([]);

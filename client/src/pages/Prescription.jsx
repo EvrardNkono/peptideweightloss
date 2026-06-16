@@ -1,6 +1,6 @@
 // src/pages/Prescription.jsx
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';  // ← AJOUTER CET IMPORT
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { 
   Stethoscope, 
@@ -22,7 +22,18 @@ import {
   Loader2
 } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000/api';
+// ✅ CONFIGURATION AUTOMATIQUE DE L'URL BACKEND
+const getApiUrl = () => {
+  // En production (Vercel), on utilise l'URL du backend déployé
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://peptideweightloss.vercel.app/api';
+  }
+  // En développement (local), on utilise localhost
+  return 'http://localhost:5000/api';
+};
+
+const API_URL = getApiUrl();
+console.log(`🔧 Prescription - API URL: ${API_URL}`); // Pour vérifier en console
 
 const Prescription = () => {
   const [activeTab, setActiveTab] = useState('request');
@@ -128,7 +139,6 @@ const Prescription = () => {
               and respond within 24-48 hours.
             </p>
             
-            {/* ← BOUTON VERS MY PRESCRIPTIONS */}
             <Link 
               to="/my-prescriptions" 
               className="inline-flex items-center justify-center gap-2 bg-[#2563EB] text-white px-6 py-2 rounded-lg font-medium hover:bg-[#1E40AF] transition mb-3 w-full"
@@ -414,7 +424,6 @@ const Prescription = () => {
                 </p>
               </div>
 
-              {/* ← NOUVEAU BLOC - LIEN VERS MY PRESCRIPTIONS */}
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <div className="flex items-center gap-3 mb-4">
                   <FileText size={24} className="text-[#2563EB]" />

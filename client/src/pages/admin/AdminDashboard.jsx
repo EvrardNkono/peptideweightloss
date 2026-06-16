@@ -29,7 +29,20 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+// ✅ CONFIGURATION AUTOMATIQUE DE L'URL BACKEND
+const getApiUrl = () => {
+  // En production (Vercel), on utilise l'URL du backend déployé
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://peptideweightloss.vercel.app/api';
+  }
+  // En développement (local), on utilise localhost
+  return 'http://localhost:5000/api';
+};
+
+const API_URL = getApiUrl();
+const BACKEND_URL = API_URL.replace('/api', '');
+
+console.log(`🔧 API URL: ${API_URL}`); // Pour vérifier en console
 
 const AdminDashboard = ({ onLogout, token }) => {
   const [activeTab, setActiveTab] = useState('products');
@@ -220,7 +233,7 @@ const AdminDashboard = ({ onLogout, token }) => {
       return '/images/pept.png';
     }
     if (imageUrl.startsWith('/uploads/')) {
-      return `http://localhost:5000${imageUrl}?t=${imageRefreshKey}`;
+      return `${BACKEND_URL}${imageUrl}?t=${imageRefreshKey}`;
     }
     return `${imageUrl}?t=${imageRefreshKey}`;
   };
@@ -723,6 +736,7 @@ const AdminDashboard = ({ onLogout, token }) => {
             }
           }}
           productTypes={productTypes}
+          backendUrl={BACKEND_URL}
         />
       )}
     </div>
@@ -730,7 +744,7 @@ const AdminDashboard = ({ onLogout, token }) => {
 };
 
 // Modal pour ajouter/modifier un produit avec UPLOAD D'IMAGE
-const ProductModal = ({ product, onClose, onSave, productTypes }) => {
+const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) => {
   const [formData, setFormData] = useState({
     id: product?._id || product?.id || null,
     _id: product?._id || null,
@@ -746,6 +760,15 @@ const ProductModal = ({ product, onClose, onSave, productTypes }) => {
   const [uploadError, setUploadError] = useState('');
   const [saving, setSaving] = useState(false);
   const [previewKey, setPreviewKey] = useState(Date.now());
+
+  // ✅ Utilisation de la même logique pour l'URL
+  const getApiUrl = () => {
+    if (process.env.NODE_ENV === 'production') {
+      return 'https://peptideweightloss.vercel.app/api';
+    }
+    return 'http://localhost:5000/api';
+  };
+  const API_URL = getApiUrl();
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -943,7 +966,7 @@ const ProductModal = ({ product, onClose, onSave, productTypes }) => {
               <div className="mt-3 flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                 <img 
                   key={previewKey}
-                  src={formData.image.startsWith('/uploads/') ? `http://localhost:5000${formData.image}?t=${previewKey}` : `${formData.image}?t=${previewKey}`}
+                  src={formData.image.startsWith('/uploads/') ? `${backendUrl}${formData.image}?t=${previewKey}` : `${formData.image}?t=${previewKey}`}
                   alt="Preview" 
                   className="w-16 h-16 object-cover rounded-lg border border-gray-200"
                   onError={(e) => { e.target.src = '/images/pept.png'; }}

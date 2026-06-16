@@ -9,7 +9,20 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+// ✅ CONFIGURATION AUTOMATIQUE DE L'URL BACKEND
+const getApiUrl = () => {
+  // En production (Vercel), on utilise l'URL du backend déployé
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://peptideweightloss.vercel.app/api';
+  }
+  // En développement (local), on utilise localhost
+  return 'http://localhost:5000/api';
+};
+
+const API_URL = getApiUrl();
+const BACKEND_URL = API_URL.replace('/api', '');
+
+console.log(`🔧 Marketplace - API URL: ${API_URL}`); // Pour vérifier en console
 
 const Marketplace = () => {
   const { category } = useParams();
@@ -17,7 +30,7 @@ const Marketplace = () => {
   const [filterOpen, setFilterOpen] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
   const [selectedType, setSelectedType] = useState('all');
-  const [priceRange, setPriceRange] = useState([0, 5000]); // ← Augmenté à 2000
+  const [priceRange, setPriceRange] = useState([0, 5000]);
   const [sortBy, setSortBy] = useState('popular');
   const [searchQuery, setSearchQuery] = useState('');
   const [visibleCount, setVisibleCount] = useState(20);
@@ -45,7 +58,7 @@ const Marketplace = () => {
 
   const getFullImageUrl = (imageUrl) => {
     if (!imageUrl || imageUrl === '/images/pept.png') return '/images/pept.png';
-    if (imageUrl.startsWith('/uploads/')) return `http://localhost:5000${imageUrl}`;
+    if (imageUrl.startsWith('/uploads/')) return `${BACKEND_URL}${imageUrl}`;
     if (imageUrl.startsWith('http')) return imageUrl;
     return imageUrl;
   };
@@ -58,7 +71,7 @@ const Marketplace = () => {
         let apiProducts = response.data.data || response.data;
         apiProducts = apiProducts.filter(p => p.status !== 'inactive');
         
-        console.log('Produits reçus de l\'API:', apiProducts); // ← Debug
+        console.log('Produits reçus de l\'API:', apiProducts);
         
         const formattedProducts = apiProducts.map((p, index) => ({
           id: p._id || p.id || index,
@@ -75,7 +88,7 @@ const Marketplace = () => {
           image: p.image || '/images/pept.png',
         }));
         
-        console.log('Produits formatés:', formattedProducts); // ← Debug
+        console.log('Produits formatés:', formattedProducts);
         setProducts(formattedProducts);
       } catch (error) {
         console.error('Error fetching products:', error);
@@ -111,11 +124,9 @@ const Marketplace = () => {
     }
   };
 
-  // Filtrer les produits - Version sans filtre de prix pour tester
+  // Filtrer les produits
   const filteredProducts = products.filter(product => {
     if (selectedType !== 'all' && product.type !== selectedType) return false;
-    // FILTRE PRIX DÉSACTIVÉ TEMPORAIREMENT
-    // if (product.price < priceRange[0] || product.price > priceRange[1]) return false;
     if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
@@ -130,7 +141,6 @@ const Marketplace = () => {
 
   const displayedProducts = sortedProducts.slice(0, visibleCount);
 
-  // Debug: Afficher dans la console
   console.log('selectedType:', selectedType);
   console.log('filteredProducts count:', filteredProducts.length);
   console.log('displayedProducts:', displayedProducts);

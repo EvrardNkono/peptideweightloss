@@ -8,7 +8,18 @@ import {
 } from 'lucide-react';
 import AdminDashboard from './admin/AdminDashboard';
 
-const API_URL = 'http://localhost:5000/api';
+// ✅ CONFIGURATION AUTOMATIQUE DE L'URL BACKEND
+const getApiUrl = () => {
+  // En production (Vercel), on utilise l'URL du backend déployé
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://peptideweightloss.vercel.app/api';
+  }
+  // En développement (local), on utilise localhost
+  return 'http://localhost:5000/api';
+};
+
+const API_URL = getApiUrl();
+console.log(`🔧 Account - API URL: ${API_URL}`); // Pour vérifier en console
 
 const Account = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);

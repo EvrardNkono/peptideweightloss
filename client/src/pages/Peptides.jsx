@@ -3,7 +3,20 @@ import React, { useState, useEffect } from 'react';
 import { Search, Filter, X, Star, ShoppingCart, Eye, ChevronDown, Grid3x3, List, SlidersHorizontal, FlaskConical, Beaker, Droplets, Zap, Activity, TrendingUp, Clock } from 'lucide-react';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+// ✅ CONFIGURATION AUTOMATIQUE DE L'URL BACKEND
+const getApiUrl = () => {
+  // En production (Vercel), on utilise l'URL du backend déployé
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://peptideweightloss.vercel.app/api';
+  }
+  // En développement (local), on utilise localhost
+  return 'http://localhost:5000/api';
+};
+
+const API_URL = getApiUrl();
+const BACKEND_URL = API_URL.replace('/api', '');
+
+console.log(`🔧 Peptides - API URL: ${API_URL}`); // Pour vérifier en console
 
 const Peptides = () => {
   const [filterOpen, setFilterOpen] = useState(false);
@@ -78,7 +91,7 @@ const Peptides = () => {
       return '/images/pept.png';
     }
     if (imageUrl.startsWith('/uploads/')) {
-      return `http://localhost:5000${imageUrl}`;
+      return `${BACKEND_URL}${imageUrl}`;
     }
     if (imageUrl.startsWith('http')) {
       return imageUrl;
