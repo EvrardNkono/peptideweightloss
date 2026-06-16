@@ -27,12 +27,30 @@ app.use(cors({
 // Serve static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// ✅ AJOUTEZ CETTE ROUTE ICI (après les middlewares, avant les autres routes)
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Bienvenue sur l\'API Peptide Weight Loss',
+    version: '1.0.0',
+    endpoints: {
+      auth: '/api/auth',
+      products: '/api/products',
+      orders: '/api/orders',
+      users: '/api/users',
+      prescriptions: '/api/prescriptions',
+      upload: '/api/upload'
+    },
+    status: 'online'
+  });
+});
+
 // Mount routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
-app.use('/api/prescriptions', require('./routes/prescriptionRoutes')); // ← AJOUTER CETTE LIGNE
+app.use('/api/prescriptions', require('./routes/prescriptionRoutes'));
 
 // Image upload route
 app.post('/api/upload', upload.single('image'), (req, res) => {
