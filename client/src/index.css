@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: linear-gradient(135deg, #F3F4F6 0%, #FFFFFF 100%);
+  color: #111827;
+}
