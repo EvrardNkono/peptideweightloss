@@ -84,7 +84,7 @@ const Header = () => {
     { name: 'Steroids', href: '/marketplace/steroids', icon: <Pill size={16} />, description: 'Anabolic compounds' },
     { name: 'Post Cycle Therapy', href: '/marketplace/pct', icon: <Package size={16} />, description: 'PCT & ancillaries' },
     { name: 'Weight Loss', href: '/marketplace/weight-loss', icon: <Beaker size={16} />, description: 'Semaglutide, Tirzepatide & more' },
-    { name: 'African Products', href: '/marketplace/african-products', icon: <MapPin size={16} className="text-[#10B981]" />, description: '🇿🇦 Premium African products' },
+    { name: 'African Products', href: '/marketplace/african-products', icon: <MapPin size={16} className="text-[#10B981]" />, description: 'Premium African products' },
   ];
 
   const navItems = [
