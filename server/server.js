@@ -18,11 +18,11 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ ENABLE CORS - AVEC VOTRE URL FRONTEND
+// ✅ ENABLE CORS - AVEC VOTRE URL FRONTEND CORRECTE
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://peptideweightloss-pqw6-glhlq3orm-lahotte.vercel.app'
+    'https://peptideweightloss-pqw6.vercel.app'  // ✅ L'URL CORRECTE de votre frontend
   ],
   credentials: true
 }));
