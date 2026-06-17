@@ -13,7 +13,7 @@ const ProductCard = ({
   category,
   image = "/images/pept.png",
   isBestSeller = false,
-  isPopular = false,  // ✅ AJOUTÉ
+  isPopular = false,
   isNew = false,
   onAddToCart,
   onQuickView
@@ -21,7 +21,11 @@ const ProductCard = ({
   const [isHovered, setIsHovered] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
 
-  // Déterminer la couleur en fonction du nom du produit ou catégorie
+  // ✅ Normaliser les valeurs booléennes (corrige le cas où ce sont des strings "true"/"false")
+  const _isBestSeller = isBestSeller === true || isBestSeller === 'true';
+  const _isPopular    = isPopular === true    || isPopular === 'true';
+  const _isNew        = isNew === true        || isNew === 'true';
+
   const getProductColor = () => {
     if (name.includes('Semaglutide')) return 'blue';
     if (name.includes('Tirzepatide')) return 'green';
@@ -62,72 +66,35 @@ const ProductCard = ({
 
   const colors = colorClasses[color];
 
-  // ✅ Déterminer les badges à afficher
-  const getBadges = () => {
-    const badges = [];
-    
-    if (isBestSeller) {
-      badges.push({
-        label: 'BEST SELLER',
-        icon: <Star size={10} className="fill-white" />,
-        color: 'bg-gradient-to-r from-[#F59E0B] to-[#D97706]',
-        position: 'top-3 left-3'
-      });
-    }
-    
-    if (isPopular) {
-      badges.push({
-        label: 'POPULAR',
-        icon: <TrendingUp size={10} className="text-white" />,
-        color: 'bg-gradient-to-r from-[#2563EB] to-[#1E40AF]',
-        position: isBestSeller ? 'top-3 right-3' : 'top-3 left-3'
-      });
-    }
-    
-    if (isNew) {
-      badges.push({
-        label: 'NEW',
-        icon: null,
-        color: 'bg-gradient-to-r from-[#10B981] to-[#059669]',
-        position: (isBestSeller || isPopular) ? 'top-3 right-3' : 'top-3 left-3'
-      });
-    }
-    
-    // Ajuster les positions si plusieurs badges
-    if (badges.length >= 2) {
-      badges[0].position = 'top-3 left-3';
-      badges[1].position = 'top-3 right-3';
-      if (badges.length === 3) {
-        badges[2].position = 'top-12 left-3';
-      }
-    }
-    
-    return badges;
-  };
-
-  const badges = getBadges();
-
   return (
     <div 
       className="group relative bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 overflow-hidden"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* ✅ BADGES DYNAMIQUES */}
-      <div className="absolute top-3 left-3 z-20 flex flex-col gap-2">
-        {badges.map((badge, index) => (
-          <div 
-            key={index}
-            className={`${badge.color} text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-md`}
-          >
-            {badge.icon}
-            {badge.label}
+      {/* ✅ BADGES — tous empilés à gauche, logique simple et fiable */}
+      <div className="absolute top-3 left-3 z-20 flex flex-col gap-1.5">
+        {_isBestSeller && (
+          <div className="bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-md">
+            <Star size={10} className="fill-white" />
+            BEST SELLER
           </div>
-        ))}
+        )}
+        {_isPopular && (
+          <div className="bg-gradient-to-r from-[#2563EB] to-[#1E40AF] text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-md">
+            <TrendingUp size={10} className="text-white" />
+            POPULAR
+          </div>
+        )}
+        {_isNew && (
+          <div className="bg-gradient-to-r from-[#10B981] to-[#059669] text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-md">
+            ✨ NEW
+          </div>
+        )}
       </div>
 
-      {/* Actions rapides (hover) */}
-      <div className={`absolute top-3 right-3 z-20 flex flex-col gap-2 transition-all duration-300 ${isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'}`}>
+      {/* Actions rapides (hover) — à droite, z-30 pour passer au-dessus */}
+      <div className={`absolute top-3 right-3 z-30 flex flex-col gap-2 transition-all duration-300 ${isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'}`}>
         <button 
           onClick={() => setIsWishlisted(!isWishlisted)}
           className="w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center hover:scale-110 transition-transform"
@@ -163,22 +130,18 @@ const ProductCard = ({
 
       {/* Contenu */}
       <div className="p-4">
-        {/* Catégorie */}
         {category && (
           <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
             {category}
           </div>
         )}
 
-        {/* Nom du produit */}
         <h3 className="font-bold text-gray-800 text-lg mb-1 line-clamp-1 group-hover:text-[#2563EB] transition-colors">
           {name}
         </h3>
 
-        {/* Dosage */}
         <p className="text-sm text-gray-500 mb-2">{dosage}</p>
 
-        {/* Rating */}
         <div className="flex items-center gap-2 mb-3">
           <div className="flex items-center gap-0.5">
             <Star size={12} className="fill-[#F59E0B] text-[#F59E0B]" />
@@ -189,7 +152,6 @@ const ProductCard = ({
           )}
         </div>
 
-        {/* Prix */}
         <div className="flex items-baseline gap-2 mb-4">
           <span className="text-2xl font-bold text-gray-900">${price}</span>
           {oldPrice && (
@@ -202,7 +164,6 @@ const ProductCard = ({
           )}
         </div>
 
-        {/* Bouton Add to Cart */}
         <button 
           onClick={onAddToCart}
           className={`w-full py-2.5 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${colors.bgLight} ${colors.text} hover:text-white hover:${colors.bg} group/btn`}
@@ -211,7 +172,6 @@ const ProductCard = ({
           Add to Cart
         </button>
 
-        {/* Livraison info */}
         <div className="flex items-center justify-center gap-1 mt-3">
           <TrendingUp size={10} className="text-[#10B981]" />
           <span className="text-[10px] text-gray-400">Free shipping on orders $200+</span>
