@@ -7,10 +7,27 @@ const API_URL = process.env.NODE_ENV === 'production'
   ? 'https://peptideweightloss.vercel.app/api'
   : 'http://localhost:5000/api';
 
+const BACKEND_URL = API_URL.replace('/api', '');
+
 const Hero = () => {
   const [heroData, setHeroData] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
+
+  // ✅ Fonction pour obtenir l'URL complète de l'image
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl || imageUrl === '/images/pept.png') {
+      return '/images/pept.png';
+    }
+    if (imageUrl.includes('cloudinary.com')) {
+      return imageUrl;
+    }
+    if (imageUrl.startsWith('/uploads/')) {
+      return `${BACKEND_URL}${imageUrl}`;
+    }
+    return imageUrl;
+  };
 
   useEffect(() => {
     const fetchHero = async () => {
@@ -19,7 +36,6 @@ const Hero = () => {
         setHeroData(response.data.data);
       } catch (error) {
         console.error('Error fetching hero:', error);
-        // Fallback
         setHeroData({
           images: ['/images/pept.png'],
           title: 'Premium Peptides For Weight Loss',
@@ -31,6 +47,17 @@ const Hero = () => {
     };
     fetchHero();
   }, []);
+
+  // ✅ SLIDESHOW AUTOMATIQUE - Change d'image toutes les 4 secondes
+  useEffect(() => {
+    if (!heroData || heroData.images.length <= 1 || isPaused) return;
+
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % heroData.images.length);
+    }, 4000); // 4 secondes
+
+    return () => clearInterval(interval);
+  }, [heroData, isPaused]);
 
   const nextImage = () => {
     if (heroData && heroData.images.length > 1) {
@@ -55,7 +82,7 @@ const Hero = () => {
   }
 
   const images = heroData?.images || ['/images/pept.png'];
-  const currentImage = images[currentImageIndex] || '/images/pept.png';
+  const currentImage = getImageUrl(images[currentImageIndex] || '/images/pept.png');
 
   return (
     <section className="relative bg-white overflow-hidden">
@@ -68,7 +95,11 @@ const Hero = () => {
 
           {/* IMAGE */}
           <div className="relative order-2 lg:order-1">
-            <div className="relative bg-gray-50 rounded-2xl shadow-xl overflow-hidden group p-6 sm:p-10">
+            <div 
+              className="relative bg-gray-50 rounded-2xl shadow-xl overflow-hidden group p-6 sm:p-10"
+              onMouseEnter={() => setIsPaused(true)}
+              onMouseLeave={() => setIsPaused(false)}
+            >
               <div className="absolute top-4 left-4 z-20 bg-white/95 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-md flex items-center gap-1.5">
                 <FlaskConical size={12} className="text-[#2563EB]" />
                 <span className="text-xs font-semibold text-gray-700">LAB TESTED</span>
@@ -84,6 +115,7 @@ const Hero = () => {
                   alt="Premium Peptides"
                   loading="eager"
                   className="w-full h-auto max-h-[420px] mx-auto object-contain drop-shadow-2xl transition-transform duration-700 group-hover:scale-105"
+                  onError={(e) => { e.target.src = '/images/pept.png'; }}
                 />
                 
                 {/* Flèches de navigation si plusieurs images */}
@@ -91,13 +123,13 @@ const Hero = () => {
                   <>
                     <button
                       onClick={prevImage}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition z-10"
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition z-10 hover:scale-110"
                     >
                       <ChevronLeft size={20} className="text-gray-700" />
                     </button>
                     <button
                       onClick={nextImage}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition z-10"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition z-10 hover:scale-110"
                     >
                       <ChevronRight size={20} className="text-gray-700" />
                     </button>
@@ -105,20 +137,40 @@ const Hero = () => {
                 )}
               </div>
 
-              {/* Indicateurs de navigation */}
+              {/* Indicateurs de navigation avec progression */}
               {images.length > 1 && (
                 <div className="flex justify-center gap-2 mt-4">
                   {images.map((_, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentImageIndex(index)}
-                      className={`w-2 h-2 rounded-full transition ${
+                      className={`relative h-2 rounded-full transition-all duration-300 ${
                         currentImageIndex === index 
-                          ? 'bg-[#2563EB] w-6' 
-                          : 'bg-gray-300 hover:bg-gray-400'
+                          ? 'bg-[#2563EB] w-8' 
+                          : 'bg-gray-300 hover:bg-gray-400 w-2'
                       }`}
-                    />
+                    >
+                      {currentImageIndex === index && (
+                        <span 
+                          className="absolute inset-0 bg-[#2563EB] rounded-full animate-pulse"
+                          style={{ animationDuration: '4s' }}
+                        />
+                      )}
+                    </button>
                   ))}
+                </div>
+              )}
+
+              {/* Indicateur de progression du slideshow */}
+              {images.length > 1 && !isPaused && (
+                <div className="w-full h-0.5 bg-gray-200 rounded-full mt-2 overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-[#2563EB] to-[#10B981] rounded-full"
+                    style={{
+                      width: '100%',
+                      animation: 'progress 4s linear infinite',
+                    }}
+                  />
                 </div>
               )}
 
@@ -209,6 +261,14 @@ const Hero = () => {
           </div>
         </div>
       </div>
+
+      {/* ✅ Animation CSS pour la barre de progression */}
+      <style jsx>{`
+        @keyframes progress {
+          from { width: 100%; }
+          to { width: 0%; }
+        }
+      `}</style>
     </section>
   );
 };
