@@ -58,6 +58,11 @@ const productSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  // ✅ NOUVEAU CHAMP - Best Seller
+  isBestSeller: {
+    type: Boolean,
+    default: false
+  },
   image: {
     type: String,
     default: '/images/pept.png'

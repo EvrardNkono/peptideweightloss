@@ -20,7 +20,7 @@ const API_URL = getApiUrl();
 const BACKEND_URL = API_URL.replace('/api', '');
 
 const Home = () => {
-  const [products, setProducts] = useState([]);
+  const [bestSellerProducts, setBestSellerProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -38,17 +38,15 @@ const Home = () => {
     return imageUrl;
   };
 
-  // Récupérer les produits depuis l'API
+  // Récupérer les Best Sellers depuis l'API
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchBestSellers = async () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await axios.get(`${API_URL}/products`);
-        let apiProducts = response.data.data || response.data;
-        
-        // Filtrer les produits actifs
-        apiProducts = apiProducts.filter(p => p.status !== 'inactive');
+        // ✅ Utilisation de la nouvelle route /bestsellers
+        const response = await axios.get(`${API_URL}/products/bestsellers?limit=8`);
+        let apiProducts = response.data.data || [];
         
         // Transformer les produits pour le format attendu
         const formattedProducts = apiProducts.map((p) => ({
@@ -62,44 +60,23 @@ const Home = () => {
           reviews: p.reviews || Math.floor(Math.random() * 200) + 10,
           category: p.category || 'Peptide',
           type: p.type || 'peptide',
-          isBestSeller: p.isPopular || p.isBestSeller || false,
+          isBestSeller: p.isBestSeller || p.isPopular || false,
           isNew: p.isNew || false,
           image: p.image || '/images/pept.png',
           stock: p.stock || 0
         }));
         
-        setProducts(formattedProducts);
+        setBestSellerProducts(formattedProducts);
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('Error fetching best sellers:', error);
         setError('Impossible de charger les produits');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProducts();
+    fetchBestSellers();
   }, []);
-
-  // Sélectionner les 8 meilleurs produits (best sellers ou les mieux notés)
-  const getBestSellerProducts = () => {
-    // D'abord, prendre les produits marqués comme best sellers
-    const bestSellers = products.filter(p => p.isBestSeller);
-    
-    // Si moins de 8 best sellers, compléter avec les mieux notés
-    if (bestSellers.length < 8) {
-      const others = products
-        .filter(p => !p.isBestSeller)
-        .sort((a, b) => b.rating - a.rating)
-        .slice(0, 8 - bestSellers.length);
-      
-      return [...bestSellers, ...others];
-    }
-    
-    // Si plus de 8 best sellers, prendre les 8 premiers
-    return bestSellers.slice(0, 8);
-  };
-
-  const bestSellerProducts = getBestSellerProducts();
 
   const handleAddToCart = (product) => {
     console.log('Added to cart:', product);

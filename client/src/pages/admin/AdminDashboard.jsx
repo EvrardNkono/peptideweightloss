@@ -25,24 +25,25 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
-  Eye
+  Eye,
+  Star,
+  TrendingUp,
+  Sparkles
 } from 'lucide-react';
 import axios from 'axios';
 
 // ✅ CONFIGURATION AUTOMATIQUE DE L'URL BACKEND
 const getApiUrl = () => {
-  // En production (Vercel), on utilise l'URL du backend déployé
   if (process.env.NODE_ENV === 'production') {
     return 'https://peptideweightloss.vercel.app/api';
   }
-  // En développement (local), on utilise localhost
   return 'http://localhost:5000/api';
 };
 
 const API_URL = getApiUrl();
 const BACKEND_URL = API_URL.replace('/api', '');
 
-console.log(`🔧 API URL: ${API_URL}`); // Pour vérifier en console
+console.log(`🔧 API URL: ${API_URL}`);
 
 const AdminDashboard = ({ onLogout, token }) => {
   const [activeTab, setActiveTab] = useState('products');
@@ -115,7 +116,22 @@ const AdminDashboard = ({ onLogout, token }) => {
 
   const addProduct = async (product) => {
     try {
-      const res = await axios.post(`${API_URL}/products`, product, axiosConfig);
+      const res = await axios.post(`${API_URL}/products`, {
+        name: product.name,
+        dosage: product.dosage,
+        price: product.price,
+        category: product.category,
+        stock: product.stock,
+        type: product.type,
+        image: product.image,
+        isPopular: product.isPopular || false,
+        isNew: product.isNew || false,
+        isBestSeller: product.isBestSeller || false,
+        purity: product.purity || '≥99%',
+        rating: product.rating || 4.8,
+        reviews: product.reviews || 0,
+        status: 'active'
+      }, axiosConfig);
       setProducts([res.data.data, ...products]);
       setImageRefreshKey(Date.now());
       return true;
@@ -128,7 +144,22 @@ const AdminDashboard = ({ onLogout, token }) => {
   const updateProduct = async (product) => {
     try {
       const productId = product._id || product.id;
-      const res = await axios.put(`${API_URL}/products/${productId}`, product, axiosConfig);
+      const res = await axios.put(`${API_URL}/products/${productId}`, {
+        name: product.name,
+        dosage: product.dosage,
+        price: product.price,
+        category: product.category,
+        stock: product.stock,
+        type: product.type,
+        image: product.image,
+        isPopular: product.isPopular || false,
+        isNew: product.isNew || false,
+        isBestSeller: product.isBestSeller || false,
+        purity: product.purity || '≥99%',
+        rating: product.rating || 4.8,
+        reviews: product.reviews || 0,
+        status: 'active'
+      }, axiosConfig);
       const updatedProduct = res.data.data;
       
       setProducts(prev => prev.map(p => 
@@ -263,6 +294,15 @@ const AdminDashboard = ({ onLogout, token }) => {
   const paginatedProducts = filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
+  // Fonction pour vérifier si un produit a des badges
+  const getProductBadges = (product) => {
+    const badges = [];
+    if (product.isBestSeller) badges.push({ label: '⭐ Best Seller', color: 'bg-amber-100 text-amber-700' });
+    if (product.isPopular) badges.push({ label: '🔥 Popular', color: 'bg-blue-100 text-blue-700' });
+    if (product.isNew) badges.push({ label: '✨ New', color: 'bg-green-100 text-green-700' });
+    return badges;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -369,7 +409,7 @@ const AdminDashboard = ({ onLogout, token }) => {
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm overflow-x-auto">
-              <table className="w-full min-w-[900px]">
+              <table className="w-full min-w-[1000px]">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Image</th>
@@ -378,13 +418,14 @@ const AdminDashboard = ({ onLogout, token }) => {
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Dosage</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Category</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Price</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Stock</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Badges</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedProducts.map((product) => {
                     const badge = getTypeBadge(product.type);
+                    const productBadges = getProductBadges(product);
                     return (
                       <tr key={product._id || product.id} className="border-b border-gray-100 hover:bg-gray-50">
                         <td className="px-4 py-3">
@@ -406,9 +447,13 @@ const AdminDashboard = ({ onLogout, token }) => {
                         <td className="px-4 py-3 text-gray-600">{product.category}</td>
                         <td className="px-4 py-3 font-semibold text-gray-800">${product.price}</td>
                         <td className="px-4 py-3">
-                          <span className={`px-2 py-1 rounded-full text-xs ${product.stock > 10 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                            {product.stock} units
-                          </span>
+                          <div className="flex flex-wrap gap-1">
+                            {productBadges.map((b, i) => (
+                              <span key={i} className={`text-[10px] px-1.5 py-0.5 rounded-full ${b.color}`}>
+                                {b.label}
+                              </span>
+                            ))}
+                          </div>
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex gap-2">
@@ -755,13 +800,15 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
     stock: product?.stock || 0,
     type: product?.type || 'peptide',
     image: product?.image || '/images/pept.png',
+    isPopular: product?.isPopular || false,
+    isNew: product?.isNew || false,
+    isBestSeller: product?.isBestSeller || false,
   });
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [saving, setSaving] = useState(false);
   const [previewKey, setPreviewKey] = useState(Date.now());
 
-  // ✅ Utilisation de la même logique pour l'URL
   const getApiUrl = () => {
     if (process.env.NODE_ENV === 'production') {
       return 'https://peptideweightloss.vercel.app/api';
@@ -846,19 +893,18 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
               {productTypes.map((type) => (
                 <label
                   key={type.value}
-                  className="flex items-center gap-2 cursor-pointer p-2 rounded-lg border transition-all"
-                  style={{
-                    borderColor: formData.type === type.value ? type.color : '#e5e7eb',
-                    backgroundColor: formData.type === type.value ? `${type.color}15` : 'transparent'
-                  }}
+                  className={`flex items-center gap-2 cursor-pointer p-2 rounded-lg border transition-all ${
+                    formData.type === type.value
+                      ? 'border-[#2563EB] bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
                 >
                   <input
                     type="radio"
                     value={type.value}
                     checked={formData.type === type.value}
                     onChange={(e) => setFormData({...formData, type: e.target.value})}
-                    className="w-4 h-4"
-                    style={{ accentColor: type.color }}
+                    className="w-4 h-4 text-[#2563EB]"
                   />
                   <span style={{ color: type.color }}>{type.icon}</span>
                   <span className="text-sm font-medium text-gray-700">{type.label}</span>
@@ -867,6 +913,7 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
             </div>
           </div>
 
+          {/* Product Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
             <input
@@ -878,6 +925,7 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
             />
           </div>
 
+          {/* Dosage */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Dosage</label>
             <input
@@ -890,6 +938,7 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
             />
           </div>
 
+          {/* Category */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Category / Type</label>
             <input
@@ -902,6 +951,7 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
             />
           </div>
 
+          {/* Price & Stock */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
@@ -914,7 +964,6 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
                 className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-[#2563EB] outline-none"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Stock</label>
               <input
@@ -927,7 +976,84 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
             </div>
           </div>
 
-          {/* Image Upload avec prévisualisation */}
+          {/* ✅ TOGGLES - Best Seller, Popular, New */}
+          <div className="space-y-3 border-t border-gray-100 pt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Product Badges</label>
+            
+            {/* Best Seller Toggle */}
+            <div className="flex items-center justify-between p-3 bg-amber-50 rounded-xl border border-amber-200">
+              <div className="flex items-center gap-3">
+                <Star size={20} className="text-[#F59E0B] fill-[#F59E0B]" />
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Best Seller</label>
+                  <p className="text-xs text-gray-400">Afficher dans la section "Best Sellers"</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormData({...formData, isBestSeller: !formData.isBestSeller})}
+                className={`relative w-12 h-7 rounded-full transition-colors ${
+                  formData.isBestSeller ? 'bg-[#F59E0B]' : 'bg-gray-300'
+                }`}
+              >
+                <span 
+                  className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                    formData.isBestSeller ? 'translate-x-5' : ''
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Popular Toggle */}
+            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-xl border border-blue-200">
+              <div className="flex items-center gap-3">
+                <TrendingUp size={20} className="text-[#2563EB]" />
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Popular</label>
+                  <p className="text-xs text-gray-400">Afficher comme produit populaire</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormData({...formData, isPopular: !formData.isPopular})}
+                className={`relative w-12 h-7 rounded-full transition-colors ${
+                  formData.isPopular ? 'bg-[#2563EB]' : 'bg-gray-300'
+                }`}
+              >
+                <span 
+                  className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                    formData.isPopular ? 'translate-x-5' : ''
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* New Toggle */}
+            <div className="flex items-center justify-between p-3 bg-green-50 rounded-xl border border-green-200">
+              <div className="flex items-center gap-3">
+                <Sparkles size={20} className="text-[#10B981]" />
+                <div>
+                  <label className="text-sm font-medium text-gray-700">New Product</label>
+                  <p className="text-xs text-gray-400">Afficher le badge "NEW" sur le produit</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormData({...formData, isNew: !formData.isNew})}
+                className={`relative w-12 h-7 rounded-full transition-colors ${
+                  formData.isNew ? 'bg-[#10B981]' : 'bg-gray-300'
+                }`}
+              >
+                <span 
+                  className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                    formData.isNew ? 'translate-x-5' : ''
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
+          {/* Image Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
             
