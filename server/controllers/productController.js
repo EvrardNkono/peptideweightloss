@@ -1,7 +1,6 @@
 // server/controllers/productController.js
 const Product = require('../models/Product');
 
-// ✅ Champs autorisés pour la création/mise à jour (AJOUT DE likes)
 const allowedFields = [
   'name', 
   'type', 
@@ -20,7 +19,7 @@ const allowedFields = [
   'isBestSeller', 
   'image', 
   'status',
-  'likes'  // ✅ AJOUT
+  'likes'
 ];
 
 exports.getProducts = async (req, res) => {
@@ -60,7 +59,6 @@ exports.getProduct = async (req, res) => {
 
 exports.createProduct = async (req, res) => {
   try {
-    // ✅ Filtrer uniquement les champs autorisés
     const productData = {};
     allowedFields.forEach(field => {
       if (req.body[field] !== undefined) {
@@ -68,20 +66,20 @@ exports.createProduct = async (req, res) => {
       }
     });
     
-    // ✅ Si moreDetails est vide mais dosage existe, utiliser dosage
     if (!productData.moreDetails && productData.dosage) {
       productData.moreDetails = productData.dosage;
     }
     
-    // ✅ Si description est vide, générer une description par défaut
     if (!productData.description && productData.name) {
       productData.description = `Premium ${productData.name} peptide. High purity ${productData.purity || '≥99%'} with guaranteed quality.`;
     }
     
-    // ✅ Si likes n'est pas défini, mettre 0 par défaut
     if (productData.likes === undefined) {
       productData.likes = 0;
     }
+
+    // ✅ likedBy initialisé à vide à la création
+    productData.likedBy = [];
     
     const product = await Product.create(productData);
     res.status(201).json({ success: true, data: product });
@@ -93,7 +91,6 @@ exports.createProduct = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   try {
-    // ✅ Filtrer uniquement les champs autorisés
     const productData = {};
     allowedFields.forEach(field => {
       if (req.body[field] !== undefined) {
@@ -101,23 +98,19 @@ exports.updateProduct = async (req, res) => {
       }
     });
     
-    // ✅ Récupérer le produit existant pour conserver les valeurs si nécessaire
     const existingProduct = await Product.findById(req.params.id);
     if (!existingProduct) {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
     
-    // ✅ Si moreDetails n'est pas fourni mais dosage l'est, utiliser dosage
     if (req.body.moreDetails === undefined && req.body.dosage !== undefined) {
       productData.moreDetails = req.body.dosage;
     }
     
-    // ✅ Si description n'est pas fournie, garder l'ancienne
     if (req.body.description === undefined) {
       productData.description = existingProduct.description;
     }
     
-    // ✅ Si likes n'est pas fourni, garder l'ancienne valeur
     if (req.body.likes === undefined) {
       productData.likes = existingProduct.likes;
     }
@@ -148,18 +141,15 @@ exports.deleteProduct = async (req, res) => {
   }
 };
 
-// ✅ Nouvelle fonction : Récupérer les Best Sellers
 exports.getBestSellers = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 8;
     
-    // D'abord, récupérer les produits marqués isBestSeller
     let products = await Product.find({ 
       status: 'active', 
       isBestSeller: true 
     }).sort({ rating: -1 });
     
-    // Si moins que la limite, compléter avec les produits populaires
     if (products.length < limit) {
       const remaining = limit - products.length;
       const popularProducts = await Product.find({ 
@@ -170,7 +160,6 @@ exports.getBestSellers = async (req, res) => {
       
       products = [...products, ...popularProducts];
     } else {
-      // Si plus que la limite, prendre les 8 premiers
       products = products.slice(0, limit);
     }
     
@@ -181,32 +170,61 @@ exports.getBestSellers = async (req, res) => {
   }
 };
 
-// ✅ NOUVELLE FONCTION : Ajouter un like (utilisateur connecté)
-exports.addLike = async (req, res) => {
+// ✅ CORRIGÉ : Guard clause sur req.user + String() pour .includes()
+exports.toggleLike = async (req, res) => {
   try {
     const productId = req.params.id;
+
+    // ✅ FIX : Si req.user absent → réponse propre avec headers CORS intacts
+    if (!req.user) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Authentication required' 
+      });
+    }
+
+    // ✅ FIX : String() pour garantir la comparaison avec .includes()
+    const userId = String(req.user.id || req.user._id);
     
-    // Vérifier si le produit existe
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
+
+    // ✅ FIX : Migration auto si likedBy absent sur ancien document
+    const likedBy = product.likedBy || [];
+    const hasLiked = likedBy.includes(userId);
     
-    // ✅ Incrémenter le compteur de likes de 1
-    const updatedProduct = await Product.findByIdAndUpdate(
-      productId,
-      { $inc: { likes: 1 } },
-      { new: true }
-    );
+    let updatedProduct;
+    if (hasLiked) {
+      updatedProduct = await Product.findByIdAndUpdate(
+        productId,
+        {
+          $inc: { likes: -1 },
+          $pull: { likedBy: userId }
+        },
+        { new: true }
+      );
+    } else {
+      updatedProduct = await Product.findByIdAndUpdate(
+        productId,
+        {
+          $inc: { likes: 1 },
+          $push: { likedBy: userId }
+        },
+        { new: true }
+      );
+    }
     
     res.json({
       success: true,
       data: {
-        likes: updatedProduct.likes
+        likes: updatedProduct.likes,
+        hasLiked: !hasLiked
       }
     });
   } catch (error) {
-    console.error('Error adding like:', error);
+    console.error('Error toggling like:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
