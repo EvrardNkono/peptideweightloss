@@ -18,7 +18,8 @@ import {
   ChevronRight,
   Loader2,
   Info,
-  FileText
+  FileText,
+  ThumbsUp  // ✅ AJOUTÉ
 } from 'lucide-react';
 
 const getApiUrl = () => {
@@ -39,6 +40,13 @@ const ProductDetail = () => {
   const [selectedImage, setSelectedImage] = useState('');
   const [isWishlist, setIsWishlist] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
+  
+  // ✅ ÉTAT POUR LES LIKES
+  const [likesCount, setLikesCount] = useState(0);
+  const [isLiking, setIsLiking] = useState(false);
+  
+  // Récupérer le token de l'utilisateur
+  const token = localStorage.getItem('token');
 
   useEffect(() => {
     console.log('🔍 ProductDetail - ID reçu:', id);
@@ -64,7 +72,6 @@ const ProductDetail = () => {
       
       console.log('📦 API Response:', response.data);
       
-      // ✅ Structure: { success: true, data: {...} }
       let productData = null;
       
       if (response.data && response.data.success && response.data.data) {
@@ -91,14 +98,11 @@ const ProductDetail = () => {
       
       console.log('✅ Produit extrait:', productData);
       
-      // ✅ Construire l'objet produit avec les nouveaux champs
       const safeProduct = {
         _id: productData._id || id,
         name: productData.name || 'Product',
-        // ✅ Nouveaux champs
         moreDetails: productData.moreDetails || productData.dosage || 'N/A',
         description: productData.description || `Premium ${productData.name || ''} peptide. High purity ${productData.purity || '≥99%'} with guaranteed quality.`,
-        // ✅ Anciens champs (gardés pour compatibilité)
         dosage: productData.dosage || productData.moreDetails || 'N/A',
         purity: productData.purity || '≥99%',
         price: productData.price || 0,
@@ -113,14 +117,15 @@ const ProductDetail = () => {
         isBestSeller: productData.isBestSeller || false,
         image: productData.image || '/images/pept.png',
         status: productData.status || 'active',
-        createdAt: productData.createdAt || new Date().toISOString()
+        createdAt: productData.createdAt || new Date().toISOString(),
+        likes: productData.likes || 0  // ✅ Récupérer les likes
       };
       
       console.log('✅ Produit sécurisé:', safeProduct);
       setProduct(safeProduct);
       setSelectedImage(safeProduct.image);
+      setLikesCount(safeProduct.likes || 0);  // ✅ Mettre à jour les likes
       
-      // Fetch related products
       if (safeProduct.category) {
         fetchRelatedProducts(safeProduct.category);
       }
@@ -156,6 +161,34 @@ const ProductDetail = () => {
       setRelatedProducts(products.filter(p => p._id !== id).slice(0, 4));
     } catch (err) {
       console.error('Error fetching related products:', err);
+    }
+  };
+
+  // ✅ FONCTION POUR AJOUTER UN LIKE
+  const handleAddLike = async () => {
+    if (!token) {
+      alert('Please login to like this product');
+      return;
+    }
+    
+    if (isLiking) return;
+    setIsLiking(true);
+    
+    try {
+      const response = await axios.put(
+        `${API_URL}/products/${id}/like`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      if (response.data.success) {
+        setLikesCount(response.data.data.likes);
+      }
+    } catch (error) {
+      console.error('Error adding like:', error);
+      alert('Failed to add like. Please try again.');
+    } finally {
+      setIsLiking(false);
     }
   };
 
@@ -313,8 +346,8 @@ const ProductDetail = () => {
 
             <h1 className="text-3xl font-bold text-gray-800 mb-2">{product.name}</h1>
             
-            {/* Rating */}
-            <div className="flex items-center gap-4 mb-4">
+            {/* Rating & Likes */}
+            <div className="flex items-center gap-4 mb-4 flex-wrap">
               <div className="flex items-center gap-1">
                 {[...Array(5)].map((_, i) => (
                   <Star
@@ -327,6 +360,22 @@ const ProductDetail = () => {
               <span className="text-sm text-gray-500">
                 {product.rating || 4.8} ({product.reviews || 0} reviews)
               </span>
+              
+              {/* ✅ BOUTON LIKE */}
+              <button
+                onClick={handleAddLike}
+                disabled={isLiking}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  isLiking ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
+                } bg-blue-50 text-blue-600 hover:bg-blue-100`}
+              >
+                {isLiking ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <ThumbsUp size={16} />
+                )}
+                <span>{likesCount}</span>
+              </button>
             </div>
 
             {/* Price */}
@@ -344,9 +393,8 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* ✅ Product Details avec More Details */}
+            {/* Product Details */}
             <div className="space-y-3 mb-6 p-4 bg-gray-50 rounded-xl">
-              {/* ✅ More Details (remplace Dosage) */}
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500 flex items-center gap-1">
                   <Info size={14} />
@@ -445,7 +493,7 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        {/* ✅ Description améliorée avec les nouveaux champs */}
+        {/* Description */}
         <div className="mb-12">
           <div className="bg-white rounded-2xl shadow-sm p-6">
             <div className="flex items-center gap-2 mb-4">
@@ -456,7 +504,6 @@ const ProductDetail = () => {
               {product.description || `Premium ${product.name} peptide. High purity ${product.purity} with guaranteed quality.`}
             </p>
             
-            {/* ✅ Afficher More Details si différent de la description */}
             {product.moreDetails && product.moreDetails !== product.description && (
               <div className="mt-4 pt-4 border-t border-gray-100">
                 <h3 className="text-sm font-semibold text-gray-700 mb-2">📋 More Details</h3>
@@ -494,7 +541,14 @@ const ProductDetail = () => {
                     }}
                   />
                   <h3 className="font-semibold text-gray-800 text-sm truncate">{related.name}</h3>
-                  <p className="text-[#2563EB] font-bold">{formatPrice(related.price)}</p>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-[#2563EB] font-bold">{formatPrice(related.price)}</p>
+                    {related.likes > 0 && (
+                      <span className="flex items-center gap-1 text-xs text-gray-400">
+                        <ThumbsUp size={12} /> {related.likes}
+                      </span>
+                    )}
+                  </div>
                 </Link>
               ))}
             </div>

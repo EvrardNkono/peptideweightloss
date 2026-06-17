@@ -29,7 +29,8 @@ import {
   Star,
   TrendingUp,
   Sparkles,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Heart  // ✅ AJOUTÉ
 } from 'lucide-react';
 import axios from 'axios';
 import AdminHero from './AdminHero';
@@ -133,7 +134,8 @@ const AdminDashboard = ({ onLogout, token }) => {
         purity: product.purity || '≥99%',
         rating: product.rating || 4.8,
         reviews: product.reviews || 0,
-        status: 'active'
+        status: 'active',
+        likes: product.likes || 0  // ✅ AJOUT
       }, axiosConfig);
       setProducts([res.data.data, ...products]);
       setImageRefreshKey(Date.now());
@@ -162,7 +164,8 @@ const AdminDashboard = ({ onLogout, token }) => {
         purity: product.purity || '≥99%',
         rating: product.rating || 4.8,
         reviews: product.reviews || 0,
-        status: 'active'
+        status: 'active',
+        likes: product.likes || 0  // ✅ AJOUT
       }, axiosConfig);
       const updatedProduct = res.data.data;
       
@@ -506,7 +509,7 @@ const AdminDashboard = ({ onLogout, token }) => {
           </div>
         )}
 
-        {/* Orders Tab - identique */}
+        {/* Orders Tab */}
         {activeTab === 'orders' && (
           <div className="bg-white rounded-2xl shadow-sm overflow-x-auto">
             <table className="w-full min-w-[600px]">
@@ -554,7 +557,7 @@ const AdminDashboard = ({ onLogout, token }) => {
           </div>
         )}
 
-        {/* Users Tab - identique */}
+        {/* Users Tab */}
         {activeTab === 'users' && (
           <div className="bg-white rounded-2xl shadow-sm overflow-x-auto">
             <table className="w-full min-w-[600px]">
@@ -591,7 +594,7 @@ const AdminDashboard = ({ onLogout, token }) => {
           </div>
         )}
 
-        {/* Prescriptions Tab - identique */}
+        {/* Prescriptions Tab */}
         {activeTab === 'prescriptions' && (
           <div>
             <div className="flex justify-between items-center mb-4">
@@ -679,7 +682,7 @@ const AdminDashboard = ({ onLogout, token }) => {
         )}
       </div>
 
-      {/* Prescription Detail Modal - identique */}
+      {/* Prescription Detail Modal */}
       {showPrescriptionModal && selectedPrescription && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -690,7 +693,6 @@ const AdminDashboard = ({ onLogout, token }) => {
               </button>
             </div>
             <div className="p-6 space-y-4">
-              {/* ... contenu identique ... */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-gray-500">Patient Name</label>
@@ -772,7 +774,7 @@ const AdminDashboard = ({ onLogout, token }) => {
         </div>
       )}
 
-      {/* Product Modal - MODIFIÉ */}
+      {/* Product Modal */}
       {showProductModal && (
         <ProductModal
           product={editingProduct}
@@ -800,14 +802,14 @@ const AdminDashboard = ({ onLogout, token }) => {
   );
 };
 
-// ✅ MODAL MODIFIÉ AVEC "More Details" et "Product Description"
+// ✅ ProductModal avec le champ "Likes"
 const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) => {
   const [formData, setFormData] = useState({
     id: product?._id || product?.id || null,
     _id: product?._id || null,
     name: product?.name || '',
-    moreDetails: product?.dosage || product?.moreDetails || '', // ✅ "More Details"
-    description: product?.description || '', // ✅ "Product Description"
+    moreDetails: product?.dosage || product?.moreDetails || '',
+    description: product?.description || '',
     price: product?.price || '',
     category: product?.category || '',
     stock: product?.stock || 0,
@@ -816,6 +818,7 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
     isPopular: product?.isPopular || false,
     isNew: product?.isNew || false,
     isBestSeller: product?.isBestSeller || false,
+    likes: product?.likes || 0,  // ✅ AJOUT
   });
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
@@ -938,7 +941,7 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
             />
           </div>
 
-          {/* ✅ More Details (remplace Dosage) */}
+          {/* More Details */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               More Details
@@ -953,7 +956,7 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
             />
           </div>
 
-          {/* ✅ Product Description (remplace Category / Type) */}
+          {/* Product Description */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Product Description
@@ -991,6 +994,27 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
                 className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-[#2563EB] outline-none"
               />
             </div>
+          </div>
+
+          {/* ✅ LIKES - Nouveau champ */}
+          <div className="border-t border-gray-100 pt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              <span className="flex items-center gap-2">
+                <Heart size={16} className="text-red-500" />
+                Popularity Score (Likes)
+              </span>
+              <span className="text-xs text-gray-400 font-normal block mt-1">
+                Nombre de likes initial. Les utilisateurs pourront ajouter des likes supplémentaires.
+              </span>
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={formData.likes}
+              onChange={(e) => setFormData({...formData, likes: parseInt(e.target.value) || 0})}
+              className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-[#2563EB] outline-none"
+              placeholder="0"
+            />
           </div>
 
           {/* TOGGLES - Best Seller, Popular, New */}

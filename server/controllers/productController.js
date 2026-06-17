@@ -1,13 +1,13 @@
 // server/controllers/productController.js
 const Product = require('../models/Product');
 
-// ✅ Champs autorisés pour la création/mise à jour (AJOUT DE moreDetails ET description)
+// ✅ Champs autorisés pour la création/mise à jour (AJOUT DE likes)
 const allowedFields = [
   'name', 
   'type', 
   'dosage', 
-  'moreDetails',    // ✅ NOUVEAU
-  'description',    // ✅ NOUVEAU
+  'moreDetails',
+  'description',
   'purity', 
   'price', 
   'oldPrice', 
@@ -19,7 +19,8 @@ const allowedFields = [
   'isNew', 
   'isBestSeller', 
   'image', 
-  'status'
+  'status',
+  'likes'  // ✅ AJOUT
 ];
 
 exports.getProducts = async (req, res) => {
@@ -77,6 +78,11 @@ exports.createProduct = async (req, res) => {
       productData.description = `Premium ${productData.name} peptide. High purity ${productData.purity || '≥99%'} with guaranteed quality.`;
     }
     
+    // ✅ Si likes n'est pas défini, mettre 0 par défaut
+    if (productData.likes === undefined) {
+      productData.likes = 0;
+    }
+    
     const product = await Product.create(productData);
     res.status(201).json({ success: true, data: product });
   } catch (error) {
@@ -109,6 +115,11 @@ exports.updateProduct = async (req, res) => {
     // ✅ Si description n'est pas fournie, garder l'ancienne
     if (req.body.description === undefined) {
       productData.description = existingProduct.description;
+    }
+    
+    // ✅ Si likes n'est pas fourni, garder l'ancienne valeur
+    if (req.body.likes === undefined) {
+      productData.likes = existingProduct.likes;
     }
     
     const product = await Product.findByIdAndUpdate(
@@ -166,6 +177,36 @@ exports.getBestSellers = async (req, res) => {
     res.json({ success: true, count: products.length, data: products });
   } catch (error) {
     console.error('Error fetching best sellers:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ✅ NOUVELLE FONCTION : Ajouter un like (utilisateur connecté)
+exports.addLike = async (req, res) => {
+  try {
+    const productId = req.params.id;
+    
+    // Vérifier si le produit existe
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+    
+    // ✅ Incrémenter le compteur de likes de 1
+    const updatedProduct = await Product.findByIdAndUpdate(
+      productId,
+      { $inc: { likes: 1 } },
+      { new: true }
+    );
+    
+    res.json({
+      success: true,
+      data: {
+        likes: updatedProduct.likes
+      }
+    });
+  } catch (error) {
+    console.error('Error adding like:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

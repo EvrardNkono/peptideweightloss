@@ -91,6 +91,13 @@ const productSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  
+  // ✅ NOUVEAU : Likes (Popularité)
+  likes: {
+    type: Number,
+    default: 0,
+    min: 0
   }
 });
 
