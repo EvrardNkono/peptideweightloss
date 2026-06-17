@@ -13,6 +13,7 @@ const ProductCard = ({
   category,
   image = "/images/pept.png",
   isBestSeller = false,
+  isPopular = false,  // ✅ AJOUTÉ
   isNew = false,
   onAddToCart,
   onQuickView
@@ -61,25 +62,68 @@ const ProductCard = ({
 
   const colors = colorClasses[color];
 
+  // ✅ Déterminer les badges à afficher
+  const getBadges = () => {
+    const badges = [];
+    
+    if (isBestSeller) {
+      badges.push({
+        label: 'BEST SELLER',
+        icon: <Star size={10} className="fill-white" />,
+        color: 'bg-gradient-to-r from-[#F59E0B] to-[#D97706]',
+        position: 'top-3 left-3'
+      });
+    }
+    
+    if (isPopular) {
+      badges.push({
+        label: 'POPULAR',
+        icon: <TrendingUp size={10} className="text-white" />,
+        color: 'bg-gradient-to-r from-[#2563EB] to-[#1E40AF]',
+        position: isBestSeller ? 'top-3 right-3' : 'top-3 left-3'
+      });
+    }
+    
+    if (isNew) {
+      badges.push({
+        label: 'NEW',
+        icon: null,
+        color: 'bg-gradient-to-r from-[#10B981] to-[#059669]',
+        position: (isBestSeller || isPopular) ? 'top-3 right-3' : 'top-3 left-3'
+      });
+    }
+    
+    // Ajuster les positions si plusieurs badges
+    if (badges.length >= 2) {
+      badges[0].position = 'top-3 left-3';
+      badges[1].position = 'top-3 right-3';
+      if (badges.length === 3) {
+        badges[2].position = 'top-12 left-3';
+      }
+    }
+    
+    return badges;
+  };
+
+  const badges = getBadges();
+
   return (
     <div 
       className="group relative bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 overflow-hidden"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Badge en haut */}
+      {/* ✅ BADGES DYNAMIQUES */}
       <div className="absolute top-3 left-3 z-20 flex flex-col gap-2">
-        {isBestSeller && (
-          <div className="bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-md">
-            <Star size={10} className="fill-white" />
-            BEST SELLER
+        {badges.map((badge, index) => (
+          <div 
+            key={index}
+            className={`${badge.color} text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-md`}
+          >
+            {badge.icon}
+            {badge.label}
           </div>
-        )}
-        {isNew && (
-          <div className="bg-[#2563EB] text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md">
-            NEW
-          </div>
-        )}
+        ))}
       </div>
 
       {/* Actions rapides (hover) */}
