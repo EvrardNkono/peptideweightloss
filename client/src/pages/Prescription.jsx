@@ -66,7 +66,8 @@ const Prescription = () => {
       reviews: 567,
       badge: 'Board Certified Endocrinologist',
       available: true,
-      bio: 'Leading expert in peptide therapeutics with over 20 years of clinical experience. Published author in leading medical journals.'
+      bio: 'Leading expert in peptide therapeutics with over 20 years of clinical experience. Published author in leading medical journals.',
+      image: '/images/bradley.webp'
     },
     {
       name: 'Dr. Sarah Thompson',
@@ -77,7 +78,8 @@ const Prescription = () => {
       reviews: 234,
       badge: 'Board Certified',
       available: true,
-      bio: 'Specializes in metabolic health and peptide-based weight management protocols.'
+      bio: 'Specializes in metabolic health and peptide-based weight management protocols.',
+      image: '/images/sarah.webp'
     },
     {
       name: 'Dr. Michael Chen',
@@ -88,7 +90,8 @@ const Prescription = () => {
       reviews: 189,
       badge: 'PhD in Pharmacology',
       available: true,
-      bio: 'Expert in peptide pharmacology and therapeutic applications.'
+      bio: 'Expert in peptide pharmacology and therapeutic applications.',
+      image: '/images/michel.webp'
     },
     {
       name: 'Dr. Emily Rodriguez',
@@ -99,7 +102,8 @@ const Prescription = () => {
       reviews: 156,
       badge: 'Integrative Medicine',
       available: true,
-      bio: 'Holistic approach to peptide therapy combined with nutrition and lifestyle optimization.'
+      bio: 'Holistic approach to peptide therapy combined with nutrition and lifestyle optimization.',
+      image: '/images/emily.webp'
     }
   ];
 
@@ -455,10 +459,16 @@ const Prescription = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {experts.map((expert, idx) => (
                 <div key={idx} className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
-                  <div className="h-48 bg-gradient-to-br from-[#2563EB]/20 to-[#10B981]/20 flex items-center justify-center">
-                    <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg">
-                      <User size={40} className="text-[#2563EB]" />
-                    </div>
+                  <div className="h-56 bg-gradient-to-br from-[#2563EB]/5 to-[#10B981]/5 flex items-center justify-center overflow-hidden">
+                    <img 
+                      src={expert.image} 
+                      alt={expert.name}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(expert.name) + '&background=2563EB&color=fff&size=128';
+                      }}
+                    />
                   </div>
                   <div className="p-6 text-center">
                     <div className="inline-flex items-center gap-1 bg-[#F59E0B]/10 rounded-full px-2 py-0.5 text-xs text-[#D97706] mb-2">
@@ -468,7 +478,7 @@ const Prescription = () => {
                     <h3 className="text-xl font-bold text-gray-800 mb-1">{expert.name}</h3>
                     <p className="text-sm text-[#2563EB] font-medium mb-1">{expert.title}</p>
                     <p className="text-sm text-gray-500 mb-2">{expert.specialty}</p>
-                    <div className="flex justify-center gap-2 mb-4">
+                    <div className="flex justify-center gap-2 mb-4 flex-wrap">
                       <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">{expert.experience}</span>
                       <span className="text-xs bg-[#2563EB]/10 text-[#2563EB] px-2 py-1 rounded-full">{expert.badge}</span>
                     </div>
