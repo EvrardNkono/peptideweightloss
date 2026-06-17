@@ -73,7 +73,7 @@ const Hero = () => {
             </h1>
 
             <p className="text-gray-500 leading-relaxed mb-6 max-w-md">
-              Scientifically formulated, third-party tested, and clinically validated peptides to support your weight loss journey.
+              Your fully licensed corporate distributor for premium peptides, SARMs, and clinical-grade research compounds—from weight management to muscle recovery and beyond
             </p>
 
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-8">
