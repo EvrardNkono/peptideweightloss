@@ -15,6 +15,8 @@ import Account from './pages/Account';
 import Prescription from './pages/Prescription';
 import Labs from './pages/Labs';
 import AdminDashboard from './pages/admin/AdminDashboard';
+// ✅ IMPORT DE LA PAGE PRODUCT DETAIL
+import ProductDetail from './pages/ProductDetail';
 
 const AppContent = () => {
   const location = useLocation();
@@ -43,12 +45,13 @@ const AppContent = () => {
           <Route path="/prescription" element={<Prescription />} />
           <Route path="/labs" element={<Labs />} />
           <Route path="/labs/:labId" element={<Labs />} />
+          {/* ✅ NOUVELLE ROUTE POUR LES DÉTAILS DU PRODUIT */}
+          <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/admin/*" element={<AdminDashboard onLogout={() => {}} token={token} />} />
         </Routes>
       </main>
       {/* ✅ FOOTER - Toujours affiché pour le test */}
-      {/* {!isAdminPage && <Footer />} */}
-      <Footer />  {/* ✅ Temporaire : affiche toujours le footer */}
+      <Footer />
     </div>
   );
 };
