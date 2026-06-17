@@ -24,9 +24,8 @@ const Home = () => {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'bestseller', 'popular', 'new'
+  const [activeFilter, setActiveFilter] = useState('all');
 
-  // Fonction pour obtenir l'URL complète de l'image
   const getImageUrl = (imageUrl) => {
     if (!imageUrl || imageUrl === '/images/pept.png') {
       return '/images/pept.png';
@@ -40,7 +39,6 @@ const Home = () => {
     return imageUrl;
   };
 
-  // Récupérer tous les produits depuis l'API
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
@@ -48,11 +46,7 @@ const Home = () => {
       try {
         const response = await axios.get(`${API_URL}/products`);
         let apiProducts = response.data.data || [];
-        
-        // Filtrer les produits actifs
         apiProducts = apiProducts.filter(p => p.status !== 'inactive');
-        
-        // Transformer les produits pour le format attendu
         const formattedProducts = apiProducts.map((p) => ({
           id: p._id || p.id,
           name: p.name,
@@ -70,7 +64,6 @@ const Home = () => {
           image: p.image || '/images/pept.png',
           stock: p.stock || 0
         }));
-        
         setAllProducts(formattedProducts);
         setFilteredProducts(formattedProducts);
       } catch (error) {
@@ -84,7 +77,6 @@ const Home = () => {
     fetchProducts();
   }, []);
 
-  // Filtrer les produits selon la catégorie sélectionnée
   useEffect(() => {
     if (activeFilter === 'all') {
       setFilteredProducts(allProducts);
@@ -97,7 +89,6 @@ const Home = () => {
     }
   }, [activeFilter, allProducts]);
 
-  // Compter les produits par catégorie
   const counts = {
     all: allProducts.length,
     bestseller: allProducts.filter(p => p.isBestSeller).length,
@@ -113,50 +104,32 @@ const Home = () => {
     console.log('Quick view:', product);
   };
 
-  // Affichage du chargement
-  if (loading) {
-    return (
-      <div>
-        <Hero />
-        <section className="py-16 bg-gray-50">
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div className="flex items-center justify-center gap-3 text-gray-500">
-              <Loader2 size={24} className="animate-spin text-[#2563EB]" />
-              <span>Chargement des produits...</span>
-            </div>
-          </div>
-        </section>
-      </div>
-    );
-  }
-
-  // Déterminer quel titre et icône afficher selon le filtre
   const getSectionInfo = () => {
     switch(activeFilter) {
       case 'bestseller':
-        return { 
-          title: 'Best Sellers', 
+        return {
+          title: 'Best Sellers',
           icon: <Star size={20} className="fill-[#F59E0B] text-[#F59E0B]" />,
           color: 'from-amber-500 to-amber-600',
           badgeColor: 'bg-amber-100 text-amber-700'
         };
       case 'popular':
-        return { 
-          title: 'Popular Products', 
+        return {
+          title: 'Popular Products',
           icon: <TrendingUp size={20} className="text-[#2563EB]" />,
           color: 'from-blue-500 to-blue-600',
           badgeColor: 'bg-blue-100 text-blue-700'
         };
       case 'new':
-        return { 
-          title: 'New Arrivals', 
+        return {
+          title: 'New Arrivals',
           icon: <Sparkles size={20} className="text-[#10B981]" />,
           color: 'from-green-500 to-green-600',
           badgeColor: 'bg-green-100 text-green-700'
         };
       default:
-        return { 
-          title: 'All Products', 
+        return {
+          title: 'All Products',
           icon: <FlaskConical size={20} className="text-[#2563EB]" />,
           color: 'from-[#2563EB] to-[#10B981]',
           badgeColor: 'bg-gray-100 text-gray-700'
@@ -166,6 +139,7 @@ const Home = () => {
 
   const sectionInfo = getSectionInfo();
 
+  // ✅ UN SEUL RETURN — le loading est géré à l'intérieur
   return (
     <div>
       {/* Hero Section */}
@@ -206,10 +180,9 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Products Section avec Filtres */}
+      {/* Products Section */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          {/* En-tête */}
           <div className="text-center mb-8">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-3">
               Our Products
@@ -219,104 +192,114 @@ const Home = () => {
             </p>
           </div>
 
-          {/* ✅ FILTRES - 4 boutons */}
-          <div className="flex flex-wrap justify-center gap-3 mb-10">
-            <button
-              onClick={() => setActiveFilter('all')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all ${
-                activeFilter === 'all'
-                  ? 'bg-[#2563EB] text-white shadow-md'
-                  : 'bg-white text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <FlaskConical size={16} />
-              All ({counts.all})
-            </button>
-            <button
-              onClick={() => setActiveFilter('bestseller')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all ${
-                activeFilter === 'bestseller'
-                  ? 'bg-amber-500 text-white shadow-md'
-                  : 'bg-white text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <Star size={16} className="fill-current" />
-              Best Sellers ({counts.bestseller})
-            </button>
-            <button
-              onClick={() => setActiveFilter('popular')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all ${
-                activeFilter === 'popular'
-                  ? 'bg-blue-500 text-white shadow-md'
-                  : 'bg-white text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <TrendingUp size={16} />
-              Popular ({counts.popular})
-            </button>
-            <button
-              onClick={() => setActiveFilter('new')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all ${
-                activeFilter === 'new'
-                  ? 'bg-green-500 text-white shadow-md'
-                  : 'bg-white text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <Sparkles size={16} />
-              New ({counts.new})
-            </button>
-          </div>
-
-          {/* ✅ TITRE DYNAMIQUE DE LA SECTION */}
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${activeFilter === 'all' ? 'bg-gray-100 text-gray-700' : sectionInfo.badgeColor}`}>
-              {sectionInfo.icon}
-              <span className="font-semibold">{sectionInfo.title}</span>
-              <span className="text-xs opacity-70">({filteredProducts.length})</span>
-            </div>
-          </div>
-
-          {/* ✅ PRODUITS FILTRÉS - AVEC isPopular CORRIGÉ */}
-          {filteredProducts.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-2xl">
-              <p className="text-gray-500">Aucun produit dans cette catégorie pour le moment.</p>
+          {/* ✅ LOADING INLINE — ne bloque plus le Footer */}
+          {loading ? (
+            <div className="flex items-center justify-center gap-3 text-gray-500 py-20">
+              <Loader2 size={24} className="animate-spin text-[#2563EB]" />
+              <span>Chargement des produits...</span>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {filteredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  name={product.name}
-                  dosage={product.dosage}
-                  purity={product.purity}
-                  price={product.price}
-                  oldPrice={product.oldPrice}
-                  rating={product.rating}
-                  reviews={product.reviews}
-                  category={product.category}
-                  isBestSeller={product.isBestSeller}
-                  isPopular={product.isPopular}      // ✅ AJOUTÉ - C'EST CE QUI MANQUAIT !
-                  isNew={product.isNew}
-                  image={getImageUrl(product.image)}
-                  onAddToCart={() => handleAddToCart(product)}
-                  onQuickView={() => handleQuickView(product)}
-                />
-              ))}
-            </div>
-          )}
+            <>
+              {/* Filtres */}
+              <div className="flex flex-wrap justify-center gap-3 mb-10">
+                <button
+                  onClick={() => setActiveFilter('all')}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all ${
+                    activeFilter === 'all'
+                      ? 'bg-[#2563EB] text-white shadow-md'
+                      : 'bg-white text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <FlaskConical size={16} />
+                  All ({counts.all})
+                </button>
+                <button
+                  onClick={() => setActiveFilter('bestseller')}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all ${
+                    activeFilter === 'bestseller'
+                      ? 'bg-amber-500 text-white shadow-md'
+                      : 'bg-white text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <Star size={16} className="fill-current" />
+                  Best Sellers ({counts.bestseller})
+                </button>
+                <button
+                  onClick={() => setActiveFilter('popular')}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all ${
+                    activeFilter === 'popular'
+                      ? 'bg-blue-500 text-white shadow-md'
+                      : 'bg-white text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <TrendingUp size={16} />
+                  Popular ({counts.popular})
+                </button>
+                <button
+                  onClick={() => setActiveFilter('new')}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all ${
+                    activeFilter === 'new'
+                      ? 'bg-green-500 text-white shadow-md'
+                      : 'bg-white text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <Sparkles size={16} />
+                  New ({counts.new})
+                </button>
+              </div>
 
-          {/* Bouton View All */}
-          <div className="text-center mt-12">
-            <Link
-              to="/marketplace"
-              className="group bg-gradient-to-r from-[#2563EB] to-[#10B981] text-white px-10 py-3 rounded-full font-semibold shadow-md hover:shadow-xl transition-all duration-300 inline-flex items-center gap-2 hover:-translate-y-0.5"
-            >
-              View All Products
-              <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
-          </div>
+              {/* Titre dynamique */}
+              <div className="flex items-center justify-center gap-3 mb-8">
+                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${activeFilter === 'all' ? 'bg-gray-100 text-gray-700' : sectionInfo.badgeColor}`}>
+                  {sectionInfo.icon}
+                  <span className="font-semibold">{sectionInfo.title}</span>
+                  <span className="text-xs opacity-70">({filteredProducts.length})</span>
+                </div>
+              </div>
+
+              {/* Produits */}
+              {filteredProducts.length === 0 ? (
+                <div className="text-center py-12 bg-white rounded-2xl">
+                  <p className="text-gray-500">Aucun produit dans cette catégorie pour le moment.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {filteredProducts.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      name={product.name}
+                      dosage={product.dosage}
+                      purity={product.purity}
+                      price={product.price}
+                      oldPrice={product.oldPrice}
+                      rating={product.rating}
+                      reviews={product.reviews}
+                      category={product.category}
+                      isBestSeller={product.isBestSeller}
+                      isPopular={product.isPopular}
+                      isNew={product.isNew}
+                      image={getImageUrl(product.image)}
+                      onAddToCart={() => handleAddToCart(product)}
+                      onQuickView={() => handleQuickView(product)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Bouton View All */}
+              <div className="text-center mt-12">
+                <Link
+                  to="/marketplace"
+                  className="group bg-gradient-to-r from-[#2563EB] to-[#10B981] text-white px-10 py-3 rounded-full font-semibold shadow-md hover:shadow-xl transition-all duration-300 inline-flex items-center gap-2 hover:-translate-y-0.5"
+                >
+                  View All Products
+                  <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
+            </>
+          )}
         </div>
       </section>
 
