@@ -300,7 +300,7 @@ const PeptideScience = () => {
         </div>
 
         {/* CONTENU DYNAMIQUE */}
-        <div className="min-h-[700px]">
+        <div className="pb-4">
           
           {/* TAB 1: MECANISM OF ACTION */}
           {activeTab === 'mechanism' && (
