@@ -44,6 +44,16 @@ const ProductDetail = () => {
   const [relatedProducts, setRelatedProducts] = useState([]);
 
   useEffect(() => {
+    console.log('🔍 ProductDetail - ID reçu:', id);
+    console.log('🔍 Type de ID:', typeof id);
+    
+    if (!id || id === 'undefined' || id === 'null' || id === '') {
+      console.error('❌ ID invalide');
+      setError('Invalid product ID');
+      setLoading(false);
+      return;
+    }
+    
     fetchProduct();
     window.scrollTo(0, 0);
   }, [id]);
@@ -52,18 +62,113 @@ const ProductDetail = () => {
     setLoading(true);
     setError('');
     try {
+      console.log(`🔍 Fetching product: ${API_URL}/products/${id}`);
       const response = await axios.get(`${API_URL}/products/${id}`);
-      if (response.data.success) {
-        setProduct(response.data.product);
-        setSelectedImage(response.data.product.image || '/images/pept.png');
-        // Fetch related products
-        fetchRelatedProducts(response.data.product.category);
-      } else {
-        setError('Product not found');
+      
+      // 🔍 LOG DÉTAILLÉ DE LA RÉPONSE
+      console.log('📦 FULL API RESPONSE:', JSON.stringify(response.data, null, 2));
+      console.log('📦 Response status:', response.status);
+      console.log('📦 Response data type:', typeof response.data);
+      console.log('📦 Response data keys:', Object.keys(response.data));
+      
+      // ✅ ESSAYER DIFFÉRENTES STRUCTURES DE RÉPONSE
+      let productData = null;
+      
+      // Structure 1: { success: true, product: {...} }
+      if (response.data && response.data.success && response.data.product) {
+        console.log('✅ Structure 1: success + product');
+        productData = response.data.product;
       }
+      // Structure 2: { product: {...} }
+      else if (response.data && response.data.product) {
+        console.log('✅ Structure 2: product direct');
+        productData = response.data.product;
+      }
+      // Structure 3: { data: {...} }
+      else if (response.data && response.data.data) {
+        console.log('✅ Structure 3: data wrapper');
+        productData = response.data.data;
+      }
+      // Structure 4: Directement le produit
+      else if (response.data && response.data._id) {
+        console.log('✅ Structure 4: Direct product object');
+        productData = response.data;
+      }
+      // Structure 5: Array avec un élément
+      else if (Array.isArray(response.data) && response.data.length > 0) {
+        console.log('✅ Structure 5: Array');
+        productData = response.data[0];
+      }
+      // Structure 6: Si la réponse a une propriété qui contient le produit
+      else {
+        console.log('⚠️ Structure inconnue, recherche d\'un objet avec _id');
+        const keys = Object.keys(response.data);
+        for (const key of keys) {
+          const value = response.data[key];
+          if (value && typeof value === 'object' && value._id) {
+            productData = value;
+            console.log(`✅ Structure 6: Trouvé dans la propriété "${key}"`);
+            break;
+          }
+        }
+      }
+      
+      if (!productData) {
+        console.error('❌ Aucun produit trouvé dans la réponse');
+        console.log('📦 Contenu complet de la réponse:', response.data);
+        setError('Product not found in response');
+        setLoading(false);
+        return;
+      }
+      
+      console.log('✅ Produit extrait:', productData);
+      console.log('✅ Product ID:', productData._id);
+      console.log('✅ Product Name:', productData.name);
+      console.log('✅ Product Image:', productData.image);
+      
+      // S'assurer que le produit a toutes les propriétés nécessaires
+      const sanitizedProduct = {
+        ...productData,
+        image: productData.image || '/images/pept.png',
+        price: productData.price || 0,
+        oldPrice: productData.oldPrice || null,
+        stock: productData.stock || 0,
+        rating: productData.rating || 4.8,
+        reviews: productData.reviews || 0,
+        type: productData.type || 'peptide',
+        category: productData.category || productData.type || 'peptide',
+        isNew: productData.isNew || false,
+        isPopular: productData.isPopular || false,
+        isBestSeller: productData.isBestSeller || false,
+        purity: productData.purity || '≥99%',
+        dosage: productData.dosage || 'N/A',
+        description: productData.description || `Premium ${productData.name || ''} peptide.`
+      };
+      
+      setProduct(sanitizedProduct);
+      setSelectedImage(sanitizedProduct.image);
+      
+      // Fetch related products
+      if (sanitizedProduct.category) {
+        fetchRelatedProducts(sanitizedProduct.category);
+      }
+      
     } catch (err) {
-      console.error('Error fetching product:', err);
-      setError(err.response?.data?.message || 'Failed to load product');
+      console.error('❌ Error fetching product:', err);
+      console.error('❌ Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        config: err.config
+      });
+      
+      if (err.response?.status === 404) {
+        setError('Product not found');
+      } else if (err.response?.status === 500) {
+        setError('Server error. Please try again later.');
+      } else {
+        setError(err.response?.data?.message || 'Failed to load product');
+      }
     } finally {
       setLoading(false);
     }
@@ -72,18 +177,25 @@ const ProductDetail = () => {
   const fetchRelatedProducts = async (category) => {
     try {
       const response = await axios.get(`${API_URL}/products?category=${category}&limit=4`);
-      if (response.data.success) {
-        setRelatedProducts(response.data.products.filter(p => p._id !== id));
+      
+      let products = [];
+      if (response.data.success && response.data.products) {
+        products = response.data.products;
+      } else if (Array.isArray(response.data.data)) {
+        products = response.data.data;
+      } else if (Array.isArray(response.data)) {
+        products = response.data;
       }
+      
+      setRelatedProducts(products.filter(p => p._id !== id));
     } catch (err) {
       console.error('Error fetching related products:', err);
     }
   };
 
   const handleAddToCart = () => {
-    // TODO: Implémenter la logique du panier
-    console.log('Adding to cart:', { productId: id, quantity });
-    alert(`Added ${quantity} x ${product?.name} to cart!`);
+    console.log('🛒 Adding to cart:', { productId: id, quantity, product });
+    alert(`Added ${quantity} x ${product?.name || 'product'} to cart!`);
   };
 
   const handleQuantityChange = (type) => {
@@ -94,16 +206,16 @@ const ProductDetail = () => {
     }
   };
 
-  // Format price
   const formatPrice = (price) => {
+    if (!price && price !== 0) return '$0.00';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
     }).format(price);
   };
 
-  // Get product type color
   const getTypeColor = (type) => {
+    if (!type) return 'bg-gray-100 text-gray-800';
     const colors = {
       peptide: 'bg-blue-100 text-blue-800',
       blend: 'bg-purple-100 text-purple-800',
@@ -117,12 +229,14 @@ const ProductDetail = () => {
     return colors[type] || 'bg-gray-100 text-gray-800';
   };
 
+  // Afficher l'erreur avec plus de détails
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 size={48} className="animate-spin text-[#2563EB] mx-auto mb-4" />
           <p className="text-gray-500">Loading product details...</p>
+          <p className="text-xs text-gray-400 mt-2">ID: {id}</p>
         </div>
       </div>
     );
@@ -134,13 +248,14 @@ const ProductDetail = () => {
         <div className="text-center max-w-md px-4">
           <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-gray-800 mb-2">Product Not Found</h2>
-          <p className="text-gray-500 mb-6">{error || 'The product you are looking for does not exist.'}</p>
+          <p className="text-gray-500 mb-2">{error || 'The product you are looking for does not exist.'}</p>
+          <p className="text-xs text-gray-400 mb-6">ID: {id}</p>
           <Link
-            to="/shop"
+            to="/marketplace"
             className="inline-flex items-center gap-2 bg-[#2563EB] text-white px-6 py-2 rounded-lg hover:bg-[#1E40AF] transition"
           >
             <ArrowLeft size={18} />
-            Back to Shop
+            Back to Marketplace
           </Link>
         </div>
       </div>
@@ -152,17 +267,19 @@ const ProductDetail = () => {
       <div className="max-w-7xl mx-auto px-4">
         
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">
+        <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6 flex-wrap">
           <Link to="/" className="hover:text-[#2563EB]">Home</Link>
           <ChevronRight size={14} />
-          <Link to="/shop" className="hover:text-[#2563EB]">Shop</Link>
+          <Link to="/marketplace" className="hover:text-[#2563EB]">Marketplace</Link>
           <ChevronRight size={14} />
-          <Link to={`/shop?category=${product.category}`} className="hover:text-[#2563EB] capitalize">
-            {product.category}
-          </Link>
-          <ChevronRight size={14} />
-          <span className="text-gray-800 font-medium truncate">{product.name}</span>
+          <span className="text-gray-800 font-medium truncate">{product.name || 'Product'}</span>
         </nav>
+
+        {/* Debug info (à supprimer plus tard) */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 mb-4 text-xs text-gray-600">
+          <p>🔍 Debug: Product ID: {product._id}</p>
+          <p>📦 Product data: {JSON.stringify(product, null, 2).substring(0, 200)}...</p>
+        </div>
 
         {/* Main Product Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
@@ -171,8 +288,8 @@ const ProductDetail = () => {
           <div>
             <div className="bg-white rounded-2xl overflow-hidden shadow-sm mb-4">
               <img
-                src={selectedImage}
-                alt={product.name}
+                src={selectedImage || '/images/pept.png'}
+                alt={product.name || 'Product'}
                 className="w-full h-[400px] object-cover hover:scale-105 transition-transform duration-300"
                 onError={(e) => {
                   e.target.onerror = null;
@@ -181,7 +298,7 @@ const ProductDetail = () => {
               />
             </div>
             <div className="grid grid-cols-4 gap-3">
-              {[product.image, '/images/pept.png', '/images/pept.png'].map((img, index) => (
+              {[product.image, '/images/pept.png'].filter(Boolean).map((img, index) => (
                 <div
                   key={index}
                   onClick={() => setSelectedImage(img)}
@@ -191,8 +308,12 @@ const ProductDetail = () => {
                 >
                   <img
                     src={img}
-                    alt={`${product.name} ${index + 1}`}
+                    alt={`${product.name || 'Product'} ${index + 1}`}
                     className="w-full h-20 object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = '/images/pept.png';
+                    }}
                   />
                 </div>
               ))}
@@ -203,9 +324,11 @@ const ProductDetail = () => {
           <div>
             {/* Badges */}
             <div className="flex flex-wrap gap-2 mb-4">
-              <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase ${getTypeColor(product.type)}`}>
-                {product.type}
-              </span>
+              {product.type && (
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase ${getTypeColor(product.type)}`}>
+                  {product.type}
+                </span>
+              )}
               {product.isNew && (
                 <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase bg-emerald-100 text-emerald-800">
                   New
@@ -238,7 +361,7 @@ const ProductDetail = () => {
               )}
             </div>
 
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">{product.name}</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">{product.name || 'Product'}</h1>
             
             {/* Rating */}
             <div className="flex items-center gap-4 mb-4">
@@ -247,19 +370,19 @@ const ProductDetail = () => {
                   <Star
                     key={i}
                     size={18}
-                    className={i < Math.floor(product.rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
+                    className={i < Math.floor(product.rating || 4.8) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
                   />
                 ))}
               </div>
               <span className="text-sm text-gray-500">
-                {product.rating} ({product.reviews} reviews)
+                {product.rating || 4.8} ({product.reviews || 0} reviews)
               </span>
             </div>
 
             {/* Price */}
             <div className="mb-6">
               {product.oldPrice ? (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                   <span className="text-3xl font-bold text-[#2563EB]">{formatPrice(product.price)}</span>
                   <span className="text-xl text-gray-400 line-through">{formatPrice(product.oldPrice)}</span>
                   <span className="px-3 py-1 bg-red-100 text-red-600 text-sm font-bold rounded-full">
@@ -273,24 +396,32 @@ const ProductDetail = () => {
 
             {/* Product Details */}
             <div className="space-y-3 mb-6 p-4 bg-gray-50 rounded-xl">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Dosage</span>
-                <span className="font-medium text-gray-800">{product.dosage}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Purity</span>
-                <span className="font-medium text-gray-800">{product.purity}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Category</span>
-                <span className="font-medium text-gray-800 capitalize">{product.category}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Stock</span>
-                <span className={`font-medium ${product.stock > 10 ? 'text-green-600' : 'text-yellow-600'}`}>
-                  {product.stock > 0 ? `${product.stock} units` : 'Out of Stock'}
-                </span>
-              </div>
+              {product.dosage && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Dosage</span>
+                  <span className="font-medium text-gray-800">{product.dosage}</span>
+                </div>
+              )}
+              {product.purity && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Purity</span>
+                  <span className="font-medium text-gray-800">{product.purity}</span>
+                </div>
+              )}
+              {product.category && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Category</span>
+                  <span className="font-medium text-gray-800 capitalize">{product.category}</span>
+                </div>
+              )}
+              {product.stock !== undefined && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Stock</span>
+                  <span className={`font-medium ${product.stock > 10 ? 'text-green-600' : 'text-yellow-600'}`}>
+                    {product.stock > 0 ? `${product.stock} units` : 'Out of Stock'}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Quantity Selector */}
@@ -366,12 +497,12 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        {/* Tabs: Description, Reviews */}
+        {/* Description */}
         <div className="mb-12">
           <div className="bg-white rounded-2xl shadow-sm p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">Product Description</h2>
             <p className="text-gray-600 leading-relaxed">
-              {product.description || `Premium ${product.name} peptide. High purity ${product.purity} with guaranteed quality. Ideal for ${product.type} applications.`}
+              {product.description || `Premium ${product.name || ''} peptide. High purity ${product.purity || '≥99%'} with guaranteed quality.`}
             </p>
           </div>
         </div>
@@ -381,7 +512,7 @@ const ProductDetail = () => {
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-800">Related Products</h2>
-              <Link to="/shop" className="text-sm text-[#2563EB] hover:underline font-medium">
+              <Link to="/marketplace" className="text-sm text-[#2563EB] hover:underline font-medium">
                 View All →
               </Link>
             </div>
@@ -396,6 +527,10 @@ const ProductDetail = () => {
                     src={related.image || '/images/pept.png'}
                     alt={related.name}
                     className="w-full h-32 object-cover rounded-lg mb-3"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = '/images/pept.png';
+                    }}
                   />
                   <h3 className="font-semibold text-gray-800 text-sm truncate">{related.name}</h3>
                   <p className="text-[#2563EB] font-bold">{formatPrice(related.price)}</p>
