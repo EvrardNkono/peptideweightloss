@@ -15,7 +15,6 @@ import Account from './pages/Account';
 import Prescription from './pages/Prescription';
 import Labs from './pages/Labs';
 import AdminDashboard from './pages/admin/AdminDashboard';
-// ✅ IMPORT DE LA PAGE PRODUCT DETAIL
 import ProductDetail from './pages/ProductDetail';
 
 const AppContent = () => {
@@ -33,10 +32,21 @@ const AppContent = () => {
       <main className="flex-grow">
         <Routes>
           <Route path="/" element={<Home />} />
+          
+          {/* ✅ ROUTES SHOP */}
+          <Route path="/shop" element={<Marketplace />} />
           <Route path="/shop/peptides" element={<Peptides />} />
           <Route path="/shop/blends" element={<PeptideBlends />} />
+          <Route path="/shop/:category" element={<Marketplace />} />
+          
+          {/* ✅ ROUTES MARKETPLACE */}
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/marketplace/:category" element={<Marketplace />} />
+          
+          {/* ✅ ROUTES PRODUITS */}
+          <Route path="/product/:id" element={<ProductDetail />} />
+          
+          {/* ✅ AUTRES ROUTES */}
           <Route path="/my-prescriptions" element={<MyPrescriptions token={token} />} />
           <Route path="/about" element={<About />} />
           <Route path="/knowledge" element={<KnowledgeCenter />} />
@@ -45,12 +55,18 @@ const AppContent = () => {
           <Route path="/prescription" element={<Prescription />} />
           <Route path="/labs" element={<Labs />} />
           <Route path="/labs/:labId" element={<Labs />} />
-          {/* ✅ NOUVELLE ROUTE POUR LES DÉTAILS DU PRODUIT */}
-          <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/admin/*" element={<AdminDashboard onLogout={() => {}} token={token} />} />
+          
+          {/* ✅ ROUTE 404 - FALLBACK */}
+          <Route path="*" element={<div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <div className="text-center">
+              <h1 className="text-4xl font-bold text-gray-800 mb-4">404</h1>
+              <p className="text-gray-500">Page not found</p>
+              <a href="/" className="mt-4 inline-block text-[#2563EB] hover:underline">Go back home</a>
+            </div>
+          </div>} />
         </Routes>
       </main>
-      {/* ✅ FOOTER - Toujours affiché pour le test */}
       <Footer />
     </div>
   );
