@@ -1,13 +1,13 @@
 // server/routes/productRoutes.js
 const express = require('express');
-const {
-  getProducts,
-  getProduct,
-  createProduct,
-  updateProduct,
+const { 
+  getProducts, 
+  getProduct, 
+  createProduct, 
+  updateProduct, 
   deleteProduct,
   getBestSellers,
-  toggleLike  // ✅ toggleLike au lieu de addLike
+  addLike  // ✅ IMPORT de la nouvelle fonction
 } = require('../controllers/productController');
 const { protect, admin } = require('../middleware/auth');
 
@@ -18,10 +18,10 @@ router.get('/', getProducts);
 router.get('/bestsellers', getBestSellers);
 router.get('/:id', getProduct);
 
-// ✅ Route like — protect obligatoire pour req.user
-router.put('/:id/like', protect, toggleLike);
+// ✅ Route pour ajouter un like (protégée - utilisateur connecté)
+router.put('/:id/like', protect, addLike);
 
-// Routes admin
+// Routes protégées (admin uniquement)
 router.post('/', protect, admin, createProduct);
 router.put('/:id', protect, admin, updateProduct);
 router.delete('/:id', protect, admin, deleteProduct);
