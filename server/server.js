@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
+const path = require('path');
 const upload = require('./middleware/upload');
 
 dotenv.config();
@@ -10,31 +11,20 @@ connectDB();
 
 const app = express();
 
-// ✅ CORS EN PREMIER — avant body parser
-const corsOptions = {
-  origin: function (origin, callback) {
-    const allowedOrigins = [
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'https://peptideweightloss-pqw6.vercel.app',
-      'https://peptideweightloss.vercel.app',
-      'https://peptidesweight-loss.com',
-      'https://www.peptidesweight-loss.com'
-    ];
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error(`CORS blocked: ${origin}`));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-};
-
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // ✅ preflight obligatoire
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ✅ CORS — identique à l'original + www + options preflight
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://peptideweightloss-pqw6.vercel.app',
+    'https://peptidesweight-loss.com',
+    'https://www.peptidesweight-loss.com'  // ✅ ajout
+  ],
+  credentials: true
+}));
+app.options('*', cors());  // ✅ seul vrai ajout nécessaire
 
 app.get('/', (req, res) => {
   res.json({
@@ -42,9 +32,13 @@ app.get('/', (req, res) => {
     message: 'Bienvenue sur l\'API Peptide Weight Loss',
     version: '1.0.0',
     endpoints: {
-      auth: '/api/auth', products: '/api/products', orders: '/api/orders',
-      users: '/api/users', prescriptions: '/api/prescriptions',
-      upload: '/api/upload', hero: '/api/hero'
+      auth: '/api/auth',
+      products: '/api/products',
+      orders: '/api/orders',
+      users: '/api/users',
+      prescriptions: '/api/prescriptions',
+      upload: '/api/upload',
+      hero: '/api/hero'
     },
     status: 'online'
   });
