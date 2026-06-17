@@ -54,7 +54,7 @@ const Hero = () => {
 
     const interval = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % heroData.images.length);
-    }, 4000); // 4 secondes
+    }, 4000);
 
     return () => clearInterval(interval);
   }, [heroData, isPaused]);
@@ -96,10 +96,11 @@ const Hero = () => {
           {/* IMAGE */}
           <div className="relative order-2 lg:order-1">
             <div 
-              className="relative bg-gray-50 rounded-2xl shadow-xl overflow-hidden group p-6 sm:p-10"
+              className="relative bg-gray-50 rounded-2xl shadow-xl overflow-hidden p-6 sm:p-10"
               onMouseEnter={() => setIsPaused(true)}
               onMouseLeave={() => setIsPaused(false)}
             >
+              {/* Badges */}
               <div className="absolute top-4 left-4 z-20 bg-white/95 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-md flex items-center gap-1.5">
                 <FlaskConical size={12} className="text-[#2563EB]" />
                 <span className="text-xs font-semibold text-gray-700">LAB TESTED</span>
@@ -108,13 +109,13 @@ const Hero = () => {
                 <span className="text-xs font-bold text-[#10B981]">99% PURE</span>
               </div>
 
-              {/* Image principale avec carrousel */}
-              <div className="relative">
+              {/* Image principale avec carrousel - TAILLE FIXE */}
+              <div className="relative flex items-center justify-center h-[420px]">
                 <img
                   src={currentImage}
                   alt="Premium Peptides"
                   loading="eager"
-                  className="w-full h-auto max-h-[420px] mx-auto object-contain drop-shadow-2xl transition-transform duration-700 group-hover:scale-105"
+                  className="w-full h-full object-contain drop-shadow-2xl transition-opacity duration-500"
                   onError={(e) => { e.target.src = '/images/pept.png'; }}
                 />
                 
@@ -137,31 +138,24 @@ const Hero = () => {
                 )}
               </div>
 
-              {/* Indicateurs de navigation avec progression */}
+              {/* Indicateurs de navigation */}
               {images.length > 1 && (
                 <div className="flex justify-center gap-2 mt-4">
                   {images.map((_, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentImageIndex(index)}
-                      className={`relative h-2 rounded-full transition-all duration-300 ${
+                      className={`h-2 rounded-full transition-all duration-300 ${
                         currentImageIndex === index 
                           ? 'bg-[#2563EB] w-8' 
                           : 'bg-gray-300 hover:bg-gray-400 w-2'
                       }`}
-                    >
-                      {currentImageIndex === index && (
-                        <span 
-                          className="absolute inset-0 bg-[#2563EB] rounded-full animate-pulse"
-                          style={{ animationDuration: '4s' }}
-                        />
-                      )}
-                    </button>
+                    />
                   ))}
                 </div>
               )}
 
-              {/* Indicateur de progression du slideshow */}
+              {/* Barre de progression du slideshow */}
               {images.length > 1 && !isPaused && (
                 <div className="w-full h-0.5 bg-gray-200 rounded-full mt-2 overflow-hidden">
                   <div 
@@ -173,19 +167,9 @@ const Hero = () => {
                   />
                 </div>
               )}
-
-              <div className="mt-6 flex justify-between gap-2 flex-wrap">
-                <div className="bg-white rounded-lg px-3 py-1.5 shadow-md border border-gray-100">
-                  <div className="text-xs text-gray-500">Molecular Weight</div>
-                  <div className="text-xs font-mono font-semibold text-gray-800">~4,113.6 g/mol</div>
-                </div>
-                <div className="bg-white rounded-lg px-3 py-1.5 shadow-md border border-gray-100">
-                  <div className="text-xs text-gray-500">Formula</div>
-                  <div className="text-xs font-mono font-semibold text-gray-800">C₁₈₇H₂₉₁N₅₉O₅₉</div>
-                </div>
-              </div>
             </div>
 
+            {/* Badge BEST SELLER */}
             <div className="absolute -right-4 sm:-right-6 top-8 z-30">
               <div className="bg-gradient-to-r from-[#F59E0B] to-[#D97706] rounded-full px-4 py-2 shadow-lg">
                 <span className="text-xs font-bold text-white whitespace-nowrap">BEST SELLER</span>
@@ -263,7 +247,7 @@ const Hero = () => {
       </div>
 
       {/* ✅ Animation CSS pour la barre de progression */}
-      <style jsx>{`
+      <style>{`
         @keyframes progress {
           from { width: 100%; }
           to { width: 0%; }
