@@ -8,21 +8,21 @@ import {
   Package, MapPin, Loader2
 } from 'lucide-react';
 import axios from 'axios';
+// ✅ IMPORT DU COMPOSANT PRODUCTCARD
+import ProductCard from '../components/ProductCard';
 
 // ✅ CONFIGURATION AUTOMATIQUE DE L'URL BACKEND
 const getApiUrl = () => {
-  // En production (Vercel), on utilise l'URL du backend déployé
   if (process.env.NODE_ENV === 'production') {
     return 'https://peptideweightloss.vercel.app/api';
   }
-  // En développement (local), on utilise localhost
   return 'http://localhost:5000/api';
 };
 
 const API_URL = getApiUrl();
 const BACKEND_URL = API_URL.replace('/api', '');
 
-console.log(`🔧 Marketplace - API URL: ${API_URL}`); // Pour vérifier en console
+console.log(`🔧 Marketplace - API URL: ${API_URL}`);
 
 const Marketplace = () => {
   const { category } = useParams();
@@ -74,7 +74,7 @@ const Marketplace = () => {
         console.log('Produits reçus de l\'API:', apiProducts);
         
         const formattedProducts = apiProducts.map((p, index) => ({
-          id: p._id || p.id || index,
+          _id: p._id || p.id || index,
           name: p.name,
           dosage: p.dosage,
           purity: p.purity || '≥99%',
@@ -83,9 +83,11 @@ const Marketplace = () => {
           rating: p.rating || 4.8,
           reviews: p.reviews || Math.floor(Math.random() * 200) + 10,
           type: p.type,
+          category: p.category || p.type,
           isPopular: p.isPopular || false,
+          isBestSeller: p.isBestSeller || false,
           isNew: p.isNew || false,
-          image: p.image || '/images/pept.png',
+          image: getFullImageUrl(p.image),
         }));
         
         console.log('Produits formatés:', formattedProducts);
@@ -122,6 +124,20 @@ const Marketplace = () => {
     } else {
       navigate('/marketplace');
     }
+  };
+
+  // Fonction pour ajouter au panier
+  const handleAddToCart = (product) => {
+    console.log('Adding to cart:', product);
+    // TODO: Implémenter la logique du panier
+    alert(`Added ${product.name} to cart!`);
+  };
+
+  // Fonction pour la vue rapide
+  const handleQuickView = (product) => {
+    console.log('Quick view:', product);
+    // TODO: Implémenter le modal de vue rapide
+    navigate(`/product/${product._id}`);
   };
 
   // Filtrer les produits
@@ -246,10 +262,22 @@ const Marketplace = () => {
           }>
             {displayedProducts.map((product) => (
               <ProductCard 
-                key={product.id} 
-                product={product} 
-                viewMode={viewMode} 
-                getFullImageUrl={getFullImageUrl}
+                key={product._id}
+                id={product._id}
+                name={product.name}
+                dosage={product.dosage}
+                purity={product.purity}
+                price={product.price}
+                oldPrice={product.oldPrice}
+                rating={product.rating}
+                reviews={product.reviews}
+                category={product.category}
+                image={product.image}
+                isBestSeller={product.isBestSeller}
+                isPopular={product.isPopular}
+                isNew={product.isNew}
+                onAddToCart={() => handleAddToCart(product)}
+                onQuickView={() => handleQuickView(product)}
               />
             ))}
           </div>
@@ -265,58 +293,6 @@ const Marketplace = () => {
             </button>
           </div>
         )}
-      </div>
-    </div>
-  );
-};
-
-const ProductCard = ({ product, viewMode, getFullImageUrl }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
-  if (viewMode === 'list') {
-    return (
-      <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition p-4 flex gap-4">
-        <img src={getFullImageUrl(product.image)} alt={product.name} className="w-24 h-24 object-cover rounded-lg" onError={(e) => e.target.src = '/images/pept.png'} />
-        <div className="flex-1">
-          <h3 className="font-bold text-gray-800">{product.name}</h3>
-          <p className="text-sm text-gray-500">{product.dosage}</p>
-          <div className="flex items-center gap-2 mt-2">
-            <Star size={12} className="fill-[#F59E0B] text-[#F59E0B]" />
-            <span className="text-sm">{product.rating}</span>
-            <span className="text-xs text-gray-400">({product.reviews})</span>
-          </div>
-          <div className="flex justify-between items-center mt-3">
-            <span className="text-2xl font-bold">${product.price}</span>
-            <button className="bg-[#2563EB] text-white px-4 py-1.5 rounded-lg text-sm hover:bg-[#1E40AF] transition">
-              Add to Cart
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 overflow-hidden group">
-      <div className="relative h-48 overflow-hidden">
-        <img src={getFullImageUrl(product.image)} alt={product.name} className="w-full h-full object-cover transition-transform group-hover:scale-110" onError={(e) => e.target.src = '/images/pept.png'} />
-        {product.isPopular && <span className="absolute top-3 left-3 bg-[#F59E0B] text-white text-xs font-bold px-2 py-1 rounded-full">BEST SELLER</span>}
-        {product.isNew && <span className="absolute top-3 right-3 bg-[#2563EB] text-white text-xs font-bold px-2 py-1 rounded-full">NEW</span>}
-      </div>
-      <div className="p-4">
-        <h3 className="font-bold text-gray-800">{product.name}</h3>
-        <p className="text-sm text-gray-500">{product.dosage}</p>
-        <div className="flex items-center gap-2 my-2">
-          <Star size={14} className="fill-[#F59E0B] text-[#F59E0B]" />
-          <span className="text-sm">{product.rating}</span>
-          <span className="text-xs text-gray-400">({product.reviews})</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-xl font-bold">${product.price}</span>
-          <button className="bg-[#2563EB] text-white px-3 py-1.5 rounded-lg text-sm hover:bg-[#1E40AF] transition">
-            Add
-          </button>
-        </div>
       </div>
     </div>
   );
