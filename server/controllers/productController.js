@@ -1,11 +1,25 @@
 // server/controllers/productController.js
 const Product = require('../models/Product');
 
-// ✅ Champs autorisés pour la création/mise à jour
+// ✅ Champs autorisés pour la création/mise à jour (AJOUT DE moreDetails ET description)
 const allowedFields = [
-  'name', 'type', 'dosage', 'purity', 'price', 'oldPrice', 
-  'category', 'stock', 'rating', 'reviews', 'isPopular', 'isNew', 
-  'isBestSeller', 'image', 'status', 'description'
+  'name', 
+  'type', 
+  'dosage', 
+  'moreDetails',    // ✅ NOUVEAU
+  'description',    // ✅ NOUVEAU
+  'purity', 
+  'price', 
+  'oldPrice', 
+  'category', 
+  'stock', 
+  'rating', 
+  'reviews', 
+  'isPopular', 
+  'isNew', 
+  'isBestSeller', 
+  'image', 
+  'status'
 ];
 
 exports.getProducts = async (req, res) => {
@@ -25,6 +39,7 @@ exports.getProducts = async (req, res) => {
     const products = await Product.find(query).sort({ createdAt: -1 });
     res.json({ success: true, count: products.length, data: products });
   } catch (error) {
+    console.error('Error fetching products:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -32,9 +47,12 @@ exports.getProducts = async (req, res) => {
 exports.getProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-    if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
     res.json({ success: true, data: product });
   } catch (error) {
+    console.error('Error fetching product:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -49,9 +67,20 @@ exports.createProduct = async (req, res) => {
       }
     });
     
+    // ✅ Si moreDetails est vide mais dosage existe, utiliser dosage
+    if (!productData.moreDetails && productData.dosage) {
+      productData.moreDetails = productData.dosage;
+    }
+    
+    // ✅ Si description est vide, générer une description par défaut
+    if (!productData.description && productData.name) {
+      productData.description = `Premium ${productData.name} peptide. High purity ${productData.purity || '≥99%'} with guaranteed quality.`;
+    }
+    
     const product = await Product.create(productData);
     res.status(201).json({ success: true, data: product });
   } catch (error) {
+    console.error('Error creating product:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -66,15 +95,31 @@ exports.updateProduct = async (req, res) => {
       }
     });
     
+    // ✅ Récupérer le produit existant pour conserver les valeurs si nécessaire
+    const existingProduct = await Product.findById(req.params.id);
+    if (!existingProduct) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+    
+    // ✅ Si moreDetails n'est pas fourni mais dosage l'est, utiliser dosage
+    if (req.body.moreDetails === undefined && req.body.dosage !== undefined) {
+      productData.moreDetails = req.body.dosage;
+    }
+    
+    // ✅ Si description n'est pas fournie, garder l'ancienne
+    if (req.body.description === undefined) {
+      productData.description = existingProduct.description;
+    }
+    
     const product = await Product.findByIdAndUpdate(
       req.params.id, 
       productData, 
       { new: true, runValidators: true }
     );
     
-    if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
     res.json({ success: true, data: product });
   } catch (error) {
+    console.error('Error updating product:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -82,9 +127,12 @@ exports.updateProduct = async (req, res) => {
 exports.deleteProduct = async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
-    if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
     res.json({ success: true, data: {} });
   } catch (error) {
+    console.error('Error deleting product:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -117,6 +165,7 @@ exports.getBestSellers = async (req, res) => {
     
     res.json({ success: true, count: products.length, data: products });
   } catch (error) {
+    console.error('Error fetching best sellers:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

@@ -16,7 +16,9 @@ import {
   Clock,
   Package,
   ChevronRight,
-  Loader2
+  Loader2,
+  Info,
+  FileText
 } from 'lucide-react';
 
 const getApiUrl = () => {
@@ -62,7 +64,7 @@ const ProductDetail = () => {
       
       console.log('📦 API Response:', response.data);
       
-      // ✅ Structure CORRECTE: { success: true, data: {...} }
+      // ✅ Structure: { success: true, data: {...} }
       let productData = null;
       
       if (response.data && response.data.success && response.data.data) {
@@ -89,11 +91,15 @@ const ProductDetail = () => {
       
       console.log('✅ Produit extrait:', productData);
       
-      // ✅ Construire l'objet produit
+      // ✅ Construire l'objet produit avec les nouveaux champs
       const safeProduct = {
         _id: productData._id || id,
         name: productData.name || 'Product',
-        dosage: productData.dosage || 'N/A',
+        // ✅ Nouveaux champs
+        moreDetails: productData.moreDetails || productData.dosage || 'N/A',
+        description: productData.description || `Premium ${productData.name || ''} peptide. High purity ${productData.purity || '≥99%'} with guaranteed quality.`,
+        // ✅ Anciens champs (gardés pour compatibilité)
+        dosage: productData.dosage || productData.moreDetails || 'N/A',
         purity: productData.purity || '≥99%',
         price: productData.price || 0,
         oldPrice: productData.oldPrice || null,
@@ -106,7 +112,6 @@ const ProductDetail = () => {
         isPopular: productData.isPopular || false,
         isBestSeller: productData.isBestSeller || false,
         image: productData.image || '/images/pept.png',
-        description: productData.description || `Premium ${productData.name || ''} peptide. High purity ${productData.purity || '≥99%'} with guaranteed quality.`,
         status: productData.status || 'active',
         createdAt: productData.createdAt || new Date().toISOString()
       };
@@ -140,7 +145,6 @@ const ProductDetail = () => {
       const response = await axios.get(`${API_URL}/products?category=${category}&limit=4`);
       
       let products = [];
-      // ✅ Structure CORRECTE: { success: true, data: [...] }
       if (response.data && response.data.success && Array.isArray(response.data.data)) {
         products = response.data.data;
       } else if (response.data && Array.isArray(response.data.data)) {
@@ -340,11 +344,17 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* Product Details */}
+            {/* ✅ Product Details avec More Details */}
             <div className="space-y-3 mb-6 p-4 bg-gray-50 rounded-xl">
+              {/* ✅ More Details (remplace Dosage) */}
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Dosage</span>
-                <span className="font-medium text-gray-800">{product.dosage}</span>
+                <span className="text-gray-500 flex items-center gap-1">
+                  <Info size={14} />
+                  Details
+                </span>
+                <span className="font-medium text-gray-800 text-right max-w-[60%]">
+                  {product.moreDetails || product.dosage || 'N/A'}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Purity</span>
@@ -435,13 +445,26 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        {/* Description */}
+        {/* ✅ Description améliorée avec les nouveaux champs */}
         <div className="mb-12">
           <div className="bg-white rounded-2xl shadow-sm p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Product Description</h2>
-            <p className="text-gray-600 leading-relaxed">
+            <div className="flex items-center gap-2 mb-4">
+              <FileText size={20} className="text-[#2563EB]" />
+              <h2 className="text-xl font-bold text-gray-800">Product Description</h2>
+            </div>
+            <p className="text-gray-600 leading-relaxed whitespace-pre-line">
               {product.description || `Premium ${product.name} peptide. High purity ${product.purity} with guaranteed quality.`}
             </p>
+            
+            {/* ✅ Afficher More Details si différent de la description */}
+            {product.moreDetails && product.moreDetails !== product.description && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">📋 More Details</h3>
+                <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">
+                  {product.moreDetails}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 

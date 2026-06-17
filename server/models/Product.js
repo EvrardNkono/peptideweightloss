@@ -13,10 +13,27 @@ const productSchema = new mongoose.Schema({
     required: true,
     default: 'peptide'
   },
+  
+  // ✅ NOUVEAU : More Details (remplace dosage pour plus d'infos)
+  moreDetails: {
+    type: String,
+    default: '',
+    trim: true
+  },
+  
+  // ✅ NOUVEAU : Product Description
+  description: {
+    type: String,
+    default: '',
+    trim: true
+  },
+  
+  // ✅ Gardé pour compatibilité (mais sera progressivement remplacé par moreDetails)
   dosage: {
     type: String,
-    required: true
+    default: ''
   },
+  
   purity: {
     type: String,
     default: '≥99%'
@@ -58,7 +75,6 @@ const productSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  // ✅ NOUVEAU CHAMP - Best Seller
   isBestSeller: {
     type: Boolean,
     default: false

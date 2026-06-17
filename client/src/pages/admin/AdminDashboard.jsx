@@ -29,10 +29,10 @@ import {
   Star,
   TrendingUp,
   Sparkles,
-  Image as ImageIcon  // ✅ AJOUTÉ
+  Image as ImageIcon
 } from 'lucide-react';
 import axios from 'axios';
-import AdminHero from './AdminHero';  // ✅ IMPORT DU COMPOSANT HERO
+import AdminHero from './AdminHero';
 
 // ✅ CONFIGURATION AUTOMATIQUE DE L'URL BACKEND
 const getApiUrl = () => {
@@ -120,9 +120,10 @@ const AdminDashboard = ({ onLogout, token }) => {
     try {
       const res = await axios.post(`${API_URL}/products`, {
         name: product.name,
-        dosage: product.dosage,
+        dosage: product.moreDetails || product.dosage || '',
+        description: product.description || '',
         price: product.price,
-        category: product.category,
+        category: product.type || product.category,
         stock: product.stock,
         type: product.type,
         image: product.image,
@@ -148,9 +149,10 @@ const AdminDashboard = ({ onLogout, token }) => {
       const productId = product._id || product.id;
       const res = await axios.put(`${API_URL}/products/${productId}`, {
         name: product.name,
-        dosage: product.dosage,
+        dosage: product.moreDetails || product.dosage || '',
+        description: product.description || '',
         price: product.price,
-        category: product.category,
+        category: product.type || product.category,
         stock: product.stock,
         type: product.type,
         image: product.image,
@@ -356,7 +358,7 @@ const AdminDashboard = ({ onLogout, token }) => {
           ))}
         </div>
 
-        {/* Tabs - AJOUT DE L'ONGLET HERO */}
+        {/* Tabs */}
         <div className="flex gap-2 mb-6 border-b border-gray-200 overflow-x-auto">
           {['products', 'orders', 'users', 'prescriptions', 'hero'].map((tab) => (
             <button
@@ -417,7 +419,7 @@ const AdminDashboard = ({ onLogout, token }) => {
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Image</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Type</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Product</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Dosage</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Details</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Category</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Price</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Badges</th>
@@ -445,7 +447,9 @@ const AdminDashboard = ({ onLogout, token }) => {
                           </span>
                         </td>
                         <td className="px-4 py-3 font-medium text-gray-800">{product.name}</td>
-                        <td className="px-4 py-3 text-gray-600">{product.dosage}</td>
+                        <td className="px-4 py-3 text-gray-600 max-w-[150px] truncate">
+                          {product.dosage || product.moreDetails || '-'}
+                        </td>
                         <td className="px-4 py-3 text-gray-600">{product.category}</td>
                         <td className="px-4 py-3 font-semibold text-gray-800">${product.price}</td>
                         <td className="px-4 py-3">
@@ -502,7 +506,7 @@ const AdminDashboard = ({ onLogout, token }) => {
           </div>
         )}
 
-        {/* Orders Tab */}
+        {/* Orders Tab - identique */}
         {activeTab === 'orders' && (
           <div className="bg-white rounded-2xl shadow-sm overflow-x-auto">
             <table className="w-full min-w-[600px]">
@@ -550,7 +554,7 @@ const AdminDashboard = ({ onLogout, token }) => {
           </div>
         )}
 
-        {/* Users Tab */}
+        {/* Users Tab - identique */}
         {activeTab === 'users' && (
           <div className="bg-white rounded-2xl shadow-sm overflow-x-auto">
             <table className="w-full min-w-[600px]">
@@ -587,7 +591,7 @@ const AdminDashboard = ({ onLogout, token }) => {
           </div>
         )}
 
-        {/* Prescriptions Tab */}
+        {/* Prescriptions Tab - identique */}
         {activeTab === 'prescriptions' && (
           <div>
             <div className="flex justify-between items-center mb-4">
@@ -669,13 +673,13 @@ const AdminDashboard = ({ onLogout, token }) => {
           </div>
         )}
 
-        {/* ✅ HERO TAB */}
+        {/* HERO TAB */}
         {activeTab === 'hero' && (
           <AdminHero token={token} />
         )}
       </div>
 
-      {/* Prescription Detail Modal */}
+      {/* Prescription Detail Modal - identique */}
       {showPrescriptionModal && selectedPrescription && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -686,6 +690,7 @@ const AdminDashboard = ({ onLogout, token }) => {
               </button>
             </div>
             <div className="p-6 space-y-4">
+              {/* ... contenu identique ... */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-gray-500">Patient Name</label>
@@ -767,7 +772,7 @@ const AdminDashboard = ({ onLogout, token }) => {
         </div>
       )}
 
-      {/* Product Modal */}
+      {/* Product Modal - MODIFIÉ */}
       {showProductModal && (
         <ProductModal
           product={editingProduct}
@@ -795,13 +800,14 @@ const AdminDashboard = ({ onLogout, token }) => {
   );
 };
 
-// Modal pour ajouter/modifier un produit avec UPLOAD D'IMAGE
+// ✅ MODAL MODIFIÉ AVEC "More Details" et "Product Description"
 const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) => {
   const [formData, setFormData] = useState({
     id: product?._id || product?.id || null,
     _id: product?._id || null,
     name: product?.name || '',
-    dosage: product?.dosage || '',
+    moreDetails: product?.dosage || product?.moreDetails || '', // ✅ "More Details"
+    description: product?.description || '', // ✅ "Product Description"
     price: product?.price || '',
     category: product?.category || '',
     stock: product?.stock || 0,
@@ -932,29 +938,33 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
             />
           </div>
 
-          {/* Dosage */}
+          {/* ✅ More Details (remplace Dosage) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Dosage</label>
-            <input
-              type="text"
-              required
-              value={formData.dosage}
-              onChange={(e) => setFormData({...formData, dosage: e.target.value})}
-              className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-[#2563EB] outline-none"
-              placeholder="5mg/vial"
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              More Details
+              <span className="text-xs text-gray-400 ml-2 font-normal">(Dosage, concentration, usage, etc.)</span>
+            </label>
+            <textarea
+              rows={3}
+              value={formData.moreDetails}
+              onChange={(e) => setFormData({...formData, moreDetails: e.target.value})}
+              className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-[#2563EB] outline-none resize-none"
+              placeholder="e.g., 5mg/vial, injection 2x per week, ideal for..."
             />
           </div>
 
-          {/* Category */}
+          {/* ✅ Product Description (remplace Category / Type) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Category / Type</label>
-            <input
-              type="text"
-              required
-              value={formData.category}
-              onChange={(e) => setFormData({...formData, category: e.target.value})}
-              className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-[#2563EB] outline-none"
-              placeholder="GLP-1 Agonist / SARM / etc."
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Product Description
+              <span className="text-xs text-gray-400 ml-2 font-normal">(Detailed description of the product)</span>
+            </label>
+            <textarea
+              rows={4}
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-[#2563EB] outline-none resize-none"
+              placeholder="Describe the product, its benefits, usage instructions..."
             />
           </div>
 
@@ -983,7 +993,7 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
             </div>
           </div>
 
-          {/* ✅ TOGGLES - Best Seller, Popular, New */}
+          {/* TOGGLES - Best Seller, Popular, New */}
           <div className="space-y-3 border-t border-gray-100 pt-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">Product Badges</label>
             
