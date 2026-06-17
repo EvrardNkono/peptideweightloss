@@ -265,25 +265,27 @@ const Home = () => {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {filteredProducts.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      id={product.id}           // ✅ AJOUTER CETTE LIGNE
-    _id={product.id} 
-                      name={product.name}
-                      dosage={product.dosage}
-                      purity={product.purity}
-                      price={product.price}
-                      oldPrice={product.oldPrice}
-                      rating={product.rating}
-                      reviews={product.reviews}
-                      category={product.category}
-                      isBestSeller={product.isBestSeller}
-                      isPopular={product.isPopular}
-                      isNew={product.isNew}
-                      image={getImageUrl(product.image)}
-                      onAddToCart={() => handleAddToCart(product)}
-                      onQuickView={() => handleQuickView(product)}
-                    />
+                    // Ajoute stock={product.stock} ici
+<ProductCard
+  key={product.id}
+  id={product.id}
+  _id={product.id} 
+  name={product.name}
+  dosage={product.dosage}
+  purity={product.purity}
+  price={product.price}
+  oldPrice={product.oldPrice}
+  rating={product.rating}
+  reviews={product.reviews}
+  category={product.category}
+  isBestSeller={product.isBestSeller}
+  isPopular={product.isPopular}
+  isNew={product.isNew}
+  image={getImageUrl(product.image)}
+  stock={product.stock}  // ✅ AJOUTER CETTE LIGNE
+  onAddToCart={() => handleAddToCart(product)}
+  onQuickView={() => handleQuickView(product)}
+/>
                   ))}
                 </div>
               )}
