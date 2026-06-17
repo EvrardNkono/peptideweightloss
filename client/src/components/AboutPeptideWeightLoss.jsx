@@ -123,7 +123,7 @@ const AboutPeptideWeightLoss = () => {
                 <div className="space-y-3">
                   {[
                     "100% transparent lab results",
-                    "Discreet packaging & shipping",
+                    "Privacy-Protected Delivery & shipping",
                     "24/7 expert customer support",
                     "30-day satisfaction guarantee"
                   ].map((item, idx) => (

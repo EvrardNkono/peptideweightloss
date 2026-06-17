@@ -427,19 +427,19 @@ const ProductDetail = () => {
             <div className="grid grid-cols-2 gap-3 p-4 bg-white rounded-xl border border-gray-100">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Truck size={16} className="text-[#2563EB]" />
-                <span>Free shipping</span>
+                <span>Insured Global Shipping</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Shield size={16} className="text-[#2563EB]" />
-                <span>Quality guaranteed</span>
+                <span>Lab-Tested Purity</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Clock size={16} className="text-[#2563EB]" />
-                <span>24h dispatch</span>
+                <span>Ships in 1–5 Days</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Package size={16} className="text-[#2563EB]" />
-                <span>Discreet packaging</span>
+                <span>Privacy-Protected Delivery</span>
               </div>
             </div>
           </div>
