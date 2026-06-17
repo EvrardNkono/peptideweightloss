@@ -1,17 +1,33 @@
 // server/controllers/productController.js
 const Product = require('../models/Product');
 
+// ✅ Champs autorisés pour la création/mise à jour (AJOUT DE likes)
 const allowedFields = [
-  'name', 'type', 'dosage', 'moreDetails', 'description',
-  'purity', 'price', 'oldPrice', 'category', 'stock',
-  'rating', 'reviews', 'isPopular', 'isNew', 'isBestSeller',
-  'image', 'status', 'likes'
+  'name', 
+  'type', 
+  'dosage', 
+  'moreDetails',
+  'description',
+  'purity', 
+  'price', 
+  'oldPrice', 
+  'category', 
+  'stock', 
+  'rating', 
+  'reviews', 
+  'isPopular', 
+  'isNew', 
+  'isBestSeller', 
+  'image', 
+  'status',
+  'likes'  // ✅ AJOUT
 ];
 
 exports.getProducts = async (req, res) => {
   try {
     const { type, category, search, minPrice, maxPrice } = req.query;
     let query = { status: 'active' };
+    
     if (type) query.type = type;
     if (category && category !== 'all') query.category = category;
     if (search) query.name = { $regex: search, $options: 'i' };
@@ -20,9 +36,11 @@ exports.getProducts = async (req, res) => {
       if (minPrice) query.price.$gte = parseFloat(minPrice);
       if (maxPrice) query.price.$lte = parseFloat(maxPrice);
     }
+    
     const products = await Product.find(query).sort({ createdAt: -1 });
     res.json({ success: true, count: products.length, data: products });
   } catch (error) {
+    console.error('Error fetching products:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -30,46 +48,89 @@ exports.getProducts = async (req, res) => {
 exports.getProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-    if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
     res.json({ success: true, data: product });
   } catch (error) {
+    console.error('Error fetching product:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
 exports.createProduct = async (req, res) => {
   try {
+    // ✅ Filtrer uniquement les champs autorisés
     const productData = {};
     allowedFields.forEach(field => {
-      if (req.body[field] !== undefined) productData[field] = req.body[field];
+      if (req.body[field] !== undefined) {
+        productData[field] = req.body[field];
+      }
     });
-    if (!productData.moreDetails && productData.dosage) productData.moreDetails = productData.dosage;
+    
+    // ✅ Si moreDetails est vide mais dosage existe, utiliser dosage
+    if (!productData.moreDetails && productData.dosage) {
+      productData.moreDetails = productData.dosage;
+    }
+    
+    // ✅ Si description est vide, générer une description par défaut
     if (!productData.description && productData.name) {
       productData.description = `Premium ${productData.name} peptide. High purity ${productData.purity || '≥99%'} with guaranteed quality.`;
     }
-    if (productData.likes === undefined) productData.likes = 0;
-    productData.likedBy = []; // ✅ Toujours vide à la création
+    
+    // ✅ Si likes n'est pas défini, mettre 0 par défaut
+    if (productData.likes === undefined) {
+      productData.likes = 0;
+    }
+    
     const product = await Product.create(productData);
     res.status(201).json({ success: true, data: product });
   } catch (error) {
+    console.error('Error creating product:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
 exports.updateProduct = async (req, res) => {
   try {
+    // ✅ Filtrer uniquement les champs autorisés
     const productData = {};
     allowedFields.forEach(field => {
-      if (req.body[field] !== undefined) productData[field] = req.body[field];
+      if (req.body[field] !== undefined) {
+        productData[field] = req.body[field];
+      }
     });
+    
+    // ✅ Récupérer le produit existant pour conserver les valeurs si nécessaire
     const existingProduct = await Product.findById(req.params.id);
-    if (!existingProduct) return res.status(404).json({ success: false, message: 'Product not found' });
-    if (req.body.moreDetails === undefined && req.body.dosage !== undefined) productData.moreDetails = req.body.dosage;
-    if (req.body.description === undefined) productData.description = existingProduct.description;
-    if (req.body.likes === undefined) productData.likes = existingProduct.likes;
-    const product = await Product.findByIdAndUpdate(req.params.id, productData, { new: true, runValidators: true });
+    if (!existingProduct) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+    
+    // ✅ Si moreDetails n'est pas fourni mais dosage l'est, utiliser dosage
+    if (req.body.moreDetails === undefined && req.body.dosage !== undefined) {
+      productData.moreDetails = req.body.dosage;
+    }
+    
+    // ✅ Si description n'est pas fournie, garder l'ancienne
+    if (req.body.description === undefined) {
+      productData.description = existingProduct.description;
+    }
+    
+    // ✅ Si likes n'est pas fourni, garder l'ancienne valeur
+    if (req.body.likes === undefined) {
+      productData.likes = existingProduct.likes;
+    }
+    
+    const product = await Product.findByIdAndUpdate(
+      req.params.id, 
+      productData, 
+      { new: true, runValidators: true }
+    );
+    
     res.json({ success: true, data: product });
   } catch (error) {
+    console.error('Error updating product:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -77,62 +138,75 @@ exports.updateProduct = async (req, res) => {
 exports.deleteProduct = async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
-    if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
     res.json({ success: true, data: {} });
   } catch (error) {
+    console.error('Error deleting product:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
+// ✅ Nouvelle fonction : Récupérer les Best Sellers
 exports.getBestSellers = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 8;
-    let products = await Product.find({ status: 'active', isBestSeller: true }).sort({ rating: -1 });
+    
+    // D'abord, récupérer les produits marqués isBestSeller
+    let products = await Product.find({ 
+      status: 'active', 
+      isBestSeller: true 
+    }).sort({ rating: -1 });
+    
+    // Si moins que la limite, compléter avec les produits populaires
     if (products.length < limit) {
       const remaining = limit - products.length;
-      const popularProducts = await Product.find({
-        status: 'active', isPopular: true, isBestSeller: { $ne: true }
+      const popularProducts = await Product.find({ 
+        status: 'active', 
+        isPopular: true,
+        isBestSeller: { $ne: true }
       }).sort({ rating: -1 }).limit(remaining);
+      
       products = [...products, ...popularProducts];
     } else {
+      // Si plus que la limite, prendre les 8 premiers
       products = products.slice(0, limit);
     }
+    
     res.json({ success: true, count: products.length, data: products });
   } catch (error) {
+    console.error('Error fetching best sellers:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ✅ toggleLike : 1 like par utilisateur, avec toutes les corrections
-exports.toggleLike = async (req, res) => {
+// ✅ NOUVELLE FONCTION : Ajouter un like (utilisateur connecté)
+exports.addLike = async (req, res) => {
   try {
     const productId = req.params.id;
-
-    // ✅ FIX CORS : guard clause avant tout accès à req.user
-    if (!req.user) {
-      return res.status(401).json({ success: false, message: 'Authentication required' });
-    }
-
-    const userId = String(req.user.id || req.user._id); // ✅ String pour .includes()
-
+    
+    // Vérifier si le produit existe
     const product = await Product.findById(productId);
-    if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
-
-    // ✅ Migration auto des anciens docs sans likedBy
-    const likedBy = product.likedBy || [];
-    const hasLiked = likedBy.includes(userId);
-
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+    
+    // ✅ Incrémenter le compteur de likes de 1
     const updatedProduct = await Product.findByIdAndUpdate(
       productId,
-      hasLiked
-        ? { $inc: { likes: -1 }, $pull: { likedBy: userId } }
-        : { $inc: { likes: 1 },  $push: { likedBy: userId } },
+      { $inc: { likes: 1 } },
       { new: true }
     );
-
-    res.json({ success: true, data: { likes: updatedProduct.likes, hasLiked: !hasLiked } });
+    
+    res.json({
+      success: true,
+      data: {
+        likes: updatedProduct.likes
+      }
+    });
   } catch (error) {
-    console.error('Error toggling like:', error);
+    console.error('Error adding like:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
