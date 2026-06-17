@@ -267,6 +267,8 @@ const Home = () => {
                   {filteredProducts.map((product) => (
                     <ProductCard
                       key={product.id}
+                      id={product.id}           // ✅ AJOUTER CETTE LIGNE
+    _id={product.id} 
                       name={product.name}
                       dosage={product.dosage}
                       purity={product.purity}
