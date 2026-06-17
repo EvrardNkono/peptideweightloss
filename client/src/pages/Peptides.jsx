@@ -1,22 +1,23 @@
 // src/pages/Peptides.jsx
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Search, Filter, X, Star, ShoppingCart, Eye, ChevronDown, Grid3x3, List, SlidersHorizontal, FlaskConical, Beaker, Droplets, Zap, Activity, TrendingUp, Clock } from 'lucide-react';
 import axios from 'axios';
+// ✅ IMPORT DU COMPOSANT PRODUCTCARD
+import ProductCard from '../components/ProductCard';
 
 // ✅ CONFIGURATION AUTOMATIQUE DE L'URL BACKEND
 const getApiUrl = () => {
-  // En production (Vercel), on utilise l'URL du backend déployé
   if (process.env.NODE_ENV === 'production') {
     return 'https://peptideweightloss.vercel.app/api';
   }
-  // En développement (local), on utilise localhost
   return 'http://localhost:5000/api';
 };
 
 const API_URL = getApiUrl();
 const BACKEND_URL = API_URL.replace('/api', '');
 
-console.log(`🔧 Peptides - API URL: ${API_URL}`); // Pour vérifier en console
+console.log(`🔧 Peptides - API URL: ${API_URL}`);
 
 const Peptides = () => {
   const [filterOpen, setFilterOpen] = useState(false);
@@ -34,14 +35,12 @@ const Peptides = () => {
     { id: 'blend', name: 'Peptide Blends', icon: <Beaker size={16} />, count: 0 },
   ]);
 
-  // Données statiques de fallback (si aucun produit en BD)
+  // Données statiques de fallback
   const staticProducts = [
-    // GLP-1 Agonists
     { id: 1, name: 'Semaglutide', dosage: '5mg/vial', purity: '≥99%', price: 89.99, oldPrice: 129.99, rating: 4.9, reviews: 234, category: 'peptide', type: 'peptide', isPopular: true, isNew: false, image: '/images/pept.png' },
     { id: 2, name: 'Tirzepatide', dosage: '10mg/vial', purity: '≥99%', price: 99.99, oldPrice: 149.99, rating: 4.8, reviews: 189, category: 'peptide', type: 'peptide', isPopular: true, isNew: false, image: '/images/pept.png' },
     { id: 3, name: 'Liraglutide', dosage: '6mg/vial', purity: '≥98%', price: 79.99, oldPrice: 109.99, rating: 4.7, reviews: 112, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
     { id: 4, name: 'Dulaglutide', dosage: '4mg/vial', purity: '≥99%', price: 84.99, oldPrice: 119.99, rating: 4.6, reviews: 78, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    // Growth Hormone
     { id: 5, name: 'Ipamorelin', dosage: '5mg/vial', purity: '≥99%', price: 54.99, oldPrice: 74.99, rating: 4.8, reviews: 167, category: 'peptide', type: 'peptide', isPopular: true, isNew: false, image: '/images/pept.png' },
     { id: 6, name: 'GHRP-2', dosage: '5mg/vial', purity: '≥99%', price: 49.99, oldPrice: 69.99, rating: 4.7, reviews: 134, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
     { id: 7, name: 'GHRP-6', dosage: '5mg/vial', purity: '≥99%', price: 49.99, oldPrice: 69.99, rating: 4.7, reviews: 128, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
@@ -49,29 +48,24 @@ const Peptides = () => {
     { id: 9, name: 'Sermorelin', dosage: '5mg/vial', purity: '≥99%', price: 64.99, oldPrice: 89.99, rating: 4.7, reviews: 93, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
     { id: 10, name: 'CJC-1295', dosage: '2mg/vial', purity: '≥99%', price: 69.99, oldPrice: 99.99, rating: 4.8, reviews: 145, category: 'peptide', type: 'peptide', isPopular: true, isNew: false, image: '/images/pept.png' },
     { id: 11, name: 'Tesamorelin', dosage: '2mg/vial', purity: '≥99%', price: 89.99, oldPrice: 129.99, rating: 4.9, reviews: 76, category: 'peptide', type: 'peptide', isPopular: false, isNew: true, image: '/images/pept.png' },
-    // Healing & Repair
     { id: 12, name: 'BPC-157', dosage: '5mg/vial', purity: '≥99%', price: 59.99, oldPrice: 79.99, rating: 4.9, reviews: 312, category: 'peptide', type: 'peptide', isPopular: true, isNew: false, image: '/images/pept.png' },
     { id: 13, name: 'TB-500', dosage: '5mg/vial', purity: '≥99%', price: 64.99, oldPrice: 84.99, rating: 4.8, reviews: 178, category: 'peptide', type: 'peptide', isPopular: true, isNew: false, image: '/images/pept.png' },
     { id: 14, name: 'KPV', dosage: '10mg/vial', purity: '≥99%', price: 49.99, rating: 4.7, reviews: 56, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
     { id: 15, name: 'LL-37', dosage: '5mg/vial', purity: '≥98%', price: 69.99, rating: 4.8, reviews: 67, category: 'peptide', type: 'peptide', isPopular: false, isNew: true, image: '/images/pept.png' },
     { id: 16, name: 'Thymosin Alpha-1', dosage: '10mg/vial', purity: '≥99%', price: 79.99, rating: 4.9, reviews: 89, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
     { id: 17, name: 'Thymosin Beta-4', dosage: '5mg/vial', purity: '≥99%', price: 74.99, rating: 4.8, reviews: 92, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    // Fat Burning
     { id: 18, name: 'AOD-9604', dosage: '5mg/vial', purity: '≥99%', price: 69.99, oldPrice: 89.99, rating: 4.7, reviews: 156, category: 'peptide', type: 'peptide', isPopular: true, isNew: true, image: '/images/pept.png' },
     { id: 19, name: 'MOTS-c', dosage: '10mg/vial', purity: '≥99%', price: 79.99, rating: 4.8, reviews: 98, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
     { id: 20, name: 'Tesofensine', dosage: '1mg/vial', purity: '≥99%', price: 89.99, rating: 4.8, reviews: 67, category: 'peptide', type: 'peptide', isPopular: false, isNew: true, image: '/images/pept.png' },
     { id: 21, name: '5-Amino-1MQ', dosage: '50mg/vial', purity: '≥98%', price: 99.99, rating: 4.7, reviews: 45, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    // Additional peptides
     { id: 22, name: 'Melanotan II', dosage: '10mg/vial', purity: '≥99%', price: 44.99, rating: 4.6, reviews: 234, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
     { id: 23, name: 'PT-141', dosage: '10mg/vial', purity: '≥99%', price: 54.99, rating: 4.7, reviews: 178, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
     { id: 24, name: 'Epithalon', dosage: '10mg/vial', purity: '≥99%', price: 49.99, rating: 4.7, reviews: 89, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
     { id: 25, name: 'GHK-Cu', dosage: '50mg/vial', purity: '≥99%', price: 49.99, rating: 4.7, reviews: 145, category: 'peptide', type: 'peptide', isPopular: false, isNew: true, image: '/images/pept.png' },
-    // Blends
     { id: 26, name: 'BPC-157 + TB-500', dosage: '5/5mg', purity: '≥99%', price: 109.99, oldPrice: 149.99, rating: 4.9, reviews: 234, category: 'blend', type: 'blend', isPopular: true, isNew: false, image: '/images/pept.png' },
     { id: 27, name: 'GLOW Blend', dosage: '35/10/5mg', purity: '≥99%', price: 129.99, rating: 4.8, reviews: 89, category: 'blend', type: 'blend', isPopular: false, isNew: true, image: '/images/pept.png' },
     { id: 28, name: 'Wolverine Stack', dosage: '10/10mg', purity: '≥99%', price: 119.99, rating: 4.9, reviews: 156, category: 'blend', type: 'blend', isPopular: true, isNew: false, image: '/images/pept.png' },
     { id: 29, name: 'CJC-1295 + Ipamorelin', dosage: '5/5mg', purity: '≥99%', price: 114.99, oldPrice: 149.99, rating: 4.8, reviews: 167, category: 'blend', type: 'blend', isPopular: true, isNew: false, image: '/images/pept.png' },
-    // More singles
     { id: 30, name: 'Selank', dosage: '10mg/vial', purity: '≥99%', price: 44.99, rating: 4.6, reviews: 78, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
     { id: 31, name: 'Semax', dosage: '10mg/vial', purity: '≥99%', price: 49.99, rating: 4.7, reviews: 89, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
     { id: 32, name: 'NAD+', dosage: '250mg/vial', purity: '≥99%', price: 79.99, rating: 4.8, reviews: 123, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
@@ -85,7 +79,6 @@ const Peptides = () => {
     { id: 40, name: 'PEG-MGF', dosage: '2mg/vial', purity: '≥99%', price: 89.99, rating: 4.8, reviews: 67, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' }
   ];
 
-  // Fonction pour obtenir l'URL complète de l'image
   const getFullImageUrl = (imageUrl) => {
     if (!imageUrl || imageUrl === '/images/pept.png') {
       return '/images/pept.png';
@@ -99,23 +92,20 @@ const Peptides = () => {
     return imageUrl;
   };
 
-  // Récupérer les produits depuis l'API
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
         const response = await axios.get(`${API_URL}/products`);
         let apiProducts = response.data.data || response.data;
-        
-        // Filtrer uniquement les produits de type peptide ou blend
         apiProducts = apiProducts.filter(p => p.type === 'peptide' || p.type === 'blend');
         
         if (apiProducts.length > 0) {
-          // Transformer les produits API pour correspondre au format attendu
           const formattedProducts = apiProducts.map((p, index) => ({
+            _id: p._id || p.id || index,
             id: p._id || p.id || index,
             name: p.name,
-            dosage: p.dosage,
+            dosage: p.dosage || p.moreDetails || 'N/A',
             purity: p.purity || '≥99%',
             price: p.price,
             oldPrice: p.oldPrice || null,
@@ -125,19 +115,18 @@ const Peptides = () => {
             type: p.type,
             isPopular: p.isPopular || false,
             isNew: p.isNew || false,
-            image: p.image || '/images/pept.png',
-            stock: p.stock
+            isBestSeller: p.isBestSeller || false,
+            image: getFullImageUrl(p.image),
+            stock: p.stock || 0
           }));
           setProducts(formattedProducts);
           
-          // Mettre à jour les compteurs des catégories
           setCategories([
             { id: 'all', name: 'All Peptides', icon: <FlaskConical size={16} />, count: formattedProducts.length },
             { id: 'peptide', name: 'Peptides', icon: <FlaskConical size={16} />, count: formattedProducts.filter(p => p.type === 'peptide').length },
             { id: 'blend', name: 'Peptide Blends', icon: <Beaker size={16} />, count: formattedProducts.filter(p => p.type === 'blend').length },
           ]);
         } else {
-          // Aucun produit en BD, utiliser les données statiques
           setProducts(staticProducts);
           setCategories([
             { id: 'all', name: 'All Peptides', icon: <FlaskConical size={16} />, count: staticProducts.length },
@@ -147,7 +136,6 @@ const Peptides = () => {
         }
       } catch (error) {
         console.error('Error fetching products:', error);
-        // En cas d'erreur, utiliser les données statiques
         setProducts(staticProducts);
         setCategories([
           { id: 'all', name: 'All Peptides', icon: <FlaskConical size={16} />, count: staticProducts.length },
@@ -162,7 +150,6 @@ const Peptides = () => {
     fetchProducts();
   }, []);
 
-  // Filtrer les produits
   const filteredProducts = products.filter(product => {
     if (selectedCategory !== 'all' && product.category !== selectedCategory) return false;
     if (product.price < priceRange[0] || product.price > priceRange[1]) return false;
@@ -170,7 +157,6 @@ const Peptides = () => {
     return true;
   });
 
-  // Trier les produits
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     if (sortBy === 'popular') return b.rating - a.rating;
     if (sortBy === 'price-low') return a.price - b.price;
@@ -180,6 +166,16 @@ const Peptides = () => {
   });
 
   const displayedProducts = sortedProducts.slice(0, visibleCount);
+
+  // Fonctions pour le panier et vue rapide
+  const handleAddToCart = (product) => {
+    console.log('🛒 Adding to cart:', product);
+    alert(`Added ${product.name} to cart!`);
+  };
+
+  const handleQuickView = (product) => {
+    console.log('👁️ Quick view:', product);
+  };
 
   if (loading) {
     return (
@@ -229,7 +225,6 @@ const Peptides = () => {
         
         {/* Barre de recherche et filtres */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          {/* Search */}
           <div className="relative w-full md:w-96">
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
@@ -242,7 +237,6 @@ const Peptides = () => {
           </div>
 
           <div className="flex items-center gap-3 w-full md:w-auto">
-            {/* Filter button mobile */}
             <button
               onClick={() => setFilterOpen(!filterOpen)}
               className="md:hidden flex items-center gap-2 px-4 py-3 bg-white rounded-xl border border-gray-200 font-medium text-gray-700"
@@ -250,22 +244,17 @@ const Peptides = () => {
               <Filter size={18} /> Filters
             </button>
 
-            {/* Sort dropdown */}
-            <div className="relative">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-3 pr-10 bg-white rounded-xl border border-gray-200 text-gray-700 font-medium appearance-none cursor-pointer focus:border-[#2563EB] outline-none"
-              >
-                <option value="popular">Most Popular</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="newest">Newest First</option>
-              </select>
-              <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            </div>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-4 py-3 pr-10 bg-white rounded-xl border border-gray-200 text-gray-700 font-medium appearance-none cursor-pointer focus:border-[#2563EB] outline-none"
+            >
+              <option value="popular">Most Popular</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+              <option value="newest">Newest First</option>
+            </select>
 
-            {/* View toggle */}
             <div className="hidden sm:flex gap-1 bg-white rounded-xl border border-gray-200 p-1">
               <button
                 onClick={() => setViewMode('grid')}
@@ -297,7 +286,6 @@ const Peptides = () => {
                 </button>
               </div>
 
-              {/* Categories */}
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-3">Categories</h4>
                 <div className="space-y-2">
@@ -318,7 +306,6 @@ const Peptides = () => {
                 </div>
               </div>
 
-              {/* Price Range */}
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-3">Price Range</h4>
                 <div className="flex items-center gap-3 mb-3">
@@ -348,7 +335,6 @@ const Peptides = () => {
                 />
               </div>
 
-              {/* Reset filters */}
               <button
                 onClick={() => {
                   setSelectedCategory('all');
@@ -380,12 +366,29 @@ const Peptides = () => {
                 : "space-y-4"
               }>
                 {displayedProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} viewMode={viewMode} getFullImageUrl={getFullImageUrl} />
+                  <ProductCard
+                    key={product._id || product.id}
+                    _id={product._id || product.id}
+                    id={product.id || product._id}
+                    name={product.name}
+                    dosage={product.dosage}
+                    purity={product.purity}
+                    price={product.price}
+                    oldPrice={product.oldPrice}
+                    rating={product.rating}
+                    reviews={product.reviews}
+                    category={product.category}
+                    image={product.image}
+                    isBestSeller={product.isBestSeller || false}
+                    isPopular={product.isPopular || false}
+                    isNew={product.isNew || false}
+                    onAddToCart={() => handleAddToCart(product)}
+                    onQuickView={() => handleQuickView(product)}
+                  />
                 ))}
               </div>
             )}
 
-            {/* Load More */}
             {visibleCount < filteredProducts.length && (
               <div className="text-center mt-10">
                 <button
@@ -397,109 +400,6 @@ const Peptides = () => {
               </div>
             )}
           </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Composant ProductCard
-const ProductCard = ({ product, viewMode, getFullImageUrl }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
-  if (viewMode === 'list') {
-    return (
-      <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition p-4 flex gap-4">
-        <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-          <img 
-            src={getFullImageUrl(product.image)} 
-            alt={product.name}
-            className="w-full h-full object-cover"
-            onError={(e) => { e.target.src = '/images/pept.png'; }}
-          />
-        </div>
-        <div className="flex-1">
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="font-bold text-gray-800">{product.name}</h3>
-              <p className="text-sm text-gray-500">{product.dosage}</p>
-              <div className="flex items-center gap-2 mt-1">
-                <div className="flex items-center gap-0.5">
-                  <Star size={12} className="fill-[#F59E0B] text-[#F59E0B]" />
-                  <span className="text-sm font-medium">{product.rating}</span>
-                </div>
-                <span className="text-xs text-gray-400">({product.reviews})</span>
-                {product.isPopular && <span className="text-xs bg-[#F59E0B]/10 text-[#D97706] px-2 py-0.5 rounded-full">Popular</span>}
-                {product.isNew && <span className="text-xs bg-[#2563EB]/10 text-[#2563EB] px-2 py-0.5 rounded-full">New</span>}
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-gray-800">${product.price}</div>
-              {product.oldPrice && <div className="text-sm text-gray-400 line-through">${product.oldPrice}</div>}
-              <button className="mt-2 bg-[#2563EB] text-white px-4 py-1.5 rounded-lg text-sm hover:bg-[#1E40AF] transition">
-                Add to Cart
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div 
-      className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden">
-        <img 
-          src={getFullImageUrl(product.image)} 
-          alt={product.name}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-          onError={(e) => { e.target.src = '/images/pept.png'; }}
-        />
-        {product.isPopular && (
-          <div className="absolute top-3 left-3 bg-[#F59E0B] text-white text-xs font-bold px-2 py-1 rounded-full">
-            BEST SELLER
-          </div>
-        )}
-        {product.isNew && (
-          <div className="absolute top-3 right-3 bg-[#2563EB] text-white text-xs font-bold px-2 py-1 rounded-full">
-            NEW
-          </div>
-        )}
-        <div className={`absolute inset-0 bg-black/50 flex items-center justify-center gap-3 transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
-          <button className="p-2 bg-white rounded-full hover:bg-[#2563EB] hover:text-white transition">
-            <Eye size={18} />
-          </button>
-          <button className="p-2 bg-white rounded-full hover:bg-[#2563EB] hover:text-white transition">
-            <ShoppingCart size={18} />
-          </button>
-        </div>
-      </div>
-      <div className="p-4">
-        <h3 className="font-bold text-gray-800 text-lg mb-1">{product.name}</h3>
-        <p className="text-sm text-gray-500 mb-2">{product.dosage}</p>
-        <div className="flex items-center gap-2 mb-3">
-          <div className="flex items-center gap-0.5">
-            <Star size={14} className="fill-[#F59E0B] text-[#F59E0B]" />
-            <span className="text-sm font-medium">{product.rating}</span>
-          </div>
-          <span className="text-xs text-gray-400">({product.reviews})</span>
-          <div className="flex items-center gap-1">
-            <FlaskConical size={10} className="text-[#10B981]" />
-            <span className="text-xs text-gray-500">{product.purity}</span>
-          </div>
-        </div>
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-2xl font-bold text-gray-800">${product.price}</span>
-            {product.oldPrice && <span className="text-sm text-gray-400 line-through ml-2">${product.oldPrice}</span>}
-          </div>
-          <button className="bg-[#2563EB] text-white px-3 py-1.5 rounded-lg text-sm hover:bg-[#1E40AF] transition">
-            Add
-          </button>
         </div>
       </div>
     </div>
