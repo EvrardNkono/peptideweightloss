@@ -276,7 +276,7 @@ const Home = () => {
             </div>
           </div>
 
-          {/* ✅ PRODUITS FILTRÉS */}
+          {/* ✅ PRODUITS FILTRÉS - AVEC isPopular CORRIGÉ */}
           {filteredProducts.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-2xl">
               <p className="text-gray-500">Aucun produit dans cette catégorie pour le moment.</p>
@@ -295,6 +295,7 @@ const Home = () => {
                   reviews={product.reviews}
                   category={product.category}
                   isBestSeller={product.isBestSeller}
+                  isPopular={product.isPopular}      // ✅ AJOUTÉ - C'EST CE QUI MANQUAIT !
                   isNew={product.isNew}
                   image={getImageUrl(product.image)}
                   onAddToCart={() => handleAddToCart(product)}
