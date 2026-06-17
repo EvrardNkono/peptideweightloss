@@ -425,9 +425,9 @@ const ProductDetail = () => {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Stock</span>
-                <span className={`font-medium ${product.stock > 10 ? 'text-green-600' : product.stock > 0 ? 'text-yellow-600' : 'text-red-600'}`}>
-                  {product.stock > 0 ? `${product.stock} units` : 'Out of Stock'}
-                </span>
+                <span className={`font-medium ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
+  {product.stock > 0 ? '✅ Available' : '❌ Out of Stock'}
+</span>
               </div>
             </div>
 

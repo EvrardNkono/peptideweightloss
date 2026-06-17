@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom';
 import { ShoppingCart, Star, Eye, Heart, TrendingUp, FlaskConical, Check } from 'lucide-react';
 
 const ProductCard = ({ 
-  id,        // ✅ Pour compatibilité
-  _id,       // ✅ AJOUT : Support MongoDB _id
+  id,
+  _id,
   name, 
   dosage, 
   purity = "≥99%", 
@@ -18,21 +18,19 @@ const ProductCard = ({
   isBestSeller = false,
   isPopular = false,
   isNew = false,
+  stock = 0,
   onAddToCart,
   onQuickView
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
 
-  // ✅ Récupérer l'ID correctement (priorité à _id, puis id)
   const productId = _id || id;
 
-  // ✅ Log d'avertissement si ID manquant
   if (!productId) {
     console.warn('⚠️ ProductCard: Missing ID for product:', name);
   }
 
-  // ✅ Normaliser les valeurs booléennes
   const _isBestSeller = isBestSeller === true || isBestSeller === 'true';
   const _isPopular    = isPopular === true    || isPopular === 'true';
   const _isNew        = isNew === true        || isNew === 'true';
@@ -77,7 +75,6 @@ const ProductCard = ({
 
   const colors = colorClasses[color];
 
-  // ✅ Si pas d'ID, ne pas créer de lien
   const CardContent = () => (
     <>
       {/* BADGES */}
@@ -138,6 +135,17 @@ const ProductCard = ({
 
         <p className="text-sm text-gray-500 mb-2">{dosage}</p>
 
+        {/* ✅ Stock badge */}
+        <div className="flex items-center gap-1 mb-2">
+          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+            stock > 0 
+              ? 'bg-green-100 text-green-600' 
+              : 'bg-red-100 text-red-500'
+          }`}>
+            {stock > 0 ? '● Available' : '● Out of Stock'}
+          </span>
+        </div>
+
         <div className="flex items-center gap-2 mb-3">
           <div className="flex items-center gap-0.5">
             <Star size={12} className="fill-[#F59E0B] text-[#F59E0B]" />
@@ -169,7 +177,6 @@ const ProductCard = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* ✅ LIEN VERS LA PAGE DE DÉTAILS - SEULEMENT SI ID EXISTE */}
       {productId ? (
         <Link to={`/product/${productId}`} className="block">
           <CardContent />
@@ -180,7 +187,7 @@ const ProductCard = ({
         </div>
       )}
 
-      {/* Actions rapides (hover) — à droite, en dehors du Link */}
+      {/* Actions rapides (hover) */}
       <div className={`absolute top-3 right-3 z-30 flex flex-col gap-2 transition-all duration-300 ${isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'}`}>
         <button 
           onClick={(e) => {
@@ -204,7 +211,7 @@ const ProductCard = ({
         </button>
       </div>
 
-      {/* Bouton Add to Cart en bas (hors du Link) */}
+      {/* Bouton Add to Cart */}
       <div className="p-4 pt-0">
         <button 
           onClick={(e) => {
