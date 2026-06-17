@@ -18,17 +18,18 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ ENABLE CORS - AVEC VOTRE URL FRONTEND CORRECTE
+// ✅ CORS
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://peptideweightloss-pqw6.vercel.app'  // ✅ L'URL CORRECTE de votre frontend
+    'https://peptideweightloss-pqw6.vercel.app'
   ],
   credentials: true
 }));
 
-// Serve static files for uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// ⚠️ PLUS BESOIN DE SERVEUR STATIQUE POUR LES UPLOADS
+// Les fichiers sont maintenant sur Cloudinary
+// app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Route racine
 app.get('/', (req, res) => {
@@ -55,20 +56,20 @@ app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/prescriptions', require('./routes/prescriptionRoutes'));
 
-// Image upload route
+// ✅ Image upload route avec Cloudinary
 app.post('/api/upload', upload.single('image'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, message: 'No file uploaded' });
   }
   res.json({ 
     success: true, 
-    imageUrl: `/uploads/${req.file.filename}` 
+    imageUrl: req.file.path  // ✅ Cloudinary retourne l'URL complète
   });
 });
 
 // Error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('Error:', err.stack);
   res.status(500).json({ success: false, message: err.message || 'Something went wrong!' });
 });
 
