@@ -43,7 +43,8 @@ app.get('/', (req, res) => {
       orders: '/api/orders',
       users: '/api/users',
       prescriptions: '/api/prescriptions',
-      upload: '/api/upload'
+      upload: '/api/upload',
+      hero: '/api/hero'  // ✅ AJOUTÉ
     },
     status: 'online'
   });
@@ -55,6 +56,7 @@ app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/prescriptions', require('./routes/prescriptionRoutes'));
+app.use('/api/hero', require('./routes/heroRoutes'));  // ✅ AJOUTÉ
 
 // ✅ Image upload route avec Cloudinary
 app.post('/api/upload', upload.single('image'), (req, res) => {

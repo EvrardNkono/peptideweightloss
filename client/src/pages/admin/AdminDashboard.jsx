@@ -28,9 +28,11 @@ import {
   Eye,
   Star,
   TrendingUp,
-  Sparkles
+  Sparkles,
+  Image as ImageIcon  // ✅ AJOUTÉ
 } from 'lucide-react';
 import axios from 'axios';
+import AdminHero from './AdminHero';  // ✅ IMPORT DU COMPOSANT HERO
 
 // ✅ CONFIGURATION AUTOMATIQUE DE L'URL BACKEND
 const getApiUrl = () => {
@@ -294,7 +296,6 @@ const AdminDashboard = ({ onLogout, token }) => {
   const paginatedProducts = filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
-  // Fonction pour vérifier si un produit a des badges
   const getProductBadges = (product) => {
     const badges = [];
     if (product.isBestSeller) badges.push({ label: '⭐ Best Seller', color: 'bg-amber-100 text-amber-700' });
@@ -355,18 +356,19 @@ const AdminDashboard = ({ onLogout, token }) => {
           ))}
         </div>
 
-        {/* Tabs */}
+        {/* Tabs - AJOUT DE L'ONGLET HERO */}
         <div className="flex gap-2 mb-6 border-b border-gray-200 overflow-x-auto">
-          {['products', 'orders', 'users', 'prescriptions'].map((tab) => (
+          {['products', 'orders', 'users', 'prescriptions', 'hero'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-6 py-3 font-semibold transition-all duration-200 whitespace-nowrap ${
+              className={`px-6 py-3 font-semibold transition-all duration-200 whitespace-nowrap flex items-center gap-2 ${
                 activeTab === tab 
                   ? 'text-[#2563EB] border-b-2 border-[#2563EB]' 
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
+              {tab === 'hero' && <ImageIcon size={16} />}
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
@@ -665,6 +667,11 @@ const AdminDashboard = ({ onLogout, token }) => {
               </div>
             )}
           </div>
+        )}
+
+        {/* ✅ HERO TAB */}
+        {activeTab === 'hero' && (
+          <AdminHero token={token} />
         )}
       </div>
 

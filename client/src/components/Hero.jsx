@@ -1,8 +1,62 @@
 // src/components/Hero.jsx
-import React from 'react';
-import { ArrowRight, Shield, FlaskConical, CheckCircle, Award } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowRight, Shield, FlaskConical, CheckCircle, Award, ChevronLeft, ChevronRight } from 'lucide-react';
+import axios from 'axios';
+
+const API_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://peptideweightloss.vercel.app/api'
+  : 'http://localhost:5000/api';
 
 const Hero = () => {
+  const [heroData, setHeroData] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHero = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/hero`);
+        setHeroData(response.data.data);
+      } catch (error) {
+        console.error('Error fetching hero:', error);
+        // Fallback
+        setHeroData({
+          images: ['/images/pept.png'],
+          title: 'Premium Peptides For Weight Loss',
+          subtitle: 'Your fully licensed corporate distributor for premium peptides, SARMs, and clinical-grade research compounds'
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHero();
+  }, []);
+
+  const nextImage = () => {
+    if (heroData && heroData.images.length > 1) {
+      setCurrentImageIndex((prev) => (prev + 1) % heroData.images.length);
+    }
+  };
+
+  const prevImage = () => {
+    if (heroData && heroData.images.length > 1) {
+      setCurrentImageIndex((prev) => (prev - 1 + heroData.images.length) % heroData.images.length);
+    }
+  };
+
+  if (loading) {
+    return (
+      <section className="relative bg-white overflow-hidden py-20">
+        <div className="max-w-[1400px] mx-auto px-4 text-center">
+          <div className="w-12 h-12 border-4 border-[#2563EB] border-t-transparent rounded-full animate-spin mx-auto"></div>
+        </div>
+      </section>
+    );
+  }
+
+  const images = heroData?.images || ['/images/pept.png'];
+  const currentImage = images[currentImageIndex] || '/images/pept.png';
+
   return (
     <section className="relative bg-white overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-blue-50/30" />
@@ -23,12 +77,50 @@ const Hero = () => {
                 <span className="text-xs font-bold text-[#10B981]">99% PURE</span>
               </div>
 
-              <img
-                src="/images/pept.png"
-                alt="Premium Peptides"
-                loading="eager"
-                className="w-full h-auto max-h-[420px] mx-auto object-contain drop-shadow-2xl transition-transform duration-700 group-hover:scale-105"
-              />
+              {/* Image principale avec carrousel */}
+              <div className="relative">
+                <img
+                  src={currentImage}
+                  alt="Premium Peptides"
+                  loading="eager"
+                  className="w-full h-auto max-h-[420px] mx-auto object-contain drop-shadow-2xl transition-transform duration-700 group-hover:scale-105"
+                />
+                
+                {/* Flèches de navigation si plusieurs images */}
+                {images.length > 1 && (
+                  <>
+                    <button
+                      onClick={prevImage}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition z-10"
+                    >
+                      <ChevronLeft size={20} className="text-gray-700" />
+                    </button>
+                    <button
+                      onClick={nextImage}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition z-10"
+                    >
+                      <ChevronRight size={20} className="text-gray-700" />
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Indicateurs de navigation */}
+              {images.length > 1 && (
+                <div className="flex justify-center gap-2 mt-4">
+                  {images.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={`w-2 h-2 rounded-full transition ${
+                        currentImageIndex === index 
+                          ? 'bg-[#2563EB] w-6' 
+                          : 'bg-gray-300 hover:bg-gray-400'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
 
               <div className="mt-6 flex justify-between gap-2 flex-wrap">
                 <div className="bg-white rounded-lg px-3 py-1.5 shadow-md border border-gray-100">
@@ -73,7 +165,7 @@ const Hero = () => {
             </h1>
 
             <p className="text-gray-500 leading-relaxed mb-6 max-w-md">
-              Your fully licensed corporate distributor for premium peptides, SARMs, and clinical-grade research compounds—from weight management to muscle recovery and beyond
+              {heroData?.subtitle || 'Your fully licensed corporate distributor for premium peptides, SARMs, and clinical-grade research compounds'}
             </p>
 
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-8">
