@@ -30,7 +30,7 @@ import {
   TrendingUp,
   Sparkles,
   Image as ImageIcon,
-  Heart  // ✅ AJOUTÉ
+  Heart
 } from 'lucide-react';
 import axios from 'axios';
 import AdminHero from './AdminHero';
@@ -135,7 +135,7 @@ const AdminDashboard = ({ onLogout, token }) => {
         rating: product.rating || 4.8,
         reviews: product.reviews || 0,
         status: 'active',
-        likes: product.likes || 0  // ✅ AJOUT
+        likes: product.likes || 0
       }, axiosConfig);
       setProducts([res.data.data, ...products]);
       setImageRefreshKey(Date.now());
@@ -165,7 +165,7 @@ const AdminDashboard = ({ onLogout, token }) => {
         rating: product.rating || 4.8,
         reviews: product.reviews || 0,
         status: 'active',
-        likes: product.likes || 0  // ✅ AJOUT
+        likes: product.likes || 0
       }, axiosConfig);
       const updatedProduct = res.data.data;
       
@@ -423,8 +423,8 @@ const AdminDashboard = ({ onLogout, token }) => {
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Type</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Product</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Details</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Category</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Price</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Status</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Badges</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Actions</th>
                   </tr>
@@ -433,6 +433,7 @@ const AdminDashboard = ({ onLogout, token }) => {
                   {paginatedProducts.map((product) => {
                     const badge = getTypeBadge(product.type);
                     const productBadges = getProductBadges(product);
+                    const isAvailable = product.stock > 0;
                     return (
                       <tr key={product._id || product.id} className="border-b border-gray-100 hover:bg-gray-50">
                         <td className="px-4 py-3">
@@ -453,8 +454,19 @@ const AdminDashboard = ({ onLogout, token }) => {
                         <td className="px-4 py-3 text-gray-600 max-w-[150px] truncate">
                           {product.dosage || product.moreDetails || '-'}
                         </td>
-                        <td className="px-4 py-3 text-gray-600">{product.category}</td>
                         <td className="px-4 py-3 font-semibold text-gray-800">${product.price}</td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                            isAvailable 
+                              ? 'bg-green-100 text-green-700' 
+                              : 'bg-red-100 text-red-700'
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${
+                              isAvailable ? 'bg-green-500' : 'bg-red-500'
+                            }`}></span>
+                            {isAvailable ? '✅ Available' : '❌ Out of Stock'}
+                          </span>
+                        </td>
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-1">
                             {productBadges.map((b, i) => (
@@ -802,7 +814,7 @@ const AdminDashboard = ({ onLogout, token }) => {
   );
 };
 
-// ✅ ProductModal avec le champ "Likes"
+// ✅ ProductModal avec TOGGLE "Available/Out of Stock" et champ "Likes"
 const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) => {
   const [formData, setFormData] = useState({
     id: product?._id || product?.id || null,
@@ -812,13 +824,13 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
     description: product?.description || '',
     price: product?.price || '',
     category: product?.category || '',
-    stock: product?.stock || 0,
+    stock: product?.stock || 0,  // 0 = Out of Stock, 1 = Available
     type: product?.type || 'peptide',
     image: product?.image || '/images/pept.png',
     isPopular: product?.isPopular || false,
     isNew: product?.isNew || false,
     isBestSeller: product?.isBestSeller || false,
-    likes: product?.likes || 0,  // ✅ AJOUT
+    likes: product?.likes || 0,
   });
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
@@ -971,32 +983,55 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
             />
           </div>
 
-          {/* Price & Stock */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
-              <input
-                type="number"
-                step="0.01"
-                required
-                value={formData.price}
-                onChange={(e) => handleNumberChange('price', e.target.value)}
-                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-[#2563EB] outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Stock</label>
-              <input
-                type="number"
-                required
-                value={formData.stock}
-                onChange={(e) => handleNumberChange('stock', e.target.value)}
-                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-[#2563EB] outline-none"
-              />
-            </div>
+          {/* Price */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
+            <input
+              type="number"
+              step="0.01"
+              required
+              value={formData.price}
+              onChange={(e) => handleNumberChange('price', e.target.value)}
+              className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-[#2563EB] outline-none"
+            />
           </div>
 
-          {/* ✅ LIKES - Nouveau champ */}
+          {/* ✅ STOCK - Toggle Available/Out of Stock (remplace le champ stock numérique) */}
+          <div className="border-t border-gray-100 pt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              <span className="flex items-center gap-2">
+                <Package size={16} className="text-[#2563EB]" />
+                Product Availability
+              </span>
+            </label>
+            
+            <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
+              <span className="text-sm text-gray-600">Status:</span>
+              <button
+                type="button"
+                onClick={() => setFormData({...formData, stock: formData.stock > 0 ? 0 : 1})}
+                className={`relative w-14 h-8 rounded-full transition-colors duration-300 ${
+                  formData.stock > 0 ? 'bg-[#10B981]' : 'bg-gray-400'
+                }`}
+              >
+                <span 
+                  className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300 ${
+                    formData.stock > 0 ? 'translate-x-6' : ''
+                  }`}
+                />
+              </button>
+              <span className={`font-medium ${
+                formData.stock > 0 ? 'text-[#10B981]' : 'text-red-500'
+              }`}>
+                {formData.stock > 0 ? '✅ Available' : '❌ Out of Stock'}
+              </span>
+            </div>
+            <p className="text-xs text-gray-400 mt-1">
+              {formData.stock > 0 ? 'Le produit est disponible à la vente' : 'Le produit n\'est pas disponible'}
+            </p>
+          </div>
+
+          {/* LIKES */}
           <div className="border-t border-gray-100 pt-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               <span className="flex items-center gap-2">

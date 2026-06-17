@@ -19,7 +19,7 @@ import {
   Loader2,
   Info,
   FileText,
-  ThumbsUp  // ✅ AJOUTÉ
+  ThumbsUp
 } from 'lucide-react';
 
 const getApiUrl = () => {
@@ -41,11 +41,9 @@ const ProductDetail = () => {
   const [isWishlist, setIsWishlist] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
   
-  // ✅ ÉTAT POUR LES LIKES
   const [likesCount, setLikesCount] = useState(0);
   const [isLiking, setIsLiking] = useState(false);
   
-  // Récupérer le token de l'utilisateur
   const token = localStorage.getItem('token');
 
   useEffect(() => {
@@ -118,13 +116,13 @@ const ProductDetail = () => {
         image: productData.image || '/images/pept.png',
         status: productData.status || 'active',
         createdAt: productData.createdAt || new Date().toISOString(),
-        likes: productData.likes || 0  // ✅ Récupérer les likes
+        likes: productData.likes || 0
       };
       
       console.log('✅ Produit sécurisé:', safeProduct);
       setProduct(safeProduct);
       setSelectedImage(safeProduct.image);
-      setLikesCount(safeProduct.likes || 0);  // ✅ Mettre à jour les likes
+      setLikesCount(safeProduct.likes || 0);
       
       if (safeProduct.category) {
         fetchRelatedProducts(safeProduct.category);
@@ -164,7 +162,6 @@ const ProductDetail = () => {
     }
   };
 
-  // ✅ FONCTION POUR AJOUTER UN LIKE
   const handleAddLike = async () => {
     if (!token) {
       alert('Please login to like this product');
@@ -287,18 +284,20 @@ const ProductDetail = () => {
                 }}
               />
             </div>
+            
+            {/* ✅ Miniatures - UNIQUEMENT l'image du produit */}
             <div className="grid grid-cols-4 gap-3">
-              {[product.image, '/images/pept.png'].filter(Boolean).slice(0, 4).map((img, index) => (
+              {product.image && product.image !== '/images/pept.png' ? (
+                // ✅ Si le produit a une vraie image, on l'affiche
                 <div
-                  key={index}
-                  onClick={() => setSelectedImage(img)}
+                  onClick={() => setSelectedImage(product.image)}
                   className={`bg-white rounded-xl overflow-hidden cursor-pointer border-2 transition-all ${
-                    selectedImage === img ? 'border-[#2563EB] shadow-md' : 'border-transparent hover:border-gray-300'
+                    selectedImage === product.image ? 'border-[#2563EB] shadow-md' : 'border-transparent hover:border-gray-300'
                   }`}
                 >
                   <img
-                    src={img}
-                    alt={`${product.name} ${index + 1}`}
+                    src={product.image}
+                    alt={product.name}
                     className="w-full h-20 object-cover"
                     onError={(e) => {
                       e.target.onerror = null;
@@ -306,7 +305,19 @@ const ProductDetail = () => {
                     }}
                   />
                 </div>
-              ))}
+              ) : (
+                // ✅ Si le produit n'a PAS d'image, on affiche l'image par défaut
+                <div
+                  onClick={() => setSelectedImage('/images/pept.png')}
+                  className="bg-white rounded-xl overflow-hidden cursor-pointer border-2 border-[#2563EB] shadow-md"
+                >
+                  <img
+                    src="/images/pept.png"
+                    alt="Default"
+                    className="w-full h-20 object-cover"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -361,7 +372,7 @@ const ProductDetail = () => {
                 {product.rating || 4.8} ({product.reviews || 0} reviews)
               </span>
               
-              {/* ✅ BOUTON LIKE */}
+              {/* BOUTON LIKE */}
               <button
                 onClick={handleAddLike}
                 disabled={isLiking}

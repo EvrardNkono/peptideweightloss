@@ -181,10 +181,11 @@ exports.getBestSellers = async (req, res) => {
   }
 };
 
-// ✅ NOUVELLE FONCTION : Ajouter un like (utilisateur connecté)
-exports.addLike = async (req, res) => {
+// ✅ NOUVELLE FONCTION : Toggle Like (1 like par utilisateur)
+exports.toggleLike = async (req, res) => {
   try {
     const productId = req.params.id;
+    const userId = req.user.id || req.user._id;
     
     // Vérifier si le produit existe
     const product = await Product.findById(productId);
@@ -192,21 +193,41 @@ exports.addLike = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
     
-    // ✅ Incrémenter le compteur de likes de 1
-    const updatedProduct = await Product.findByIdAndUpdate(
-      productId,
-      { $inc: { likes: 1 } },
-      { new: true }
-    );
+    // ✅ Vérifier si l'utilisateur a déjà liké
+    const hasLiked = product.likedBy && product.likedBy.includes(userId);
+    
+    let updatedProduct;
+    if (hasLiked) {
+      // ✅ Retirer le like (toggle)
+      updatedProduct = await Product.findByIdAndUpdate(
+        productId,
+        {
+          $inc: { likes: -1 },
+          $pull: { likedBy: userId }
+        },
+        { new: true }
+      );
+    } else {
+      // ✅ Ajouter le like
+      updatedProduct = await Product.findByIdAndUpdate(
+        productId,
+        {
+          $inc: { likes: 1 },
+          $push: { likedBy: userId }
+        },
+        { new: true }
+      );
+    }
     
     res.json({
       success: true,
       data: {
-        likes: updatedProduct.likes
+        likes: updatedProduct.likes,
+        hasLiked: !hasLiked
       }
     });
   } catch (error) {
-    console.error('Error adding like:', error);
+    console.error('Error toggling like:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

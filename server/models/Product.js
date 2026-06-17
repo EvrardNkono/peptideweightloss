@@ -98,6 +98,12 @@ const productSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: 0
+  },
+  
+  // ✅ NOUVEAU : Utilisateurs qui ont liké (pour limiter à 1 like par utilisateur)
+  likedBy: {
+    type: [String],  // Stocke les IDs des utilisateurs
+    default: []
   }
 });
 
