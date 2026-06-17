@@ -16,12 +16,10 @@ import Prescription from './pages/Prescription';
 import Labs from './pages/Labs';
 import AdminDashboard from './pages/admin/AdminDashboard';
 
-// ✅ Composant qui a accès au Router
 const AppContent = () => {
   const location = useLocation();
   const token = localStorage.getItem('token');
   
-  // ✅ Vérifier si on est sur une page admin
   const isAdminPage = location.pathname.startsWith('/admin');
 
   console.log('📍 Pathname:', location.pathname);
@@ -48,8 +46,9 @@ const AppContent = () => {
           <Route path="/admin/*" element={<AdminDashboard onLogout={() => {}} token={token} />} />
         </Routes>
       </main>
-      {/* ✅ FOOTER - Caché sur les pages admin */}
-      {!isAdminPage && <Footer />}
+      {/* ✅ FOOTER - Toujours affiché pour le test */}
+      {/* {!isAdminPage && <Footer />} */}
+      <Footer />  {/* ✅ Temporaire : affiche toujours le footer */}
     </div>
   );
 };
