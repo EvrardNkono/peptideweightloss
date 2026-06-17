@@ -22,7 +22,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://peptideweightloss-pqw6.vercel.app'
+    'https://peptideweightloss-pqw6.vercel.app',
+    'https://peptidesweight-loss.com'
   ],
   credentials: true
 }));
