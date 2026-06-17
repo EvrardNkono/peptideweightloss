@@ -6,7 +6,7 @@ import Hero from '../components/Hero';
 import ProductCard from '../components/ProductCard';
 import AboutPeptideWeightLoss from '../components/AboutPeptideWeightLoss';
 import PeptideScience from '../components/PeptideScience';
-import { Shield, Truck, FlaskConical, Star, Loader2 } from 'lucide-react';
+import { Shield, Truck, FlaskConical, Star, Loader2, TrendingUp, Sparkles } from 'lucide-react';
 
 // ✅ CONFIGURATION AUTOMATIQUE DE L'URL BACKEND
 const getApiUrl = () => {
@@ -20,9 +20,11 @@ const API_URL = getApiUrl();
 const BACKEND_URL = API_URL.replace('/api', '');
 
 const Home = () => {
-  const [bestSellerProducts, setBestSellerProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'bestseller', 'popular', 'new'
 
   // Fonction pour obtenir l'URL complète de l'image
   const getImageUrl = (imageUrl) => {
@@ -38,15 +40,17 @@ const Home = () => {
     return imageUrl;
   };
 
-  // Récupérer les Best Sellers depuis l'API
+  // Récupérer tous les produits depuis l'API
   useEffect(() => {
-    const fetchBestSellers = async () => {
+    const fetchProducts = async () => {
       setLoading(true);
       setError(null);
       try {
-        // ✅ Utilisation de la nouvelle route /bestsellers
-        const response = await axios.get(`${API_URL}/products/bestsellers?limit=8`);
+        const response = await axios.get(`${API_URL}/products`);
         let apiProducts = response.data.data || [];
+        
+        // Filtrer les produits actifs
+        apiProducts = apiProducts.filter(p => p.status !== 'inactive');
         
         // Transformer les produits pour le format attendu
         const formattedProducts = apiProducts.map((p) => ({
@@ -60,32 +64,53 @@ const Home = () => {
           reviews: p.reviews || Math.floor(Math.random() * 200) + 10,
           category: p.category || 'Peptide',
           type: p.type || 'peptide',
-          isBestSeller: p.isBestSeller || p.isPopular || false,
+          isBestSeller: p.isBestSeller || false,
+          isPopular: p.isPopular || false,
           isNew: p.isNew || false,
           image: p.image || '/images/pept.png',
           stock: p.stock || 0
         }));
         
-        setBestSellerProducts(formattedProducts);
+        setAllProducts(formattedProducts);
+        setFilteredProducts(formattedProducts);
       } catch (error) {
-        console.error('Error fetching best sellers:', error);
+        console.error('Error fetching products:', error);
         setError('Impossible de charger les produits');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchBestSellers();
+    fetchProducts();
   }, []);
+
+  // Filtrer les produits selon la catégorie sélectionnée
+  useEffect(() => {
+    if (activeFilter === 'all') {
+      setFilteredProducts(allProducts);
+    } else if (activeFilter === 'bestseller') {
+      setFilteredProducts(allProducts.filter(p => p.isBestSeller === true));
+    } else if (activeFilter === 'popular') {
+      setFilteredProducts(allProducts.filter(p => p.isPopular === true));
+    } else if (activeFilter === 'new') {
+      setFilteredProducts(allProducts.filter(p => p.isNew === true));
+    }
+  }, [activeFilter, allProducts]);
+
+  // Compter les produits par catégorie
+  const counts = {
+    all: allProducts.length,
+    bestseller: allProducts.filter(p => p.isBestSeller).length,
+    popular: allProducts.filter(p => p.isPopular).length,
+    new: allProducts.filter(p => p.isNew).length,
+  };
 
   const handleAddToCart = (product) => {
     console.log('Added to cart:', product);
-    // Ici tu ajouteras la logique du panier
   };
 
   const handleQuickView = (product) => {
     console.log('Quick view:', product);
-    // Ici tu ajouteras la logique de vue rapide
   };
 
   // Affichage du chargement
@@ -104,6 +129,42 @@ const Home = () => {
       </div>
     );
   }
+
+  // Déterminer quel titre et icône afficher selon le filtre
+  const getSectionInfo = () => {
+    switch(activeFilter) {
+      case 'bestseller':
+        return { 
+          title: 'Best Sellers', 
+          icon: <Star size={20} className="fill-[#F59E0B] text-[#F59E0B]" />,
+          color: 'from-amber-500 to-amber-600',
+          badgeColor: 'bg-amber-100 text-amber-700'
+        };
+      case 'popular':
+        return { 
+          title: 'Popular Products', 
+          icon: <TrendingUp size={20} className="text-[#2563EB]" />,
+          color: 'from-blue-500 to-blue-600',
+          badgeColor: 'bg-blue-100 text-blue-700'
+        };
+      case 'new':
+        return { 
+          title: 'New Arrivals', 
+          icon: <Sparkles size={20} className="text-[#10B981]" />,
+          color: 'from-green-500 to-green-600',
+          badgeColor: 'bg-green-100 text-green-700'
+        };
+      default:
+        return { 
+          title: 'All Products', 
+          icon: <FlaskConical size={20} className="text-[#2563EB]" />,
+          color: 'from-[#2563EB] to-[#10B981]',
+          badgeColor: 'bg-gray-100 text-gray-700'
+        };
+    }
+  };
+
+  const sectionInfo = getSectionInfo();
 
   return (
     <div>
@@ -145,29 +206,84 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Best Sellers Section - 8 produits */}
+      {/* Products Section avec Filtres */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-[#F59E0B]/10 rounded-full px-4 py-1.5 mb-4">
-              <Star size={14} className="fill-[#F59E0B] text-[#F59E0B]" />
-              <span className="text-xs font-semibold text-[#D97706] tracking-wide">BEST SELLERS</span>
-            </div>
+          {/* En-tête */}
+          <div className="text-center mb-8">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-3">
-              Our Most Popular Peptides
+              Our Products
             </h2>
             <p className="text-gray-500 max-w-2xl mx-auto">
-              Trusted by thousands of customers for quality and results
+              Discover our premium selection of research peptides
             </p>
           </div>
 
-          {bestSellerProducts.length === 0 ? (
+          {/* ✅ FILTRES - 4 boutons */}
+          <div className="flex flex-wrap justify-center gap-3 mb-10">
+            <button
+              onClick={() => setActiveFilter('all')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all ${
+                activeFilter === 'all'
+                  ? 'bg-[#2563EB] text-white shadow-md'
+                  : 'bg-white text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <FlaskConical size={16} />
+              All ({counts.all})
+            </button>
+            <button
+              onClick={() => setActiveFilter('bestseller')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all ${
+                activeFilter === 'bestseller'
+                  ? 'bg-amber-500 text-white shadow-md'
+                  : 'bg-white text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <Star size={16} className="fill-current" />
+              Best Sellers ({counts.bestseller})
+            </button>
+            <button
+              onClick={() => setActiveFilter('popular')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all ${
+                activeFilter === 'popular'
+                  ? 'bg-blue-500 text-white shadow-md'
+                  : 'bg-white text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <TrendingUp size={16} />
+              Popular ({counts.popular})
+            </button>
+            <button
+              onClick={() => setActiveFilter('new')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all ${
+                activeFilter === 'new'
+                  ? 'bg-green-500 text-white shadow-md'
+                  : 'bg-white text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <Sparkles size={16} />
+              New ({counts.new})
+            </button>
+          </div>
+
+          {/* ✅ TITRE DYNAMIQUE DE LA SECTION */}
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${activeFilter === 'all' ? 'bg-gray-100 text-gray-700' : sectionInfo.badgeColor}`}>
+              {sectionInfo.icon}
+              <span className="font-semibold">{sectionInfo.title}</span>
+              <span className="text-xs opacity-70">({filteredProducts.length})</span>
+            </div>
+          </div>
+
+          {/* ✅ PRODUITS FILTRÉS */}
+          {filteredProducts.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-2xl">
-              <p className="text-gray-500">Aucun produit disponible pour le moment.</p>
+              <p className="text-gray-500">Aucun produit dans cette catégorie pour le moment.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {bestSellerProducts.map((product) => (
+              {filteredProducts.map((product) => (
                 <ProductCard
                   key={product.id}
                   name={product.name}
@@ -188,6 +304,7 @@ const Home = () => {
             </div>
           )}
 
+          {/* Bouton View All */}
           <div className="text-center mt-12">
             <Link
               to="/marketplace"
