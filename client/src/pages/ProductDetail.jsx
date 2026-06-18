@@ -20,7 +20,9 @@ import {
   Info,
   FileText,
   ThumbsUp,
-  CheckCircle
+  CheckCircle,
+  ZoomIn,
+  X
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
@@ -44,23 +46,24 @@ const ProductDetail = () => {
   const [isWishlist, setIsWishlist] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [addedToCart, setAddedToCart] = useState(false);
-  
+  const [isZoomed, setIsZoomed] = useState(false);
+
   const [likesCount, setLikesCount] = useState(0);
   const [isLiking, setIsLiking] = useState(false);
   const [hasLiked, setHasLiked] = useState(false);
-  
+
   const token = localStorage.getItem('token');
 
   useEffect(() => {
     console.log('🔍 ProductDetail - ID reçu:', id);
-    
+
     if (!id || id === 'undefined' || id === 'null') {
       console.error('❌ ID invalide');
       setError('Product ID is missing');
       setLoading(false);
       return;
     }
-    
+
     fetchProduct();
     window.scrollTo(0, 0);
   }, [id]);
@@ -68,15 +71,15 @@ const ProductDetail = () => {
   const fetchProduct = async () => {
     setLoading(true);
     setError('');
-    
+
     try {
       console.log(`🔍 Fetching product: ${API_URL}/products/${id}`);
       const response = await axios.get(`${API_URL}/products/${id}`);
-      
+
       console.log('📦 API Response:', response.data);
-      
+
       let productData = null;
-      
+
       if (response.data && response.data.success && response.data.data) {
         console.log('✅ Structure: success + data');
         productData = response.data.data;
@@ -92,15 +95,15 @@ const ProductDetail = () => {
         setLoading(false);
         return;
       }
-      
+
       if (!productData) {
         setError('Product not found');
         setLoading(false);
         return;
       }
-      
+
       console.log('✅ Produit extrait:', productData);
-      
+
       const safeProduct = {
         _id: productData._id || id,
         id: productData._id || id,
@@ -124,12 +127,12 @@ const ProductDetail = () => {
         createdAt: productData.createdAt || new Date().toISOString(),
         likes: productData.likes || 0
       };
-      
+
       console.log('✅ Produit sécurisé:', safeProduct);
       setProduct(safeProduct);
       setSelectedImage(safeProduct.image);
       setLikesCount(safeProduct.likes || 0);
-      
+
       // ✅ Vérifier si l'utilisateur a déjà liké
       if (token && productData.likedBy) {
         try {
@@ -139,14 +142,14 @@ const ProductDetail = () => {
           console.error('Error parsing token:', e);
         }
       }
-      
+
       if (safeProduct.category) {
         fetchRelatedProducts(safeProduct.category);
       }
-      
+
     } catch (err) {
       console.error('❌ Error fetching product:', err);
-      
+
       if (err.response?.status === 404) {
         setError('Product not found');
       } else if (err.response?.status === 500) {
@@ -162,7 +165,7 @@ const ProductDetail = () => {
   const fetchRelatedProducts = async (category) => {
     try {
       const response = await axios.get(`${API_URL}/products?category=${category}&limit=4`);
-      
+
       let products = [];
       if (response.data && response.data.success && Array.isArray(response.data.data)) {
         products = response.data.data;
@@ -171,7 +174,7 @@ const ProductDetail = () => {
       } else if (Array.isArray(response.data)) {
         products = response.data;
       }
-      
+
       setRelatedProducts(products.filter(p => p._id !== id).slice(0, 4));
     } catch (err) {
       console.error('Error fetching related products:', err);
@@ -184,17 +187,17 @@ const ProductDetail = () => {
       alert('Please login to like this product');
       return;
     }
-    
+
     if (isLiking) return;
     setIsLiking(true);
-    
+
     try {
       const response = await axios.put(
         `${API_URL}/products/${id}/like`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
+
       if (response.data.success) {
         setLikesCount(response.data.data.likes);
         setHasLiked(response.data.data.hasLiked);
@@ -213,7 +216,7 @@ const ProductDetail = () => {
       alert('This product is out of stock');
       return;
     }
-    
+
     const productData = {
       id: product._id || product.id,
       name: product.name,
@@ -221,12 +224,12 @@ const ProductDetail = () => {
       image: product.image || '/images/pept.png',
       dosage: product.dosage || product.moreDetails || 'N/A',
     };
-    
+
     addToCart(productData, quantity);
     setAddedToCart(true);
-    
+
     console.log(`🛒 Added ${quantity} x ${product.name} to cart`);
-    
+
     // Reset le feedback après 3 secondes
     setTimeout(() => {
       setAddedToCart(false);
@@ -269,7 +272,7 @@ const ProductDetail = () => {
     const fullStars = Math.floor(rating || 0);
     const hasHalfStar = (rating || 0) % 1 >= 0.5;
     const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-    
+
     return (
       <>
         {[...Array(fullStars)].map((_, i) => (
@@ -318,7 +321,7 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4">
-        
+
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6 flex-wrap">
           <Link to="/" className="hover:text-[#2563EB]">Home</Link>
@@ -330,34 +333,45 @@ const ProductDetail = () => {
 
         {/* Main Product Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          
+
           {/* Left - Images */}
           <div>
-            <div className="bg-white rounded-2xl overflow-hidden shadow-sm mb-4">
+            {/* ✅ FIX IMAGE QUALITÉ - Container avec fond neutre + object-contain */}
+            <div
+              className="bg-gray-50 rounded-2xl overflow-hidden shadow-sm mb-4 flex items-center justify-center relative group cursor-zoom-in"
+              style={{ minHeight: '400px', height: '400px' }}
+              onClick={() => setIsZoomed(true)}
+            >
               <img
                 src={selectedImage || '/images/pept.png'}
                 alt={product.name}
-                className="w-full h-[400px] object-cover hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                style={{ imageRendering: 'crisp-edges' }}
                 onError={(e) => {
                   e.target.onerror = null;
                   e.target.src = '/images/pept.png';
                 }}
               />
+              {/* Zoom hint */}
+              <div className="absolute bottom-3 right-3 bg-white bg-opacity-80 rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow">
+                <ZoomIn size={16} className="text-gray-600" />
+              </div>
             </div>
-            
-            {/* Miniatures */}
+
+            {/* ✅ FIX MINIATURES - object-contain + taille augmentée */}
             <div className="grid grid-cols-4 gap-3">
               {product.image && product.image !== '/images/pept.png' ? (
                 <div
                   onClick={() => setSelectedImage(product.image)}
-                  className={`bg-white rounded-xl overflow-hidden cursor-pointer border-2 transition-all ${
+                  className={`bg-gray-50 rounded-xl overflow-hidden cursor-pointer border-2 transition-all flex items-center justify-center ${
                     selectedImage === product.image ? 'border-[#2563EB] shadow-md' : 'border-transparent hover:border-gray-300'
                   }`}
+                  style={{ height: '80px' }}
                 >
                   <img
                     src={product.image}
                     alt={product.name}
-                    className="w-full h-20 object-cover"
+                    className="w-full h-full object-contain p-1"
                     onError={(e) => {
                       e.target.onerror = null;
                       e.target.src = '/images/pept.png';
@@ -367,12 +381,13 @@ const ProductDetail = () => {
               ) : (
                 <div
                   onClick={() => setSelectedImage('/images/pept.png')}
-                  className="bg-white rounded-xl overflow-hidden cursor-pointer border-2 border-[#2563EB] shadow-md"
+                  className="bg-gray-50 rounded-xl overflow-hidden cursor-pointer border-2 border-[#2563EB] shadow-md flex items-center justify-center"
+                  style={{ height: '80px' }}
                 >
                   <img
                     src="/images/pept.png"
                     alt="Default"
-                    className="w-full h-20 object-cover"
+                    className="w-full h-full object-contain p-1"
                   />
                 </div>
               )}
@@ -414,7 +429,7 @@ const ProductDetail = () => {
             </div>
 
             <h1 className="text-3xl font-bold text-gray-800 mb-2">{product.name}</h1>
-            
+
             {/* Rating & Reviews & Likes */}
             <div className="flex items-center gap-4 mb-4 flex-wrap">
               <div className="flex items-center gap-1">
@@ -423,14 +438,14 @@ const ProductDetail = () => {
               <span className="text-sm text-gray-500">
                 {product.rating || 4.8} ({product.reviews || 0} reviews)
               </span>
-              
+
               {/* BOUTON LIKE */}
               <button
                 onClick={handleToggleLike}
                 disabled={isLiking}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  hasLiked 
-                    ? 'bg-blue-500 text-white hover:bg-blue-600' 
+                  hasLiked
+                    ? 'bg-blue-500 text-white hover:bg-blue-600'
                     : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
                 } ${isLiking ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}`}
               >
@@ -579,7 +594,7 @@ const ProductDetail = () => {
             <p className="text-gray-600 leading-relaxed whitespace-pre-line">
               {product.description || `Premium ${product.name} peptide. High purity ${product.purity} with guaranteed quality.`}
             </p>
-            
+
             {product.moreDetails && product.moreDetails !== product.description && (
               <div className="mt-4 pt-4 border-t border-gray-100">
                 <h3 className="text-sm font-semibold text-gray-700 mb-2">📋 More Details</h3>
@@ -607,15 +622,21 @@ const ProductDetail = () => {
                   to={`/product/${related._id}`}
                   className="bg-white rounded-xl shadow-sm hover:shadow-md transition p-4"
                 >
-                  <img
-                    src={related.image || '/images/pept.png'}
-                    alt={related.name}
-                    className="w-full h-32 object-cover rounded-lg mb-3"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = '/images/pept.png';
-                    }}
-                  />
+                  {/* ✅ FIX RELATED - object-contain + fond neutre */}
+                  <div
+                    className="bg-gray-50 rounded-lg mb-3 flex items-center justify-center overflow-hidden"
+                    style={{ height: '128px' }}
+                  >
+                    <img
+                      src={related.image || '/images/pept.png'}
+                      alt={related.name}
+                      className="w-full h-full object-contain p-1"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/images/pept.png';
+                      }}
+                    />
+                  </div>
                   <h3 className="font-semibold text-gray-800 text-sm truncate">{related.name}</h3>
                   <div className="flex items-center justify-between mt-2">
                     <p className="text-[#2563EB] font-bold">{formatPrice(related.price)}</p>
@@ -631,6 +652,32 @@ const ProductDetail = () => {
           </div>
         )}
       </div>
+
+      {/* ✅ ZOOM MODAL - Voir l'image en plein écran */}
+      {isZoomed && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
+          onClick={() => setIsZoomed(false)}
+        >
+          <button
+            className="absolute top-4 right-4 text-white bg-white bg-opacity-20 rounded-full p-2 hover:bg-opacity-30 transition"
+            onClick={() => setIsZoomed(false)}
+          >
+            <X size={24} />
+          </button>
+          <img
+            src={selectedImage || '/images/pept.png'}
+            alt={product.name}
+            className="max-w-full max-h-full object-contain rounded-xl"
+            style={{ maxHeight: '90vh', maxWidth: '90vw' }}
+            onClick={(e) => e.stopPropagation()}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = '/images/pept.png';
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };
