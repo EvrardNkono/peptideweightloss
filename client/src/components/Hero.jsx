@@ -38,8 +38,8 @@ const Hero = () => {
         console.error('Error fetching hero:', error);
         setHeroData({
           images: ['/images/pept.png'],
-          title: 'Premium Peptides For Weight Loss',
-          subtitle: 'Your fully licensed corporate distributor for premium peptides, SARMs, and clinical-grade research compounds'
+          title: 'State-Licensed,FDA-Registered,CFS Certified ',
+          subtitle: 'Your fully compliant corporate distributor for domestic and international operations. Trusted by over 290 clinics worldwide.'
         });
       } finally {
         setLoading(false);
