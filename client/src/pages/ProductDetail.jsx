@@ -19,8 +19,10 @@ import {
   Loader2,
   Info,
   FileText,
-  ThumbsUp
+  ThumbsUp,
+  CheckCircle
 } from 'lucide-react';
+import { useCart } from '../context/CartContext';
 
 const getApiUrl = () => {
   if (process.env.NODE_ENV === 'production') {
@@ -33,6 +35,7 @@ const API_URL = getApiUrl();
 
 const ProductDetail = () => {
   const { id } = useParams();
+  const { addToCart } = useCart();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -40,6 +43,7 @@ const ProductDetail = () => {
   const [selectedImage, setSelectedImage] = useState('');
   const [isWishlist, setIsWishlist] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const [addedToCart, setAddedToCart] = useState(false);
   
   const [likesCount, setLikesCount] = useState(0);
   const [isLiking, setIsLiking] = useState(false);
@@ -99,6 +103,7 @@ const ProductDetail = () => {
       
       const safeProduct = {
         _id: productData._id || id,
+        id: productData._id || id,
         name: productData.name || 'Product',
         moreDetails: productData.moreDetails || productData.dosage || 'N/A',
         description: productData.description || `Premium ${productData.name || ''} peptide. High purity ${productData.purity || '≥99%'} with guaranteed quality.`,
@@ -202,9 +207,30 @@ const ProductDetail = () => {
     }
   };
 
+  // ✅ HANDLE ADD TO CART - AVEC LE CONTEXTE
   const handleAddToCart = () => {
-    console.log('🛒 Adding to cart:', { productId: id, quantity });
-    alert(`Added ${quantity} x ${product?.name || 'product'} to cart!`);
+    if (!product || product.stock <= 0) {
+      alert('This product is out of stock');
+      return;
+    }
+    
+    const productData = {
+      id: product._id || product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image || '/images/pept.png',
+      dosage: product.dosage || product.moreDetails || 'N/A',
+    };
+    
+    addToCart(productData, quantity);
+    setAddedToCart(true);
+    
+    console.log(`🛒 Added ${quantity} x ${product.name} to cart`);
+    
+    // Reset le feedback après 3 secondes
+    setTimeout(() => {
+      setAddedToCart(false);
+    }, 3000);
   };
 
   const handleQuantityChange = (type) => {
@@ -319,7 +345,7 @@ const ProductDetail = () => {
               />
             </div>
             
-            {/* Miniatures - UNIQUEMENT l'image du produit */}
+            {/* Miniatures */}
             <div className="grid grid-cols-4 gap-3">
               {product.image && product.image !== '/images/pept.png' ? (
                 <div
@@ -488,12 +514,23 @@ const ProductDetail = () => {
                 disabled={product.stock === 0}
                 className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition ${
                   product.stock > 0
-                    ? 'bg-[#2563EB] text-white hover:bg-[#1E40AF]'
+                    ? addedToCart
+                      ? 'bg-green-500 text-white hover:bg-green-600'
+                      : 'bg-[#2563EB] text-white hover:bg-[#1E40AF]'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                <ShoppingCart size={20} />
-                {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+                {addedToCart ? (
+                  <>
+                    <CheckCircle size={20} />
+                    Added to Cart
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart size={20} />
+                    {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+                  </>
+                )}
               </button>
               <button
                 onClick={() => setIsWishlist(!isWishlist)}

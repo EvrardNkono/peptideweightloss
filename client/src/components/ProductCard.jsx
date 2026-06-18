@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Star, Eye, Heart, TrendingUp, FlaskConical, Check } from 'lucide-react';
+import { useCart } from '../context/CartContext';
 
 const ProductCard = ({ 
   id,
@@ -22,6 +23,7 @@ const ProductCard = ({
   onAddToCart,
   onQuickView
 }) => {
+  const { addToCart } = useCart();
   const [isHovered, setIsHovered] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
 
@@ -75,7 +77,7 @@ const ProductCard = ({
 
   const colors = colorClasses[color];
 
-  // ✅ Fonction pour afficher les étoiles
+  // Fonction pour afficher les étoiles
   const renderStars = (rating) => {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.5;
@@ -94,6 +96,33 @@ const ProductCard = ({
         ))}
       </>
     );
+  };
+
+  // ✅ Fonction pour ajouter au panier
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (stock <= 0) {
+      // Option: montrer une notification "Out of stock"
+      return;
+    }
+    
+    const productData = {
+      id: productId,
+      name: name,
+      price: price,
+      image: image,
+      dosage: dosage,
+    };
+    
+    // Si une fonction onAddToCart est passée en prop, l'utiliser
+    if (onAddToCart) {
+      onAddToCart(productData);
+    } else {
+      // Sinon, utiliser le contexte
+      addToCart(productData);
+    }
   };
 
   const CardContent = () => (
@@ -156,7 +185,7 @@ const ProductCard = ({
 
         <p className="text-sm text-gray-500 mb-2">{dosage}</p>
 
-        {/* ✅ Stock badge */}
+        {/* Stock badge */}
         <div className="flex items-center gap-1 mb-2">
           <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
             stock > 0 
@@ -167,7 +196,7 @@ const ProductCard = ({
           </span>
         </div>
 
-        {/* ✅ Rating et Reviews */}
+        {/* Rating et Reviews */}
         <div className="flex items-center gap-2 mb-3">
           <div className="flex items-center gap-0.5">
             {renderStars(rating)}
@@ -237,11 +266,7 @@ const ProductCard = ({
       {/* Bouton Add to Cart */}
       <div className="p-4 pt-0">
         <button 
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (onAddToCart) onAddToCart();
-          }}
+          onClick={handleAddToCart}
           disabled={stock === 0}
           className={`w-full py-2.5 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
             stock > 0 

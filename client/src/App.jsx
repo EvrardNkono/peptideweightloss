@@ -1,6 +1,7 @@
 // src/App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { CartProvider } from './context/CartContext'; // ✅ IMPORT
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -16,6 +17,7 @@ import Prescription from './pages/Prescription';
 import Labs from './pages/Labs';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ProductDetail from './pages/ProductDetail';
+import CartPage from './pages/CartPage'; // ✅ IMPORT
 
 const AppContent = () => {
   const location = useLocation();
@@ -46,6 +48,9 @@ const AppContent = () => {
           {/* ✅ ROUTES PRODUITS */}
           <Route path="/product/:id" element={<ProductDetail />} />
           
+          {/* ✅ CART PAGE */}
+          <Route path="/cart" element={<CartPage />} />
+          
           {/* ✅ AUTRES ROUTES */}
           <Route path="/my-prescriptions" element={<MyPrescriptions token={token} />} />
           <Route path="/about" element={<About />} />
@@ -74,9 +79,11 @@ const AppContent = () => {
 
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <CartProvider> {/* ✅ ENTOURER AVEC LE PROVIDER */}
+      <Router>
+        <AppContent />
+      </Router>
+    </CartProvider>
   );
 }
 
