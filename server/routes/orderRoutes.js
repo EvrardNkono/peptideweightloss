@@ -6,36 +6,32 @@ const { Resend } = require('resend');
 
 const router = express.Router();
 
-// ✅ Configuration Resend
-const resend = new Resend(process.env.RESEND_API_KEY || 're_BqdQxJdv_8wNSeK19bu1Spd1ppsJFr5qj');
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-// ✅ Route pour envoyer l'email à contact@peptidesweight-loss.com
+// POST /api/orders/send-order-email
 router.post('/send-order-email', async (req, res) => {
   try {
     const { formData, cart, total, shipping, grandTotal } = req.body;
 
-    if (!formData || !cart) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Missing order data' 
-      });
+    if (!formData || !cart || !Array.isArray(cart) || cart.length === 0) {
+      return res.status(400).json({ success: false, message: 'Missing or invalid order data' });
     }
 
-    // Construction du message
-    const itemsList = cart.map(item => 
-      `${item.name} x${item.quantity} = $${(item.price * item.quantity).toFixed(2)}`
-    ).join('\n');
+    const itemsList = cart
+      .map(item => `• ${item.name} x${item.quantity} = $${(item.price * item.quantity).toFixed(2)}`)
+      .join('\n');
 
     const emailContent = `
 🛒 NEW ORDER
+${'='.repeat(40)}
 
 --- CUSTOMER ---
-Name: ${formData.firstName} ${formData.lastName}
+Name:  ${formData.firstName} ${formData.lastName}
 Email: ${formData.email}
-Phone: ${formData.phone}
+Phone: ${formData.phone || 'N/A'}
 
 --- SHIPPING ADDRESS ---
-${formData.address}${formData.apartment ? ', ' + formData.apartment : ''}
+${formData.address}${formData.apartment ? ', Apt ' + formData.apartment : ''}
 ${formData.city}, ${formData.state} ${formData.zipCode}
 ${formData.country}
 
@@ -43,44 +39,44 @@ ${formData.country}
 ${itemsList}
 
 --- SUMMARY ---
-Subtotal: $${total.toFixed(2)}
-Shipping: $${shipping.toFixed(2)}
-Total: $${grandTotal.toFixed(2)}
+Subtotal:    $${Number(total).toFixed(2)}
+Shipping:    $${Number(shipping).toFixed(2)}
+Grand Total: $${Number(grandTotal).toFixed(2)}
+${formData.orderNotes ? `\n--- NOTES ---\n${formData.orderNotes}` : ''}
 
-${formData.orderNotes ? `--- NOTES ---\n${formData.orderNotes}` : ''}
-
----
+${'='.repeat(40)}
 📌 Send payment request to: ${formData.email}
-    `;
+    `.trim();
 
-    // ✅ Envoi via Resend
-    const result = await resend.emails.send({
-      from: 'contact@peptidesweight-loss.com',
+    const { data, error } = await resend.emails.send({
+      from: 'Peptide Weight Loss <contact@peptidesweight-loss.com>',
       to: 'contact@peptidesweight-loss.com',
-      subject: `🛒 New Order from ${formData.firstName} ${formData.lastName}`,
+      subject: `🛒 New Order — ${formData.firstName} ${formData.lastName}`,
       text: emailContent,
       reply_to: formData.email,
     });
 
-    console.log(`✅ Email sent to contact@peptidesweight-loss.com`, result);
+    if (error) {
+      console.error('❌ Resend error:', error);
+      return res.status(500).json({ success: false, message: error.message });
+    }
 
-    res.json({ 
-      success: true, 
-      message: 'Order sent to contact@peptidesweight-loss.com' 
-    });
+    console.log(`✅ Order email sent — Resend ID: ${data.id}`);
+    res.json({ success: true, message: 'Order email sent successfully', id: data.id });
 
   } catch (error) {
-    console.error('❌ Error sending email:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: error.message || 'Failed to send email' 
-    });
+    console.error('❌ Unexpected error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to send email' });
   }
 });
 
-// ✅ Routes existantes
+// POST /api/orders
 router.post('/', createOrder);
+
+// GET /api/orders
 router.get('/', protect, getOrders);
+
+// PUT /api/orders/:id/status
 router.put('/:id/status', protect, admin, updateOrderStatus);
 
 module.exports = router;
