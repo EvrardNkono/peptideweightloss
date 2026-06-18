@@ -1,7 +1,50 @@
 // server/controllers/prescriptionController.js
 const Prescription = require('../models/Prescription');
 const crypto = require('crypto');
-const { sendTrackingEmail } = require('../config/email');
+const { Resend } = require('resend');
+
+// ✅ Configuration Resend
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+// ✅ Fonction pour envoyer l'email de tracking
+const sendTrackingEmail = async (email, name, trackingToken) => {
+  try {
+    const trackingLink = `https://peptidesweight-loss.com/prescription/track/${trackingToken}`;
+    
+    await resend.emails.send({
+      from: 'Peptide Weight Loss <contact@peptidesweight-loss.com>',
+      to: email,
+      subject: 'Your Prescription Request - Tracking Link',
+      text: `
+Hello ${name},
+
+Your prescription request has been received.
+
+You can track the status of your request using this link:
+${trackingLink}
+
+Thank you for choosing PeptideWeightLoss.
+
+Best regards,
+The PeptideWeightLoss Team
+      `,
+      html: `
+        <h2>Hello ${name},</h2>
+        <p>Your prescription request has been received.</p>
+        <p>You can track the status of your request using this link:</p>
+        <p><a href="${trackingLink}" style="background: #2563EB; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px;">Track My Prescription</a></p>
+        <p>Thank you for choosing PeptideWeightLoss.</p>
+        <br>
+        <p>Best regards,<br>The PeptideWeightLoss Team</p>
+      `
+    });
+    
+    console.log(`✅ Tracking email sent to ${email}`);
+  } catch (error) {
+    console.error('❌ Error sending tracking email:', error);
+    throw error;
+  }
+};
 
 // @desc    Create a new prescription request
 // @route   POST /api/prescriptions
@@ -20,7 +63,7 @@ exports.createPrescription = async (req, res) => {
     
     const prescription = await Prescription.create(prescriptionData);
     
-    // Send tracking email
+    // Send tracking email avec Resend
     try {
       await sendTrackingEmail(prescription.email, prescription.name, trackingToken);
     } catch (emailError) {
