@@ -1,4 +1,4 @@
-// src/pages/CheckoutPage.jsx
+// src/pages/CheckoutPage.jsx - VERSION AVEC NODEMAILER
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
@@ -28,7 +28,6 @@ const CheckoutPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // ✅ États des champs du formulaire
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -79,8 +78,8 @@ const CheckoutPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // ✅ SUBMIT AVEC MAILTO
-  const handleSubmit = (e) => {
+  // ✅ VERSION AVEC NODEMAILER
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -91,50 +90,37 @@ const CheckoutPage = () => {
 
     setIsSubmitting(true);
 
-    // ✅ Construction du message
-    const itemsList = cart.map(item => 
-      `${item.name} x${item.quantity} = $${(item.price * item.quantity).toFixed(2)}`
-    ).join('\n');
+    try {
+      const response = await fetch('/api/send-order-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          formData,
+          cart,
+          total,
+          shipping,
+          grandTotal
+        }),
+      });
 
-    const message = `
-🛒 NEW ORDER
+      const result = await response.json();
 
---- CUSTOMER ---
-Name: ${formData.firstName} ${formData.lastName}
-Email: ${formData.email}
-Phone: ${formData.phone}
-
---- SHIPPING ADDRESS ---
-${formData.address}${formData.apartment ? ', ' + formData.apartment : ''}
-${formData.city}, ${formData.state} ${formData.zipCode}
-${formData.country}
-
---- ITEMS ---
-${itemsList}
-
---- SUMMARY ---
-Subtotal: $${total.toFixed(2)}
-Shipping: $${shipping.toFixed(2)}
-Total: $${grandTotal.toFixed(2)}
-
-${formData.orderNotes ? `--- NOTES ---\n${formData.orderNotes}` : ''}
-
----
-📌 Send payment request to: ${formData.email}
-    `;
-
-    // ✅ OUVRE LE CLIENT EMAIL AVEC TOUTES LES INFOS
-    const mailtoLink = `mailto:contact@peptidesweight-loss.com?subject=🛒 New Order from ${formData.firstName} ${formData.lastName}&body=${encodeURIComponent(message)}`;
-    
-    window.location.href = mailtoLink;
-    
-    // ✅ Succès
-    clearCart();
-    setIsSuccess(true);
-    setIsSubmitting(false);
+      if (result.success) {
+        clearCart();
+        setIsSuccess(true);
+      } else {
+        setErrors({ submit: result.message || 'Failed to send order' });
+      }
+    } catch (error) {
+      console.error('❌ Error:', error);
+      setErrors({ submit: 'Failed to send order. Please try again.' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  // ✅ Écran de succès
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -211,11 +197,9 @@ ${formData.orderNotes ? `--- NOTES ---\n${formData.orderNotes}` : ''}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* Formulaire */}
           <div className="lg:col-span-2">
             <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm p-6">
               
-              {/* Section 1: Personal Information */}
               <div className="mb-8">
                 <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                   <User size={18} className="text-[#2563EB]" />
@@ -278,7 +262,6 @@ ${formData.orderNotes ? `--- NOTES ---\n${formData.orderNotes}` : ''}
                 </div>
               </div>
 
-              {/* Section 2: Shipping Address */}
               <div className="mb-8">
                 <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                   <Truck size={18} className="text-[#2563EB]" />
@@ -368,7 +351,6 @@ ${formData.orderNotes ? `--- NOTES ---\n${formData.orderNotes}` : ''}
                 </div>
               </div>
 
-              {/* Section 3: Order Notes */}
               <div className="mb-8">
                 <h2 className="text-lg font-bold text-gray-800 mb-4">Additional Information</h2>
                 <div>
@@ -384,7 +366,6 @@ ${formData.orderNotes ? `--- NOTES ---\n${formData.orderNotes}` : ''}
                 </div>
               </div>
 
-              {/* Section 4: Terms */}
               <div className="mb-6">
                 <div className="flex items-start gap-3">
                   <input
@@ -407,7 +388,6 @@ ${formData.orderNotes ? `--- NOTES ---\n${formData.orderNotes}` : ''}
                 </div>
               </div>
 
-              {/* Bouton Submit */}
               <button
                 type="submit"
                 disabled={isSubmitting}
@@ -432,7 +412,6 @@ ${formData.orderNotes ? `--- NOTES ---\n${formData.orderNotes}` : ''}
             </form>
           </div>
 
-          {/* Order Summary */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-sm p-6 sticky top-24">
               <h2 className="text-lg font-bold text-gray-800 mb-4">Order Summary</h2>
@@ -456,7 +435,6 @@ ${formData.orderNotes ? `--- NOTES ---\n${formData.orderNotes}` : ''}
                 </div>
               </div>
 
-              {/* Items */}
               <div className="py-4 border-b border-gray-100 max-h-60 overflow-y-auto">
                 {cart.map((item) => (
                   <div key={item.id} className="flex justify-between text-sm py-2">
@@ -468,7 +446,6 @@ ${formData.orderNotes ? `--- NOTES ---\n${formData.orderNotes}` : ''}
                 ))}
               </div>
 
-              {/* Total */}
               <div className="pt-4">
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total</span>
