@@ -35,7 +35,7 @@ import {
 import axios from 'axios';
 import AdminHero from './AdminHero';
 
-// ✅ CONFIGURATION AUTOMATIQUE DE L'URL BACKEND
+// ✅ AUTOMATIC BACKEND URL CONFIGURATION
 const getApiUrl = () => {
   if (process.env.NODE_ENV === 'production') {
     return 'https://peptideweightloss.vercel.app/api';
@@ -814,7 +814,7 @@ const AdminDashboard = ({ onLogout, token }) => {
   );
 };
 
-// ✅ ProductModal avec TOGGLE "Available/Out of Stock", "Likes" et "Reviews"
+// ✅ ProductModal with Toggle "Available/Out of Stock", "Likes" and "Reviews"
 const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) => {
   const [formData, setFormData] = useState({
     id: product?._id || product?.id || null,
@@ -831,7 +831,7 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
     isNew: product?.isNew || false,
     isBestSeller: product?.isBestSeller || false,
     likes: product?.likes || 0,
-    reviews: product?.reviews || 0,  // ✅ AJOUT DU CHAMP REVIEWS
+    reviews: product?.reviews || 0,
   });
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
@@ -997,7 +997,7 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
             />
           </div>
 
-          {/* ✅ STOCK - Toggle Available/Out of Stock */}
+          {/* STOCK - Toggle Available/Out of Stock */}
           <div className="border-t border-gray-100 pt-4">
             <label className="block text-sm font-medium text-gray-700 mb-3">
               <span className="flex items-center gap-2">
@@ -1028,11 +1028,11 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
               </span>
             </div>
             <p className="text-xs text-gray-400 mt-1">
-              {formData.stock > 0 ? 'Le produit est disponible à la vente' : 'Le produit n\'est pas disponible'}
+              {formData.stock > 0 ? 'Product is available for sale' : 'Product is not available'}
             </p>
           </div>
 
-          {/* ✅ REVIEWS - Nombre d'avis */}
+          {/* REVIEWS - Number of reviews */}
           <div className="border-t border-gray-100 pt-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               <span className="flex items-center gap-2">
@@ -1040,7 +1040,7 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
                 Number of Reviews
               </span>
               <span className="text-xs text-gray-400 font-normal block mt-1">
-                Nombre d'avis affichés sur le produit
+                Number of reviews displayed on the product
               </span>
             </label>
             <input
@@ -1062,7 +1062,7 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
                 Popularity Score (Likes)
               </span>
               <span className="text-xs text-gray-400 font-normal block mt-1">
-                Nombre de likes initial. Les utilisateurs pourront ajouter des likes supplémentaires.
+                Initial number of likes. Users will be able to add more likes.
               </span>
             </label>
             <input
@@ -1085,7 +1085,7 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
                 <Star size={20} className="text-[#F59E0B] fill-[#F59E0B]" />
                 <div>
                   <label className="text-sm font-medium text-gray-700">Best Seller</label>
-                  <p className="text-xs text-gray-400">Afficher dans la section "Best Sellers"</p>
+                  <p className="text-xs text-gray-400">Show in the "Best Sellers" section</p>
                 </div>
               </div>
               <button
@@ -1109,7 +1109,7 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
                 <TrendingUp size={20} className="text-[#2563EB]" />
                 <div>
                   <label className="text-sm font-medium text-gray-700">Popular</label>
-                  <p className="text-xs text-gray-400">Afficher comme produit populaire</p>
+                  <p className="text-xs text-gray-400">Show as a popular product</p>
                 </div>
               </div>
               <button
@@ -1133,7 +1133,7 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
                 <Sparkles size={20} className="text-[#10B981]" />
                 <div>
                   <label className="text-sm font-medium text-gray-700">New Product</label>
-                  <p className="text-xs text-gray-400">Afficher le badge "NEW" sur le produit</p>
+                  <p className="text-xs text-gray-400">Show the "NEW" badge on the product</p>
                 </div>
               </div>
               <button
