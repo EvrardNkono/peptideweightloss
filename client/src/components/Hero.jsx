@@ -38,7 +38,7 @@ const Hero = () => {
         console.error('Error fetching hero:', error);
         setHeroData({
           images: ['/images/pept.png'],
-          title: 'State-Licensed,FDA-Registered,CFS Certified ',
+          title: 'State-Licensed, FDA-Registered, CFS Certified',
           subtitle: 'Your fully compliant corporate distributor for domestic and international operations. Trusted by over 290 clinics worldwide.'
         });
       } finally {
@@ -177,16 +177,20 @@ const Hero = () => {
             </div>
           </div>
 
-          {/* TEXTE */}
+          {/* TEXTE - NOUVEAU CONTENU */}
           <div className="order-1 lg:order-2">
-            <div className="flex gap-2 mb-6 flex-wrap">
+            <div className="flex flex-wrap gap-2 mb-6">
               <div className="inline-flex items-center gap-1.5 bg-[#2563EB]/10 rounded-full px-3 py-1">
                 <Shield size={12} className="text-[#2563EB]" />
-                <span className="text-xs font-medium text-[#2563EB]">GMP Certified</span>
+                <span className="text-xs font-medium text-[#2563EB]">State-Licensed</span>
               </div>
               <div className="inline-flex items-center gap-1.5 bg-[#10B981]/10 rounded-full px-3 py-1">
                 <Award size={12} className="text-[#10B981]" />
-                <span className="text-xs font-medium text-[#10B981]">ISO 9001</span>
+                <span className="text-xs font-medium text-[#10B981]">FDA-Registered</span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 bg-[#F59E0B]/10 rounded-full px-3 py-1">
+                <Shield size={12} className="text-[#F59E0B]" />
+                <span className="text-xs font-medium text-[#F59E0B]">CFS Certified</span>
               </div>
             </div>
 
@@ -201,7 +205,7 @@ const Hero = () => {
             </h1>
 
             <p className="text-gray-500 leading-relaxed mb-6 max-w-md">
-              {heroData?.subtitle || 'Your fully licensed corporate distributor for premium peptides, SARMs, and clinical-grade research compounds'}
+              Your fully compliant corporate distributor for domestic and international operations. Trusted by over 290 clinics worldwide.
             </p>
 
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-8">
