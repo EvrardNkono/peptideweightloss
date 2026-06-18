@@ -1,7 +1,7 @@
 // src/App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { CartProvider } from './context/CartContext'; // ✅ IMPORT
+import { CartProvider } from './context/CartContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -17,7 +17,8 @@ import Prescription from './pages/Prescription';
 import Labs from './pages/Labs';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ProductDetail from './pages/ProductDetail';
-import CartPage from './pages/CartPage'; // ✅ IMPORT
+import CartPage from './pages/CartPage';
+import CheckoutPage from './pages/CheckoutPage'; // ✅ AJOUT
 
 const AppContent = () => {
   const location = useLocation();
@@ -51,6 +52,9 @@ const AppContent = () => {
           {/* ✅ CART PAGE */}
           <Route path="/cart" element={<CartPage />} />
           
+          {/* ✅ CHECKOUT PAGE */}
+          <Route path="/checkout" element={<CheckoutPage />} />
+          
           {/* ✅ AUTRES ROUTES */}
           <Route path="/my-prescriptions" element={<MyPrescriptions token={token} />} />
           <Route path="/about" element={<About />} />
@@ -79,7 +83,7 @@ const AppContent = () => {
 
 function App() {
   return (
-    <CartProvider> {/* ✅ ENTOURER AVEC LE PROVIDER */}
+    <CartProvider>
       <Router>
         <AppContent />
       </Router>
