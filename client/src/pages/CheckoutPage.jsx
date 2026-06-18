@@ -22,16 +22,6 @@ import {
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
-// ✅ Configuration API
-const getApiUrl = () => {
-  if (process.env.NODE_ENV === 'production') {
-    return 'https://peptideweightloss.vercel.app/api';
-  }
-  return 'http://localhost:5000/api';
-};
-
-const API_URL = getApiUrl();
-
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const { cart, getCartTotal, getItemCount, getCartSavings, clearCart } = useCart();
@@ -40,21 +30,16 @@ const CheckoutPage = () => {
 
   // ✅ États des champs du formulaire
   const [formData, setFormData] = useState({
-    // Identité
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
-    
-    // Adresse de livraison
     address: '',
     apartment: '',
     city: '',
     state: '',
     zipCode: '',
     country: 'US',
-    
-    // Informations complémentaires
     orderNotes: '',
     agreeTerms: false
   });
@@ -67,7 +52,6 @@ const CheckoutPage = () => {
   const shipping = total > 200 ? 0 : 9.99;
   const grandTotal = total - savings + shipping;
 
-  // ✅ Gestion des changements
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -79,28 +63,24 @@ const CheckoutPage = () => {
     }
   };
 
-  // ✅ Validation du formulaire
   const validateForm = () => {
     const newErrors = {};
-    
     if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
     if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
     if (!formData.email.trim()) newErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
     if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
-    else if (!/^[\d\s\-+()]{8,20}$/.test(formData.phone)) newErrors.phone = 'Phone number is invalid';
     if (!formData.address.trim()) newErrors.address = 'Address is required';
     if (!formData.city.trim()) newErrors.city = 'City is required';
     if (!formData.state.trim()) newErrors.state = 'State/Province is required';
     if (!formData.zipCode.trim()) newErrors.zipCode = 'ZIP code is required';
     if (!formData.agreeTerms) newErrors.agreeTerms = 'You must agree to the terms';
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // ✅ Soumission du formulaire
-  const handleSubmit = async (e) => {
+  // ✅ SUBMIT AVEC MAILTO
+  const handleSubmit = (e) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -111,96 +91,47 @@ const CheckoutPage = () => {
 
     setIsSubmitting(true);
 
-    // ✅ Construction des données de la commande
-    const orderData = {
-      customer: {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phone: formData.phone
-      },
-      shipping: {
-        address: formData.address,
-        apartment: formData.apartment,
-        city: formData.city,
-        state: formData.state,
-        zipCode: formData.zipCode,
-        country: formData.country
-      },
-      order: {
-        items: cart.map(item => ({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-          dosage: item.dosage,
-          supplements: item.selectedSupplements || []
-        })),
-        subtotal: total,
-        shipping: shipping,
-        discount: savings,
-        total: grandTotal,
-        notes: formData.orderNotes
-      },
-      status: 'pending_payment',
-      createdAt: new Date().toISOString()
-    };
+    // ✅ Construction du message
+    const itemsList = cart.map(item => 
+      `${item.name} x${item.quantity} = $${(item.price * item.quantity).toFixed(2)}`
+    ).join('\n');
 
-    try {
-      // ✅ Envoi des données vers le backend
-      const response = await fetch(`${API_URL}/orders`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orderData),
-      });
+    const message = `
+🛒 NEW ORDER
 
-      const result = await response.json();
+--- CUSTOMER ---
+Name: ${formData.firstName} ${formData.lastName}
+Email: ${formData.email}
+Phone: ${formData.phone}
 
-      if (result.success) {
-        // ✅ Envoi de l'email de notification à contact@peptidesweight-loss.com
-        await sendNotificationEmail(orderData);
-        
-        setIsSuccess(true);
-        clearCart();
-        
-        setTimeout(() => {
-          navigate('/order-confirmation', { state: { orderData } });
-        }, 3000);
-      } else {
-        setErrors({ submit: result.message || 'Order failed. Please try again.' });
-      }
-      
-    } catch (error) {
-      console.error('Error submitting order:', error);
-      setErrors({ submit: 'An error occurred. Please try again.' });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+--- SHIPPING ADDRESS ---
+${formData.address}${formData.apartment ? ', ' + formData.apartment : ''}
+${formData.city}, ${formData.state} ${formData.zipCode}
+${formData.country}
 
-  // ✅ Fonction pour envoyer l'email de notification à contact@peptidesweight-loss.com
-  const sendNotificationEmail = async (orderData) => {
-    try {
-      const response = await fetch(`${API_URL}/send-order-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          to: 'contact@peptidesweight-loss.com',
-          subject: `🛒 New Order from ${orderData.customer.firstName} ${orderData.customer.lastName}`,
-          orderData: orderData
-        }),
-      });
+--- ITEMS ---
+${itemsList}
 
-      const result = await response.json();
-      console.log('📧 Email sent:', result);
-      return result;
-    } catch (error) {
-      console.error('Error sending email:', error);
-    }
+--- SUMMARY ---
+Subtotal: $${total.toFixed(2)}
+Shipping: $${shipping.toFixed(2)}
+Total: $${grandTotal.toFixed(2)}
+
+${formData.orderNotes ? `--- NOTES ---\n${formData.orderNotes}` : ''}
+
+---
+📌 Send payment request to: ${formData.email}
+    `;
+
+    // ✅ OUVRE LE CLIENT EMAIL AVEC TOUTES LES INFOS
+    const mailtoLink = `mailto:contact@peptidesweight-loss.com?subject=🛒 New Order from ${formData.firstName} ${formData.lastName}&body=${encodeURIComponent(message)}`;
+    
+    window.location.href = mailtoLink;
+    
+    // ✅ Succès
+    clearCart();
+    setIsSuccess(true);
+    setIsSubmitting(false);
   };
 
   // ✅ Écran de succès
@@ -213,10 +144,10 @@ const CheckoutPage = () => {
           </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Order Placed!</h2>
           <p className="text-gray-500 mb-6">
-            Your order has been received. We will send you a confirmation email shortly.
+            Your order has been received. Check your email for the payment request.
           </p>
           <p className="text-sm text-gray-400 mb-6">
-            A payment request will be sent to your email address.
+            A confirmation email has been sent to <strong>contact@peptidesweight-loss.com</strong>
           </p>
           <Link
             to="/"
@@ -256,7 +187,6 @@ const CheckoutPage = () => {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4">
         
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <Link to="/cart" className="text-gray-400 hover:text-gray-600 transition">
@@ -272,7 +202,6 @@ const CheckoutPage = () => {
           </span>
         </div>
 
-        {/* Error de soumission */}
         {errors.submit && (
           <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-6 flex items-center gap-2">
             <AlertCircle size={18} />
@@ -295,80 +224,56 @@ const CheckoutPage = () => {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      First Name *
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
                     <input
                       type="text"
                       name="firstName"
                       value={formData.firstName}
                       onChange={handleChange}
-                      className={`w-full px-4 py-2.5 rounded-xl border ${
-                        errors.firstName ? 'border-red-500' : 'border-gray-200'
-                      } focus:border-[#2563EB] outline-none transition`}
+                      className={`w-full px-4 py-2.5 rounded-xl border ${errors.firstName ? 'border-red-500' : 'border-gray-200'} focus:border-[#2563EB] outline-none transition`}
                       placeholder="John"
                     />
-                    {errors.firstName && (
-                      <p className="text-red-500 text-xs mt-1 error-message">{errors.firstName}</p>
-                    )}
+                    {errors.firstName && <p className="text-red-500 text-xs mt-1 error-message">{errors.firstName}</p>}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Last Name *
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
                     <input
                       type="text"
                       name="lastName"
                       value={formData.lastName}
                       onChange={handleChange}
-                      className={`w-full px-4 py-2.5 rounded-xl border ${
-                        errors.lastName ? 'border-red-500' : 'border-gray-200'
-                      } focus:border-[#2563EB] outline-none transition`}
+                      className={`w-full px-4 py-2.5 rounded-xl border ${errors.lastName ? 'border-red-500' : 'border-gray-200'} focus:border-[#2563EB] outline-none transition`}
                       placeholder="Doe"
                     />
-                    {errors.lastName && (
-                      <p className="text-red-500 text-xs mt-1 error-message">{errors.lastName}</p>
-                    )}
+                    {errors.lastName && <p className="text-red-500 text-xs mt-1 error-message">{errors.lastName}</p>}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email Address *
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
                     <input
                       type="email"
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      className={`w-full px-4 py-2.5 rounded-xl border ${
-                        errors.email ? 'border-red-500' : 'border-gray-200'
-                      } focus:border-[#2563EB] outline-none transition`}
+                      className={`w-full px-4 py-2.5 rounded-xl border ${errors.email ? 'border-red-500' : 'border-gray-200'} focus:border-[#2563EB] outline-none transition`}
                       placeholder="john.doe@email.com"
                     />
-                    {errors.email && (
-                      <p className="text-red-500 text-xs mt-1 error-message">{errors.email}</p>
-                    )}
+                    {errors.email && <p className="text-red-500 text-xs mt-1 error-message">{errors.email}</p>}
                     <p className="text-xs text-gray-400 mt-1">We'll send the payment request here</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Phone Number *
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
                     <input
                       type="tel"
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      className={`w-full px-4 py-2.5 rounded-xl border ${
-                        errors.phone ? 'border-red-500' : 'border-gray-200'
-                      } focus:border-[#2563EB] outline-none transition`}
+                      className={`w-full px-4 py-2.5 rounded-xl border ${errors.phone ? 'border-red-500' : 'border-gray-200'} focus:border-[#2563EB] outline-none transition`}
                       placeholder="+1 234 567 890"
                     />
-                    {errors.phone && (
-                      <p className="text-red-500 text-xs mt-1 error-message">{errors.phone}</p>
-                    )}
+                    {errors.phone && <p className="text-red-500 text-xs mt-1 error-message">{errors.phone}</p>}
                   </div>
                 </div>
               </div>
@@ -381,28 +286,20 @@ const CheckoutPage = () => {
                 </h2>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Street Address *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Street Address *</label>
                   <input
                     type="text"
                     name="address"
                     value={formData.address}
                     onChange={handleChange}
-                    className={`w-full px-4 py-2.5 rounded-xl border ${
-                      errors.address ? 'border-red-500' : 'border-gray-200'
-                    } focus:border-[#2563EB] outline-none transition`}
+                    className={`w-full px-4 py-2.5 rounded-xl border ${errors.address ? 'border-red-500' : 'border-gray-200'} focus:border-[#2563EB] outline-none transition`}
                     placeholder="123 Main Street"
                   />
-                  {errors.address && (
-                    <p className="text-red-500 text-xs mt-1 error-message">{errors.address}</p>
-                  )}
+                  {errors.address && <p className="text-red-500 text-xs mt-1 error-message">{errors.address}</p>}
                 </div>
 
                 <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Apartment, Suite, etc. (optional)
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Apartment, Suite, etc. (optional)</label>
                   <input
                     type="text"
                     name="apartment"
@@ -415,65 +312,45 @@ const CheckoutPage = () => {
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                   <div className="col-span-2 md:col-span-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      City *
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
                     <input
                       type="text"
                       name="city"
                       value={formData.city}
                       onChange={handleChange}
-                      className={`w-full px-4 py-2.5 rounded-xl border ${
-                        errors.city ? 'border-red-500' : 'border-gray-200'
-                      } focus:border-[#2563EB] outline-none transition`}
+                      className={`w-full px-4 py-2.5 rounded-xl border ${errors.city ? 'border-red-500' : 'border-gray-200'} focus:border-[#2563EB] outline-none transition`}
                       placeholder="New York"
                     />
-                    {errors.city && (
-                      <p className="text-red-500 text-xs mt-1 error-message">{errors.city}</p>
-                    )}
+                    {errors.city && <p className="text-red-500 text-xs mt-1 error-message">{errors.city}</p>}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      State/Province *
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">State/Province *</label>
                     <input
                       type="text"
                       name="state"
                       value={formData.state}
                       onChange={handleChange}
-                      className={`w-full px-4 py-2.5 rounded-xl border ${
-                        errors.state ? 'border-red-500' : 'border-gray-200'
-                      } focus:border-[#2563EB] outline-none transition`}
+                      className={`w-full px-4 py-2.5 rounded-xl border ${errors.state ? 'border-red-500' : 'border-gray-200'} focus:border-[#2563EB] outline-none transition`}
                       placeholder="NY"
                     />
-                    {errors.state && (
-                      <p className="text-red-500 text-xs mt-1 error-message">{errors.state}</p>
-                    )}
+                    {errors.state && <p className="text-red-500 text-xs mt-1 error-message">{errors.state}</p>}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      ZIP Code *
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">ZIP Code *</label>
                     <input
                       type="text"
                       name="zipCode"
                       value={formData.zipCode}
                       onChange={handleChange}
-                      className={`w-full px-4 py-2.5 rounded-xl border ${
-                        errors.zipCode ? 'border-red-500' : 'border-gray-200'
-                      } focus:border-[#2563EB] outline-none transition`}
+                      className={`w-full px-4 py-2.5 rounded-xl border ${errors.zipCode ? 'border-red-500' : 'border-gray-200'} focus:border-[#2563EB] outline-none transition`}
                       placeholder="10001"
                     />
-                    {errors.zipCode && (
-                      <p className="text-red-500 text-xs mt-1 error-message">{errors.zipCode}</p>
-                    )}
+                    {errors.zipCode && <p className="text-red-500 text-xs mt-1 error-message">{errors.zipCode}</p>}
                   </div>
                 </div>
 
                 <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Country
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
                   <select
                     name="country"
                     value={formData.country}
@@ -495,9 +372,7 @@ const CheckoutPage = () => {
               <div className="mb-8">
                 <h2 className="text-lg font-bold text-gray-800 mb-4">Additional Information</h2>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Order Notes (optional)
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Order Notes (optional)</label>
                   <textarea
                     name="orderNotes"
                     value={formData.orderNotes}
@@ -527,9 +402,7 @@ const CheckoutPage = () => {
                       <a href="/privacy" className="text-[#2563EB] hover:underline">Privacy Policy</a>.
                       <span className="text-red-500 ml-1">*</span>
                     </label>
-                    {errors.agreeTerms && (
-                      <p className="text-red-500 text-xs mt-1 error-message">{errors.agreeTerms}</p>
-                    )}
+                    {errors.agreeTerms && <p className="text-red-500 text-xs mt-1 error-message">{errors.agreeTerms}</p>}
                   </div>
                 </div>
               </div>
@@ -569,14 +442,12 @@ const CheckoutPage = () => {
                   <span className="text-gray-500">Subtotal ({itemCount} items)</span>
                   <span className="font-medium">${total.toFixed(2)}</span>
                 </div>
-                
                 {savings > 0 && (
                   <div className="flex justify-between text-sm text-green-600">
                     <span>Savings</span>
                     <span>-${savings.toFixed(2)}</span>
                   </div>
                 )}
-                
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Shipping</span>
                   <span className="font-medium">
