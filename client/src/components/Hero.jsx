@@ -195,13 +195,13 @@ const Hero = () => {
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-4">
-              <span className="text-gray-900">Premium</span>
+              <span className="text-gray-900">State-Licensed</span>
               <br />
               <span className="bg-gradient-to-r from-[#2563EB] via-[#10B981] to-[#F59E0B] bg-clip-text text-transparent">
-                Peptides
+                FDA-Registered
               </span>
               <br />
-              <span className="text-gray-800">For Weight Loss</span>
+              <span className="text-gray-800">CFS Certified</span>
             </h1>
 
             <p className="text-gray-500 leading-relaxed mb-6 max-w-md">
