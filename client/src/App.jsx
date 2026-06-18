@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { CartProvider } from './context/CartContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import WhatsAppButton from './components/WhatsAppButton'; // ✅ AJOUT
 import Home from './pages/Home';
 import Peptides from './pages/Peptides';
 import PeptideBlends from './pages/PeptideBlends';
@@ -18,7 +19,7 @@ import Labs from './pages/Labs';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ProductDetail from './pages/ProductDetail';
 import CartPage from './pages/CartPage';
-import CheckoutPage from './pages/CheckoutPage'; // ✅ AJOUT
+import CheckoutPage from './pages/CheckoutPage';
 
 const AppContent = () => {
   const location = useLocation();
@@ -77,6 +78,9 @@ const AppContent = () => {
         </Routes>
       </main>
       <Footer />
+      
+      {/* ✅ BOUTON WHATSAPP SUR TOUTES LES PAGES */}
+      <WhatsAppButton />
     </div>
   );
 };
