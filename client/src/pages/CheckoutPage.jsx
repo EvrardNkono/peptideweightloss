@@ -22,6 +22,16 @@ import {
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
+// ✅ Configuration API
+const getApiUrl = () => {
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://peptideweightloss.vercel.app/api';
+  }
+  return 'http://localhost:5000/api';
+};
+
+const API_URL = getApiUrl();
+
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const { cart, getCartTotal, getItemCount, getCartSavings, clearCart } = useCart();
@@ -64,7 +74,6 @@ const CheckoutPage = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-    // Effacer l'erreur du champ
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -95,7 +104,6 @@ const CheckoutPage = () => {
     e.preventDefault();
     
     if (!validateForm()) {
-      // Scroll vers la première erreur
       const firstError = document.querySelector('.error-message');
       if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
@@ -103,7 +111,7 @@ const CheckoutPage = () => {
 
     setIsSubmitting(true);
 
-    // Construction des données de la commande
+    // ✅ Construction des données de la commande
     const orderData = {
       customer: {
         firstName: formData.firstName,
@@ -139,26 +147,59 @@ const CheckoutPage = () => {
     };
 
     try {
-      // ✅ Envoi des données via email (simulé ici)
-      console.log('📦 Order Data:', orderData);
-      
-      // Simulation d'envoi
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // ✅ Succès
-      setIsSuccess(true);
-      clearCart();
-      
-      // Redirection après 3 secondes
-      setTimeout(() => {
-        navigate('/order-confirmation', { state: { orderData } });
-      }, 3000);
+      // ✅ Envoi des données vers le backend
+      const response = await fetch(`${API_URL}/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // ✅ Envoi de l'email de notification à contact@peptidesweight-loss.com
+        await sendNotificationEmail(orderData);
+        
+        setIsSuccess(true);
+        clearCart();
+        
+        setTimeout(() => {
+          navigate('/order-confirmation', { state: { orderData } });
+        }, 3000);
+      } else {
+        setErrors({ submit: result.message || 'Order failed. Please try again.' });
+      }
       
     } catch (error) {
       console.error('Error submitting order:', error);
       setErrors({ submit: 'An error occurred. Please try again.' });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // ✅ Fonction pour envoyer l'email de notification à contact@peptidesweight-loss.com
+  const sendNotificationEmail = async (orderData) => {
+    try {
+      const response = await fetch(`${API_URL}/send-order-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: 'contact@peptidesweight-loss.com',
+          subject: `🛒 New Order from ${orderData.customer.firstName} ${orderData.customer.lastName}`,
+          orderData: orderData
+        }),
+      });
+
+      const result = await response.json();
+      console.log('📧 Email sent:', result);
+      return result;
+    } catch (error) {
+      console.error('Error sending email:', error);
     }
   };
 
