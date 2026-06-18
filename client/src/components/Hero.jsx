@@ -177,36 +177,20 @@ const Hero = () => {
             </div>
           </div>
 
-          {/* TEXTE - Version CORRECTE avec le titre original */}
+          {/* TEXTE - NOUVEAU TITRE */}
           <div className="order-1 lg:order-2">
-            {/* ✅ Badges en haut (tags) - NE PAS LES METTRE DANS LE TITRE */}
-            <div className="flex flex-wrap gap-2 mb-6">
-              <div className="inline-flex items-center gap-1.5 bg-[#2563EB]/10 rounded-full px-3 py-1">
-                <Shield size={12} className="text-[#2563EB]" />
-                <span className="text-xs font-medium text-[#2563EB]">State-Licensed</span>
-              </div>
-              <div className="inline-flex items-center gap-1.5 bg-[#10B981]/10 rounded-full px-3 py-1">
-                <Award size={12} className="text-[#10B981]" />
-                <span className="text-xs font-medium text-[#10B981]">FDA-Registered</span>
-              </div>
-              <div className="inline-flex items-center gap-1.5 bg-[#F59E0B]/10 rounded-full px-3 py-1">
-                <Shield size={12} className="text-[#F59E0B]" />
-                <span className="text-xs font-medium text-[#F59E0B]">CFS Certified</span>
-              </div>
-            </div>
-
-            {/* ✅ TITRE ORIGINAL - Premium Peptides For Weight Loss */}
+            {/* ✅ NOUVEAU TITRE - State-Licensed, FDA-Registered, CFS Certified */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-4">
-              <span className="text-gray-900">Premium</span>
+              <span className="text-gray-900">State-Licensed,</span>
               <br />
               <span className="bg-gradient-to-r from-[#2563EB] via-[#10B981] to-[#F59E0B] bg-clip-text text-transparent">
-                Peptides
+                FDA-Registered,
               </span>
               <br />
-              <span className="text-gray-800">For Weight Loss</span>
+              <span className="text-gray-800">CFS Certified</span>
             </h1>
 
-            {/* ✅ SOUS-TITRE - Nouveau contenu */}
+            {/* ✅ SOUS-TITRE */}
             <p className="text-gray-500 leading-relaxed mb-6 max-w-md">
               Your fully compliant corporate distributor for domestic and international operations. Trusted by over 290 clinics worldwide.
             </p>
