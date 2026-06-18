@@ -814,7 +814,7 @@ const AdminDashboard = ({ onLogout, token }) => {
   );
 };
 
-// ✅ ProductModal avec TOGGLE "Available/Out of Stock" et champ "Likes"
+// ✅ ProductModal avec TOGGLE "Available/Out of Stock", "Likes" et "Reviews"
 const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) => {
   const [formData, setFormData] = useState({
     id: product?._id || product?.id || null,
@@ -824,13 +824,14 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
     description: product?.description || '',
     price: product?.price || '',
     category: product?.category || '',
-    stock: product?.stock || 0,  // 0 = Out of Stock, 1 = Available
+    stock: product?.stock || 0,
     type: product?.type || 'peptide',
     image: product?.image || '/images/pept.png',
     isPopular: product?.isPopular || false,
     isNew: product?.isNew || false,
     isBestSeller: product?.isBestSeller || false,
     likes: product?.likes || 0,
+    reviews: product?.reviews || 0,  // ✅ AJOUT DU CHAMP REVIEWS
   });
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
@@ -996,7 +997,7 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
             />
           </div>
 
-          {/* ✅ STOCK - Toggle Available/Out of Stock (remplace le champ stock numérique) */}
+          {/* ✅ STOCK - Toggle Available/Out of Stock */}
           <div className="border-t border-gray-100 pt-4">
             <label className="block text-sm font-medium text-gray-700 mb-3">
               <span className="flex items-center gap-2">
@@ -1029,6 +1030,28 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
             <p className="text-xs text-gray-400 mt-1">
               {formData.stock > 0 ? 'Le produit est disponible à la vente' : 'Le produit n\'est pas disponible'}
             </p>
+          </div>
+
+          {/* ✅ REVIEWS - Nombre d'avis */}
+          <div className="border-t border-gray-100 pt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              <span className="flex items-center gap-2">
+                <Star size={16} className="text-yellow-500" />
+                Number of Reviews
+              </span>
+              <span className="text-xs text-gray-400 font-normal block mt-1">
+                Nombre d'avis affichés sur le produit
+              </span>
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={formData.reviews}
+              onChange={(e) => setFormData({...formData, reviews: parseInt(e.target.value) || 0})}
+              className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-[#2563EB] outline-none"
+              placeholder="0"
+            />
           </div>
 
           {/* LIKES */}

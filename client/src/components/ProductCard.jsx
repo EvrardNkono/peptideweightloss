@@ -75,6 +75,27 @@ const ProductCard = ({
 
   const colors = colorClasses[color];
 
+  // ✅ Fonction pour afficher les étoiles
+  const renderStars = (rating) => {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+    
+    return (
+      <>
+        {[...Array(fullStars)].map((_, i) => (
+          <Star key={`full-${i}`} size={12} className="fill-[#F59E0B] text-[#F59E0B]" />
+        ))}
+        {hasHalfStar && (
+          <Star key="half" size={12} className="fill-[#F59E0B] text-[#F59E0B] opacity-50" />
+        )}
+        {[...Array(emptyStars)].map((_, i) => (
+          <Star key={`empty-${i}`} size={12} className="text-gray-300" />
+        ))}
+      </>
+    );
+  };
+
   const CardContent = () => (
     <>
       {/* BADGES */}
@@ -146,16 +167,18 @@ const ProductCard = ({
           </span>
         </div>
 
+        {/* ✅ Rating et Reviews */}
         <div className="flex items-center gap-2 mb-3">
           <div className="flex items-center gap-0.5">
-            <Star size={12} className="fill-[#F59E0B] text-[#F59E0B]" />
-            <span className="text-sm font-semibold text-gray-700">{rating}</span>
+            {renderStars(rating)}
           </div>
-          {reviews > 0 && (
-            <span className="text-xs text-gray-400">({reviews} reviews)</span>
-          )}
+          <span className="text-sm font-semibold text-gray-700">{rating}</span>
+          <span className="text-xs text-gray-400">
+            ({reviews} {reviews === 1 ? 'review' : 'reviews'})
+          </span>
         </div>
 
+        {/* Price */}
         <div className="flex items-baseline gap-2 mb-4">
           <span className="text-2xl font-bold text-gray-900">${price}</span>
           {oldPrice && (
@@ -219,10 +242,15 @@ const ProductCard = ({
             e.stopPropagation();
             if (onAddToCart) onAddToCart();
           }}
-          className={`w-full py-2.5 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${colors.bgLight} ${colors.text} hover:text-white hover:${colors.bg} group/btn`}
+          disabled={stock === 0}
+          className={`w-full py-2.5 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
+            stock > 0 
+              ? `${colors.bgLight} ${colors.text} hover:text-white hover:${colors.bg}`
+              : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+          } group/btn`}
         >
           <ShoppingCart size={16} className="transition-transform group-hover/btn:scale-110" />
-          Add to Cart
+          {stock > 0 ? 'Add to Cart' : 'Out of Stock'}
         </button>
 
         <div className="flex items-center justify-center gap-1 mt-3">

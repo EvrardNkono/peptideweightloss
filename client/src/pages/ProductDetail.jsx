@@ -43,6 +43,7 @@ const ProductDetail = () => {
   
   const [likesCount, setLikesCount] = useState(0);
   const [isLiking, setIsLiking] = useState(false);
+  const [hasLiked, setHasLiked] = useState(false);
   
   const token = localStorage.getItem('token');
 
@@ -124,6 +125,16 @@ const ProductDetail = () => {
       setSelectedImage(safeProduct.image);
       setLikesCount(safeProduct.likes || 0);
       
+      // ✅ Vérifier si l'utilisateur a déjà liké
+      if (token && productData.likedBy) {
+        try {
+          const userId = JSON.parse(atob(token.split('.')[1])).id;
+          setHasLiked(productData.likedBy.includes(userId));
+        } catch (e) {
+          console.error('Error parsing token:', e);
+        }
+      }
+      
       if (safeProduct.category) {
         fetchRelatedProducts(safeProduct.category);
       }
@@ -162,22 +173,34 @@ const ProductDetail = () => {
     }
   };
 
-  const handleAddLike = async () => {
-  if (isLiking) return;
-  setIsLiking(true);
-  
-  try {
-    const response = await axios.put(`${API_URL}/products/${id}/like`, {});
-    
-    if (response.data.success) {
-      setLikesCount(response.data.data.likes);
+  // ✅ TOGGLE LIKE
+  const handleToggleLike = async () => {
+    if (!token) {
+      alert('Please login to like this product');
+      return;
     }
-  } catch (error) {
-    console.error('Error adding like:', error);
-  } finally {
-    setIsLiking(false);
-  }
-};
+    
+    if (isLiking) return;
+    setIsLiking(true);
+    
+    try {
+      const response = await axios.put(
+        `${API_URL}/products/${id}/like`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      if (response.data.success) {
+        setLikesCount(response.data.data.likes);
+        setHasLiked(response.data.data.hasLiked);
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      alert('Failed to update like. Please try again.');
+    } finally {
+      setIsLiking(false);
+    }
+  };
 
   const handleAddToCart = () => {
     console.log('🛒 Adding to cart:', { productId: id, quantity });
@@ -213,6 +236,27 @@ const ProductDetail = () => {
       african: 'bg-orange-100 text-orange-800'
     };
     return colors[type] || 'bg-gray-100 text-gray-800';
+  };
+
+  // Fonction pour afficher les étoiles
+  const renderStars = (rating) => {
+    const fullStars = Math.floor(rating || 0);
+    const hasHalfStar = (rating || 0) % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+    
+    return (
+      <>
+        {[...Array(fullStars)].map((_, i) => (
+          <Star key={`full-${i}`} size={18} className="fill-yellow-400 text-yellow-400" />
+        ))}
+        {hasHalfStar && (
+          <Star key="half" size={18} className="fill-yellow-400 text-yellow-400 opacity-50" />
+        )}
+        {[...Array(emptyStars)].map((_, i) => (
+          <Star key={`empty-${i}`} size={18} className="text-gray-300" />
+        ))}
+      </>
+    );
   };
 
   if (loading) {
@@ -275,10 +319,9 @@ const ProductDetail = () => {
               />
             </div>
             
-            {/* ✅ Miniatures - UNIQUEMENT l'image du produit */}
+            {/* Miniatures - UNIQUEMENT l'image du produit */}
             <div className="grid grid-cols-4 gap-3">
               {product.image && product.image !== '/images/pept.png' ? (
-                // ✅ Si le produit a une vraie image, on l'affiche
                 <div
                   onClick={() => setSelectedImage(product.image)}
                   className={`bg-white rounded-xl overflow-hidden cursor-pointer border-2 transition-all ${
@@ -296,7 +339,6 @@ const ProductDetail = () => {
                   />
                 </div>
               ) : (
-                // ✅ Si le produit n'a PAS d'image, on affiche l'image par défaut
                 <div
                   onClick={() => setSelectedImage('/images/pept.png')}
                   className="bg-white rounded-xl overflow-hidden cursor-pointer border-2 border-[#2563EB] shadow-md"
@@ -347,16 +389,10 @@ const ProductDetail = () => {
 
             <h1 className="text-3xl font-bold text-gray-800 mb-2">{product.name}</h1>
             
-            {/* Rating & Likes */}
+            {/* Rating & Reviews & Likes */}
             <div className="flex items-center gap-4 mb-4 flex-wrap">
               <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    size={18}
-                    className={i < Math.floor(product.rating || 4.8) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
-                  />
-                ))}
+                {renderStars(product.rating || 4.8)}
               </div>
               <span className="text-sm text-gray-500">
                 {product.rating || 4.8} ({product.reviews || 0} reviews)
@@ -364,16 +400,18 @@ const ProductDetail = () => {
               
               {/* BOUTON LIKE */}
               <button
-                onClick={handleAddLike}
+                onClick={handleToggleLike}
                 disabled={isLiking}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  isLiking ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
-                } bg-blue-50 text-blue-600 hover:bg-blue-100`}
+                  hasLiked 
+                    ? 'bg-blue-500 text-white hover:bg-blue-600' 
+                    : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                } ${isLiking ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}`}
               >
                 {isLiking ? (
                   <Loader2 size={16} className="animate-spin" />
                 ) : (
-                  <ThumbsUp size={16} />
+                  <ThumbsUp size={16} className={hasLiked ? 'fill-white' : ''} />
                 )}
                 <span>{likesCount}</span>
               </button>
@@ -416,8 +454,8 @@ const ProductDetail = () => {
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Stock</span>
                 <span className={`font-medium ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
-  {product.stock > 0 ? '✅ Available' : '❌ Out of Stock'}
-</span>
+                  {product.stock > 0 ? '✅ Available' : '❌ Out of Stock'}
+                </span>
               </div>
             </div>
 
