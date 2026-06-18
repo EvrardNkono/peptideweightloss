@@ -1,5 +1,6 @@
 // src/components/Hero.jsx
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom'; // ✅ AJOUT
 import { ArrowRight, Shield, FlaskConical, CheckCircle, Award, ChevronLeft, ChevronRight } from 'lucide-react';
 import axios from 'axios';
 
@@ -15,7 +16,6 @@ const Hero = () => {
   const [loading, setLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
 
-  // ✅ Fonction pour obtenir l'URL complète de l'image
   const getImageUrl = (imageUrl) => {
     if (!imageUrl || imageUrl === '/images/pept.png') {
       return '/images/pept.png';
@@ -48,7 +48,6 @@ const Hero = () => {
     fetchHero();
   }, []);
 
-  // ✅ SLIDESHOW AUTOMATIQUE - Change d'image toutes les 4 secondes
   useEffect(() => {
     if (!heroData || heroData.images.length <= 1 || isPaused) return;
 
@@ -100,7 +99,6 @@ const Hero = () => {
               onMouseEnter={() => setIsPaused(true)}
               onMouseLeave={() => setIsPaused(false)}
             >
-              {/* Badges */}
               <div className="absolute top-4 left-4 z-20 bg-white/95 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-md flex items-center gap-1.5">
                 <FlaskConical size={12} className="text-[#2563EB]" />
                 <span className="text-xs font-semibold text-gray-700">LAB TESTED</span>
@@ -109,7 +107,6 @@ const Hero = () => {
                 <span className="text-xs font-bold text-[#10B981]">99% PURE</span>
               </div>
 
-              {/* Image principale avec carrousel - TAILLE FIXE */}
               <div className="relative flex items-center justify-center h-[420px]">
                 <img
                   src={currentImage}
@@ -119,7 +116,6 @@ const Hero = () => {
                   onError={(e) => { e.target.src = '/images/pept.png'; }}
                 />
                 
-                {/* Flèches de navigation si plusieurs images */}
                 {images.length > 1 && (
                   <>
                     <button
@@ -138,7 +134,6 @@ const Hero = () => {
                 )}
               </div>
 
-              {/* Indicateurs de navigation */}
               {images.length > 1 && (
                 <div className="flex justify-center gap-2 mt-4">
                   {images.map((_, index) => (
@@ -155,7 +150,6 @@ const Hero = () => {
                 </div>
               )}
 
-              {/* Barre de progression du slideshow */}
               {images.length > 1 && !isPaused && (
                 <div className="w-full h-0.5 bg-gray-200 rounded-full mt-2 overflow-hidden">
                   <div 
@@ -169,7 +163,6 @@ const Hero = () => {
               )}
             </div>
 
-            {/* Badge BEST SELLER */}
             <div className="absolute -right-4 sm:-right-6 top-8 z-30">
               <div className="bg-gradient-to-r from-[#F59E0B] to-[#D97706] rounded-full px-4 py-2 shadow-lg">
                 <span className="text-xs font-bold text-white whitespace-nowrap">BEST SELLER</span>
@@ -177,9 +170,8 @@ const Hero = () => {
             </div>
           </div>
 
-          {/* TEXTE - NOUVEAU TITRE */}
+          {/* TEXTE */}
           <div className="order-1 lg:order-2">
-            {/* ✅ NOUVEAU TITRE - State-Licensed, FDA-Registered, CFS Certified */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-4">
               <span className="text-gray-900">State-Licensed,</span>
               <br />
@@ -190,7 +182,6 @@ const Hero = () => {
               <span className="text-gray-800">CFS Certified</span>
             </h1>
 
-            {/* ✅ SOUS-TITRE */}
             <p className="text-gray-500 leading-relaxed mb-6 max-w-md">
               Your fully compliant corporate distributor for domestic and international operations. Trusted by over 290 clinics worldwide.
             </p>
@@ -210,10 +201,14 @@ const Hero = () => {
             </div>
 
             <div className="flex flex-wrap gap-4">
-              <button className="bg-gradient-to-r from-[#2563EB] to-[#10B981] text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/50">
+              {/* ✅ BOUTON SHOP NOW AVEC LINK */}
+              <Link
+                to="/marketplace"
+                className="bg-gradient-to-r from-[#2563EB] to-[#10B981] text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/50"
+              >
                 Shop Now
                 <ArrowRight size={16} />
-              </button>
+              </Link>
               <button className="border border-gray-300 bg-white text-gray-700 px-8 py-3 rounded-full font-semibold hover:border-[#2563EB] hover:text-[#2563EB] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300">
                 View Research
               </button>
@@ -237,7 +232,6 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* ✅ Animation CSS pour la barre de progression */}
       <style>{`
         @keyframes progress {
           from { width: 100%; }
