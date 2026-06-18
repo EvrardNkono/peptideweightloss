@@ -18,7 +18,8 @@ const getApiUrl = () => {
 const API_URL = getApiUrl();
 const BACKEND_URL = API_URL.replace('/api', '');
 
-const Home = () => {
+// ✅ AJOUT DE LA PROP onOpenMarketplace
+const Home = ({ onOpenMarketplace }) => {
   const [allProducts, setAllProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -95,7 +96,6 @@ const Home = () => {
     new: allProducts.filter(p => p.isNew).length,
   };
 
-  // ✅ onQuickView gardé, onAddToCart supprimé (ProductCard utilise le contexte directement)
   const handleQuickView = (product) => {
     console.log('Quick view:', product);
   };
@@ -137,8 +137,8 @@ const Home = () => {
 
   return (
     <div>
-      {/* Hero Section */}
-      <Hero />
+      {/* ✅ PASSER LA PROP À HERO */}
+      <Hero onOpenMarketplace={onOpenMarketplace} />
 
       {/* Features Section */}
       <section className="py-16 bg-white">
@@ -194,7 +194,6 @@ const Home = () => {
             </div>
           ) : (
             <>
-              {/* Filtres */}
               <div className="flex flex-wrap justify-center gap-3 mb-10">
                 <button
                   onClick={() => setActiveFilter('all')}
@@ -242,7 +241,6 @@ const Home = () => {
                 </button>
               </div>
 
-              {/* Titre dynamique */}
               <div className="flex items-center justify-center gap-3 mb-8">
                 <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${activeFilter === 'all' ? 'bg-gray-100 text-gray-700' : sectionInfo.badgeColor}`}>
                   {sectionInfo.icon}
@@ -251,7 +249,6 @@ const Home = () => {
                 </div>
               </div>
 
-              {/* Produits */}
               {filteredProducts.length === 0 ? (
                 <div className="text-center py-12 bg-white rounded-2xl">
                   <p className="text-gray-500">Aucun produit dans cette catégorie pour le moment.</p>
@@ -259,7 +256,6 @@ const Home = () => {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {filteredProducts.map((product) => (
-                    // ✅ onAddToCart retiré — ProductCard utilise useCart directement
                     <ProductCard
                       key={product.id}
                       id={product.id}
@@ -283,7 +279,6 @@ const Home = () => {
                 </div>
               )}
 
-              {/* Bouton View All */}
               <div className="text-center mt-12">
                 <Link
                   to="/marketplace"
