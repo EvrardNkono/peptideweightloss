@@ -1,4 +1,4 @@
-// src/pages/CheckoutPage.jsx - VERSION AVEC NODEMAILER
+// src/pages/CheckoutPage.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
@@ -78,7 +78,7 @@ const CheckoutPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // ✅ VERSION AVEC NODEMAILER
+  // ✅ VERSION AVEC URL COMPLETE VERCEL
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -91,7 +91,7 @@ const CheckoutPage = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/send-order-email', {
+      const response = await fetch('https://peptideweightloss.vercel.app/api/send-order-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
