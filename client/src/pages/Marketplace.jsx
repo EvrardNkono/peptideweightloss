@@ -88,6 +88,7 @@ const Marketplace = () => {
           isBestSeller: p.isBestSeller || false,
           isNew: p.isNew || false,
           image: getFullImageUrl(p.image),
+          stock: p.stock || 0 
         }));
         
         console.log('Produits formatés:', formattedProducts);
@@ -276,6 +277,7 @@ const Marketplace = () => {
                 isBestSeller={product.isBestSeller}
                 isPopular={product.isPopular}
                 isNew={product.isNew}
+                stock={product.stock}
                 onAddToCart={() => handleAddToCart(product)}
                 onQuickView={() => handleQuickView(product)}
               />

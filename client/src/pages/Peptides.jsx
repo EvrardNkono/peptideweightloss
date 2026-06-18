@@ -382,6 +382,7 @@ const Peptides = () => {
                     isBestSeller={product.isBestSeller || false}
                     isPopular={product.isPopular || false}
                     isNew={product.isNew || false}
+                    stock={product.stock}
                     onAddToCart={() => handleAddToCart(product)}
                     onQuickView={() => handleQuickView(product)}
                   />
