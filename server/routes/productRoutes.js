@@ -7,7 +7,7 @@ const {
   updateProduct, 
   deleteProduct,
   getBestSellers,
-  addLike  // ✅ IMPORT de la nouvelle fonction
+  addLike
 } = require('../controllers/productController');
 const { protect, admin } = require('../middleware/auth');
 
@@ -16,10 +16,11 @@ const router = express.Router();
 // Routes publiques
 router.get('/', getProducts);
 router.get('/bestsellers', getBestSellers);
-router.get('/:id', getProduct);
 
-// ✅ Route pour ajouter un like (protégée - utilisateur connecté)
-router.put('/:id/like', protect, addLike);
+// ✅ Like AVANT /:id et SANS protect
+router.put('/:id/like', addLike);
+
+router.get('/:id', getProduct);
 
 // Routes protégées (admin uniquement)
 router.post('/', protect, admin, createProduct);
