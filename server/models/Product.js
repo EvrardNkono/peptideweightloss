@@ -100,11 +100,7 @@ const productSchema = new mongoose.Schema({
     min: 0
   },
   
-  // ✅ NOUVEAU : Utilisateurs qui ont liké (pour limiter à 1 like par utilisateur)
-  likedBy: {
-    type: [String],  // Stocke les IDs des utilisateurs
-    default: []
-  }
+  
 });
 
 module.exports = mongoose.model('Product', productSchema);

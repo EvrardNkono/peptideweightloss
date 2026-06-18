@@ -163,31 +163,21 @@ const ProductDetail = () => {
   };
 
   const handleAddLike = async () => {
-    if (!token) {
-      alert('Please login to like this product');
-      return;
-    }
+  if (isLiking) return;
+  setIsLiking(true);
+  
+  try {
+    const response = await axios.put(`${API_URL}/products/${id}/like`, {});
     
-    if (isLiking) return;
-    setIsLiking(true);
-    
-    try {
-      const response = await axios.put(
-        `${API_URL}/products/${id}/like`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      if (response.data.success) {
-        setLikesCount(response.data.data.likes);
-      }
-    } catch (error) {
-      console.error('Error adding like:', error);
-      alert('Failed to add like. Please try again.');
-    } finally {
-      setIsLiking(false);
+    if (response.data.success) {
+      setLikesCount(response.data.data.likes);
     }
-  };
+  } catch (error) {
+    console.error('Error adding like:', error);
+  } finally {
+    setIsLiking(false);
+  }
+};
 
   const handleAddToCart = () => {
     console.log('🛒 Adding to cart:', { productId: id, quantity });
