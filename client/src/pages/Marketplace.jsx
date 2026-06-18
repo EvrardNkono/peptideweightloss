@@ -8,10 +8,8 @@ import {
   Package, MapPin, Loader2
 } from 'lucide-react';
 import axios from 'axios';
-// ✅ IMPORT DU COMPOSANT PRODUCTCARD
 import ProductCard from '../components/ProductCard';
 
-// ✅ CONFIGURATION AUTOMATIQUE DE L'URL BACKEND
 const getApiUrl = () => {
   if (process.env.NODE_ENV === 'production') {
     return 'https://peptideweightloss.vercel.app/api';
@@ -75,6 +73,7 @@ const Marketplace = () => {
         
         const formattedProducts = apiProducts.map((p, index) => ({
           _id: p._id || p.id || index,
+          id: p._id || p.id || index,
           name: p.name,
           dosage: p.dosage,
           purity: p.purity || '≥99%',
@@ -127,17 +126,9 @@ const Marketplace = () => {
     }
   };
 
-  // Fonction pour ajouter au panier
-  const handleAddToCart = (product) => {
-    console.log('Adding to cart:', product);
-    // TODO: Implémenter la logique du panier
-    alert(`Added ${product.name} to cart!`);
-  };
-
-  // Fonction pour la vue rapide
+  // ✅ Fonction pour la vue rapide (sans alerte)
   const handleQuickView = (product) => {
     console.log('Quick view:', product);
-    // TODO: Implémenter le modal de vue rapide
     navigate(`/product/${product._id}`);
   };
 
@@ -265,6 +256,7 @@ const Marketplace = () => {
               <ProductCard 
                 key={product._id}
                 id={product._id}
+                _id={product._id}
                 name={product.name}
                 dosage={product.dosage}
                 purity={product.purity}
@@ -278,7 +270,6 @@ const Marketplace = () => {
                 isPopular={product.isPopular}
                 isNew={product.isNew}
                 stock={product.stock}
-                onAddToCart={() => handleAddToCart(product)}
                 onQuickView={() => handleQuickView(product)}
               />
             ))}

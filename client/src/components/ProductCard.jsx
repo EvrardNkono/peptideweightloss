@@ -20,12 +20,12 @@ const ProductCard = ({
   isPopular = false,
   isNew = false,
   stock = 0,
-  onAddToCart,
   onQuickView
 }) => {
   const { addToCart } = useCart();
   const [isHovered, setIsHovered] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
 
   const productId = _id || id;
 
@@ -77,7 +77,6 @@ const ProductCard = ({
 
   const colors = colorClasses[color];
 
-  // Fonction pour afficher les étoiles
   const renderStars = (rating) => {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.5;
@@ -98,15 +97,12 @@ const ProductCard = ({
     );
   };
 
-  // ✅ Fonction pour ajouter au panier
+  // ✅ Toujours utiliser le contexte directement
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (stock <= 0) {
-      // Option: montrer une notification "Out of stock"
-      return;
-    }
+    if (stock <= 0) return;
     
     const productData = {
       id: productId,
@@ -116,13 +112,11 @@ const ProductCard = ({
       dosage: dosage,
     };
     
-    // Si une fonction onAddToCart est passée en prop, l'utiliser
-    if (onAddToCart) {
-      onAddToCart(productData);
-    } else {
-      // Sinon, utiliser le contexte
-      addToCart(productData);
-    }
+    addToCart(productData);
+
+    // Feedback visuel
+    setAddedToCart(true);
+    setTimeout(() => setAddedToCart(false), 2000);
   };
 
   const CardContent = () => (
@@ -269,13 +263,24 @@ const ProductCard = ({
           onClick={handleAddToCart}
           disabled={stock === 0}
           className={`w-full py-2.5 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
-            stock > 0 
-              ? `${colors.bgLight} ${colors.text} hover:text-white hover:${colors.bg}`
-              : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            stock === 0
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              : addedToCart
+                ? 'bg-green-500 text-white'
+                : `${colors.bgLight} ${colors.text} hover:text-white hover:${colors.bg}`
           } group/btn`}
         >
-          <ShoppingCart size={16} className="transition-transform group-hover/btn:scale-110" />
-          {stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+          {addedToCart ? (
+            <>
+              <Check size={16} />
+              Added!
+            </>
+          ) : (
+            <>
+              <ShoppingCart size={16} className="transition-transform group-hover/btn:scale-110" />
+              {stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+            </>
+          )}
         </button>
 
         <div className="flex items-center justify-center gap-1 mt-3">

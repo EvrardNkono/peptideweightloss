@@ -8,7 +8,6 @@ import AboutPeptideWeightLoss from '../components/AboutPeptideWeightLoss';
 import PeptideScience from '../components/PeptideScience';
 import { Shield, Truck, FlaskConical, Star, Loader2, TrendingUp, Sparkles } from 'lucide-react';
 
-// ✅ CONFIGURATION AUTOMATIQUE DE L'URL BACKEND
 const getApiUrl = () => {
   if (process.env.NODE_ENV === 'production') {
     return 'https://peptideweightloss.vercel.app/api';
@@ -96,10 +95,7 @@ const Home = () => {
     new: allProducts.filter(p => p.isNew).length,
   };
 
-  const handleAddToCart = (product) => {
-    console.log('Added to cart:', product);
-  };
-
+  // ✅ onQuickView gardé, onAddToCart supprimé (ProductCard utilise le contexte directement)
   const handleQuickView = (product) => {
     console.log('Quick view:', product);
   };
@@ -139,7 +135,6 @@ const Home = () => {
 
   const sectionInfo = getSectionInfo();
 
-  // ✅ UN SEUL RETURN — le loading est géré à l'intérieur
   return (
     <div>
       {/* Hero Section */}
@@ -192,7 +187,6 @@ const Home = () => {
             </p>
           </div>
 
-          {/* ✅ LOADING INLINE — ne bloque plus le Footer */}
           {loading ? (
             <div className="flex items-center justify-center gap-3 text-gray-500 py-20">
               <Loader2 size={24} className="animate-spin text-[#2563EB]" />
@@ -265,27 +259,26 @@ const Home = () => {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {filteredProducts.map((product) => (
-                    // Ajoute stock={product.stock} ici
-<ProductCard
-  key={product.id}
-  id={product.id}
-  _id={product.id} 
-  name={product.name}
-  dosage={product.dosage}
-  purity={product.purity}
-  price={product.price}
-  oldPrice={product.oldPrice}
-  rating={product.rating}
-  reviews={product.reviews}
-  category={product.category}
-  isBestSeller={product.isBestSeller}
-  isPopular={product.isPopular}
-  isNew={product.isNew}
-  image={getImageUrl(product.image)}
-  stock={product.stock}  // ✅ AJOUTER CETTE LIGNE
-  onAddToCart={() => handleAddToCart(product)}
-  onQuickView={() => handleQuickView(product)}
-/>
+                    // ✅ onAddToCart retiré — ProductCard utilise useCart directement
+                    <ProductCard
+                      key={product.id}
+                      id={product.id}
+                      _id={product.id}
+                      name={product.name}
+                      dosage={product.dosage}
+                      purity={product.purity}
+                      price={product.price}
+                      oldPrice={product.oldPrice}
+                      rating={product.rating}
+                      reviews={product.reviews}
+                      category={product.category}
+                      isBestSeller={product.isBestSeller}
+                      isPopular={product.isPopular}
+                      isNew={product.isNew}
+                      image={getImageUrl(product.image)}
+                      stock={product.stock}
+                      onQuickView={() => handleQuickView(product)}
+                    />
                   ))}
                 </div>
               )}
