@@ -7,8 +7,11 @@ import {
   Syringe, TestTube, Building2, Trophy, Star, Award, Store, 
   Package, Layers, FileText, Stethoscope, MapPin
 } from 'lucide-react';
+import CartDropdown from './CartDropdown'; // ✅ IMPORT
+import { useCart } from '../context/CartContext'; // ✅ IMPORT
 
 const Header = () => {
+  const { getItemCount } = useCart(); // ✅ AJOUT
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isShopDropdownOpen, setIsShopDropdownOpen] = useState(false);
   const [isLabsDropdownOpen, setIsLabsDropdownOpen] = useState(false);
@@ -16,6 +19,9 @@ const Header = () => {
   const timeoutRef = useRef(null);
   const labsTimeoutRef = useRef(null);
   const marketplaceTimeoutRef = useRef(null);
+
+  // ✅ Nombre d'articles dans le panier
+  const itemCount = getItemCount();
 
   // Gérer l'ouverture du dropdown Shop avec délai
   const handleShopMouseEnter = () => {
@@ -338,12 +344,8 @@ const Header = () => {
               <Search size={20} />
             </button>
             
-            <button className="text-gray-600 hover:text-[#2563EB] transition relative">
-              <ShoppingCart size={20} />
-              <span className="absolute -top-2 -right-2 bg-[#F59E0B] text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                0
-              </span>
-            </button>
+            {/* ✅ CART DROPDOWN - Remplacer l'icône ShoppingCart fixe */}
+            <CartDropdown />
             
             <button
               className="lg:hidden text-gray-600 hover:text-[#2563EB] transition"
