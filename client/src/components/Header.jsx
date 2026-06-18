@@ -7,23 +7,24 @@ import {
   Syringe, TestTube, Building2, Trophy, Star, Award, Store, 
   Package, Layers, FileText, Stethoscope, MapPin
 } from 'lucide-react';
-import CartDropdown from './CartDropdown'; // ✅ IMPORT
-import { useCart } from '../context/CartContext'; // ✅ IMPORT
+import CartDropdown from './CartDropdown';
+import { useCart } from '../context/CartContext';
 
-const Header = () => {
-  const { getItemCount } = useCart(); // ✅ AJOUT
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+const Header = ({ 
+  isMobileMenuOpen, 
+  setIsMobileMenuOpen,
+  isMarketplaceDropdownOpen,
+  setIsMarketplaceDropdownOpen
+}) => {
+  const { getItemCount } = useCart();
   const [isShopDropdownOpen, setIsShopDropdownOpen] = useState(false);
   const [isLabsDropdownOpen, setIsLabsDropdownOpen] = useState(false);
-  const [isMarketplaceDropdownOpen, setIsMarketplaceDropdownOpen] = useState(false);
   const timeoutRef = useRef(null);
   const labsTimeoutRef = useRef(null);
   const marketplaceTimeoutRef = useRef(null);
 
-  // ✅ Nombre d'articles dans le panier
   const itemCount = getItemCount();
 
-  // Gérer l'ouverture du dropdown Shop avec délai
   const handleShopMouseEnter = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setIsShopDropdownOpen(true);
@@ -35,7 +36,6 @@ const Header = () => {
     }, 150);
   };
 
-  // Gérer l'ouverture du dropdown Labs avec délai
   const handleLabsMouseEnter = () => {
     if (labsTimeoutRef.current) clearTimeout(labsTimeoutRef.current);
     setIsLabsDropdownOpen(true);
@@ -47,7 +47,6 @@ const Header = () => {
     }, 150);
   };
 
-  // Gérer l'ouverture du dropdown Marketplace avec délai
   const handleMarketplaceMouseEnter = () => {
     if (marketplaceTimeoutRef.current) clearTimeout(marketplaceTimeoutRef.current);
     setIsMarketplaceDropdownOpen(true);
@@ -59,7 +58,6 @@ const Header = () => {
     }, 150);
   };
 
-  // Nettoyer les timeouts
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -68,7 +66,6 @@ const Header = () => {
     };
   }, []);
 
-  // Liste des 10 laboratoires les plus crédibles
   const topLabs = [
     { name: 'Quanta', href: '/labs/quanta', rank: 1, icon: <Trophy size={16} className="text-yellow-500" />, description: 'Gold Standard' },
     { name: 'Viogen', href: '/labs/viogen', rank: 2, icon: <Star size={16} className="text-blue-500" />, description: 'Cult Favorite' },
@@ -82,7 +79,6 @@ const Header = () => {
     { name: 'Morph', href: '/labs/morph', rank: 10, icon: <Award size={16} />, description: 'High Potential' },
   ];
 
-  // Marketplace dropdown items
   const marketplaceItems = [
     { name: 'All Products', href: '/marketplace', icon: <Store size={16} />, description: 'Browse everything' },
     { name: 'SARMs', href: '/marketplace/sarms', icon: <FlaskConical size={16} />, description: 'Selective Androgen Receptor Modulators' },
@@ -124,7 +120,6 @@ const Header = () => {
     { name: 'CONTACT US', href: '/contact', hasDropdown: false },
   ];
 
-  // Fonction pour obtenir le gestionnaire d'événements selon le dropdown
   const getDropdownHandlers = (dropdownKey) => {
     switch(dropdownKey) {
       case 'shop':
@@ -138,7 +133,6 @@ const Header = () => {
     }
   };
 
-  // Fonction pour obtenir le contenu du dropdown selon le type
   const renderDropdownContent = (item) => {
     const handlers = getDropdownHandlers(item.dropdownKey);
     
@@ -293,7 +287,6 @@ const Header = () => {
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between py-4">
           
-          {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group cursor-pointer">
             <Activity className="text-[#2563EB] group-hover:text-[#10B981] transition-colors" size={28} />
             <div className="font-bold text-xl sm:text-2xl">
@@ -303,7 +296,6 @@ const Header = () => {
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-6">
             {navItems.map((item) => {
               const handlers = getDropdownHandlers(item.dropdownKey);
@@ -338,13 +330,11 @@ const Header = () => {
             })}
           </nav>
 
-          {/* Right Icons */}
           <div className="flex items-center gap-4">
             <button className="text-gray-600 hover:text-[#2563EB] transition">
               <Search size={20} />
             </button>
             
-            {/* ✅ CART DROPDOWN - Remplacer l'icône ShoppingCart fixe */}
             <CartDropdown />
             
             <button
@@ -357,7 +347,6 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Mobile Navigation */}
       {isMobileMenuOpen && (
         <div className="lg:hidden bg-white border-t border-gray-100 shadow-lg max-h-[80vh] overflow-y-auto">
           <div className="px-4 py-2 space-y-1">

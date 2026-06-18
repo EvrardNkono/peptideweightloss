@@ -1,10 +1,10 @@
 // src/App.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
-import WhatsAppButton from './components/WhatsAppButton'; // ✅ AJOUT
+import WhatsAppButton from './components/WhatsAppButton';
 import Home from './pages/Home';
 import Peptides from './pages/Peptides';
 import PeptideBlends from './pages/PeptideBlends';
@@ -27,15 +27,33 @@ const AppContent = () => {
   
   const isAdminPage = location.pathname.startsWith('/admin');
 
+  // ✅ ÉTATS PARTAGÉS POUR LES MENUS
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMarketplaceDropdownOpen, setIsMarketplaceDropdownOpen] = useState(false);
+
+  // ✅ FONCTION POUR OUVRIR LE BON MENU SELON L'APPAREIL
+  const openMarketplaceMenu = () => {
+    if (window.innerWidth < 1024) {
+      setIsMobileMenuOpen(true);
+    } else {
+      setIsMarketplaceDropdownOpen(true);
+    }
+  };
+
   console.log('📍 Pathname:', location.pathname);
   console.log('🏷️ isAdminPage:', isAdminPage);
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
+      <Header 
+        isMobileMenuOpen={isMobileMenuOpen}
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
+        isMarketplaceDropdownOpen={isMarketplaceDropdownOpen}
+        setIsMarketplaceDropdownOpen={setIsMarketplaceDropdownOpen}
+      />
       <main className="flex-grow">
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Home onOpenMarketplace={openMarketplaceMenu} />} />
           
           {/* ✅ ROUTES SHOP */}
           <Route path="/shop" element={<Marketplace />} />

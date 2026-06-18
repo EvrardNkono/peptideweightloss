@@ -1,6 +1,5 @@
 // src/components/Hero.jsx
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'; // ✅ AJOUT
 import { ArrowRight, Shield, FlaskConical, CheckCircle, Award, ChevronLeft, ChevronRight } from 'lucide-react';
 import axios from 'axios';
 
@@ -10,7 +9,8 @@ const API_URL = process.env.NODE_ENV === 'production'
 
 const BACKEND_URL = API_URL.replace('/api', '');
 
-const Hero = () => {
+// ✅ AJOUT DE LA PROP onOpenMarketplace
+const Hero = ({ onOpenMarketplace }) => {
   const [heroData, setHeroData] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -201,14 +201,14 @@ const Hero = () => {
             </div>
 
             <div className="flex flex-wrap gap-4">
-              {/* ✅ BOUTON SHOP NOW AVEC LINK */}
-              <Link
-                to="/marketplace"
+              {/* ✅ BOUTON SHOP NOW - Appelle onOpenMarketplace */}
+              <button
+                onClick={onOpenMarketplace}
                 className="bg-gradient-to-r from-[#2563EB] to-[#10B981] text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/50"
               >
                 Shop Now
                 <ArrowRight size={16} />
-              </Link>
+              </button>
               <button className="border border-gray-300 bg-white text-gray-700 px-8 py-3 rounded-full font-semibold hover:border-[#2563EB] hover:text-[#2563EB] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300">
                 View Research
               </button>
