@@ -18,7 +18,7 @@ import {
 const CONTACT_EMAIL = 'info@peptidesweight-loss.com';
 const CONTACT_PHONE = '+1 (315) 746-7760';
 const CONTACT_PHONE_RAW = '+13157467760';
-const CONTACT_ADDRESS = '123 Research Blvd, Lab City, CA 90210';
+const CONTACT_ADDRESS = '';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
