@@ -189,7 +189,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* Contact - MIS À JOUR AVEC LES VRAIES INFORMATIONS */}
           <div>
             <h4 className="text-sm font-semibold uppercase tracking-wider text-gray-400 mb-4">
               Contact Us
@@ -197,11 +197,15 @@ const Footer = () => {
             <ul className="space-y-3">
               <li className="flex items-start gap-3 text-sm text-gray-400">
                 <Mail size={16} className="text-[#2563EB] mt-0.5 flex-shrink-0" />
-                <span>support@peptideweightloss.com</span>
+                <a href="mailto:info@peptidesweight-loss.com" className="hover:text-white transition-colors">
+                  info@peptidesweight-loss.com
+                </a>
               </li>
               <li className="flex items-start gap-3 text-sm text-gray-400">
                 <Phone size={16} className="text-[#10B981] mt-0.5 flex-shrink-0" />
-                <span>+1 (555) 123-4567</span>
+                <a href="tel:+13157467760" className="hover:text-white transition-colors">
+                  +1 (315) 746-7760
+                </a>
               </li>
               <li className="flex items-start gap-3 text-sm text-gray-400">
                 <MapPin size={16} className="text-[#F59E0B] mt-0.5 flex-shrink-0" />
