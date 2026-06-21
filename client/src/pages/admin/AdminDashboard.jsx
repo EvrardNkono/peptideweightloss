@@ -30,10 +30,15 @@ import {
   TrendingUp,
   Sparkles,
   Image as ImageIcon,
-  Heart
+  Heart,
+  BookOpen,
+  Calendar,
+  User,
+  Tag
 } from 'lucide-react';
 import axios from 'axios';
 import AdminHero from './AdminHero';
+import AdminBlog from './AdminBlog';
 
 // ✅ AUTOMATIC BACKEND URL CONFIGURATION
 const getApiUrl = () => {
@@ -330,7 +335,7 @@ const AdminDashboard = ({ onLogout, token }) => {
               <Activity size={28} />
               <div>
                 <h1 className="text-xl font-bold">Admin Dashboard</h1>
-                <p className="text-white/70 text-sm">Manage products, orders, users and prescriptions</p>
+                <p className="text-white/70 text-sm">Manage products, orders, users, prescriptions and blog</p>
               </div>
             </div>
             <button
@@ -361,9 +366,9 @@ const AdminDashboard = ({ onLogout, token }) => {
           ))}
         </div>
 
-        {/* Tabs */}
+        {/* Tabs - AJOUT DE L'ONGLET BLOG */}
         <div className="flex gap-2 mb-6 border-b border-gray-200 overflow-x-auto">
-          {['products', 'orders', 'users', 'prescriptions', 'hero'].map((tab) => (
+          {['products', 'orders', 'users', 'prescriptions', 'blog', 'hero'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -373,6 +378,7 @@ const AdminDashboard = ({ onLogout, token }) => {
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
+              {tab === 'blog' && <BookOpen size={16} />}
               {tab === 'hero' && <ImageIcon size={16} />}
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
@@ -686,6 +692,11 @@ const AdminDashboard = ({ onLogout, token }) => {
               </div>
             )}
           </div>
+        )}
+
+        {/* BLOG TAB - NOUVEAU */}
+        {activeTab === 'blog' && (
+          <AdminBlog token={token} />
         )}
 
         {/* HERO TAB */}

@@ -45,6 +45,7 @@ app.get('/', (req, res) => {
       orders: '/api/orders',
       users: '/api/users',
       prescriptions: '/api/prescriptions',
+      blog: '/api/blog-posts',
       upload: '/api/upload',
       hero: '/api/hero'
     },
@@ -117,13 +118,18 @@ ${'='.repeat(40)}
   }
 });
 
-// Mount routes
+// ============================================================
+// ✅ MOUNT ROUTES
+// ============================================================
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/prescriptions', require('./routes/prescriptionRoutes'));
 app.use('/api/hero', require('./routes/heroRoutes'));
+
+// ✅ BLOG ROUTES - NOUVEAU
+app.use('/api/blog-posts', require('./routes/blog'));
 
 // ✅ Image upload route avec Cloudinary
 app.post('/api/upload', upload.single('image'), (req, res) => {
@@ -146,4 +152,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
   console.log(`📧 Email route: POST /api/send-order-email`);
+  console.log(`📝 Blog routes: /api/blog-posts`);
 });

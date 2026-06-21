@@ -1,5 +1,5 @@
 // src/pages/Blog.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Search,
@@ -18,139 +18,49 @@ import {
   Eye,
   Heart,
   Share2,
-  Filter
+  Filter,
+  Loader2
 } from 'lucide-react';
+import axios from 'axios';
+
+const getApiUrl = () => {
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://peptideweightloss.vercel.app/api';
+  }
+  return 'http://localhost:5000/api';
+};
+
+const API_URL = getApiUrl();
 
 const Blog = () => {
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('newest');
+  const [error, setError] = useState('');
 
   // ============================================================
-  // BLOG POSTS DATA
+  // FETCH POSTS FROM API
   // ============================================================
-  const posts = [
-    {
-      id: 1,
-      title: 'The Science Behind GLP-1 Agonists for Weight Loss',
-      excerpt: 'Discover how GLP-1 receptor agonists work at the molecular level to regulate appetite, slow gastric emptying, and promote sustainable weight loss in clinical research.',
-      category: 'GLP-1 Agonists',
-      author: 'Dr. Sarah Thompson',
-      authorRole: 'PhD in Molecular Biology',
-      date: 'June 15, 2026',
-      readTime: '8 min read',
-      views: 1247,
-      image: '/images/blog/glp1-science.jpg',
-      tags: ['GLP-1', 'Weight Loss', 'Peptide Research', 'Metabolism'],
-      featured: true,
-      popular: true
-    },
-    {
-      id: 2,
-      title: 'Peptide Blends: Synergistic Effects in Metabolic Health',
-      excerpt: 'Explore the potential of combining multiple peptides to achieve enhanced therapeutic outcomes in metabolic disorders, obesity, and insulin resistance research.',
-      category: 'Peptide Blends',
-      author: 'Dr. Michael Chen',
-      authorRole: 'PhD in Pharmacology',
-      date: 'June 10, 2026',
-      readTime: '6 min read',
-      views: 893,
-      image: '/images/blog/peptide-blends.jpg',
-      tags: ['Peptide Blends', 'Metabolic Health', 'Synergy', 'Research'],
-      featured: false,
-      popular: true
-    },
-    {
-      id: 3,
-      title: 'Understanding Growth Hormone Secretagogues in Research',
-      excerpt: 'A comprehensive overview of GHS and their role in stimulating endogenous growth hormone release for anti-aging and muscle preservation studies.',
-      category: 'Growth Hormones',
-      author: 'Dr. Emily Rodriguez',
-      authorRole: 'PhD in Endocrinology',
-      date: 'June 5, 2026',
-      readTime: '7 min read',
-      views: 1056,
-      image: '/images/blog/growth-hormones.jpg',
-      tags: ['Growth Hormones', 'GHS', 'Anti-Aging', 'Muscle'],
-      featured: false,
-      popular: false
-    },
-    {
-      id: 4,
-      title: 'BPC-157 and TB-500: The Healing Peptide Duo',
-      excerpt: 'An in-depth look at the regenerative potential of BPC-157 and TB-500 peptides in tissue repair, inflammation reduction, and musculoskeletal recovery.',
-      category: 'Healing Peptides',
-      author: 'Dr. James Park',
-      authorRole: 'PhD in Cell Biology',
-      date: 'May 28, 2026',
-      readTime: '9 min read',
-      views: 1562,
-      image: '/images/blog/healing-peptides.jpg',
-      tags: ['BPC-157', 'TB-500', 'Healing', 'Tissue Repair'],
-      featured: true,
-      popular: true
-    },
-    {
-      id: 5,
-      title: 'SARMs vs. Peptides: What Researchers Need to Know',
-      excerpt: 'A comparative analysis of SARMs and peptides in clinical research, highlighting mechanisms, applications, and key differences for informed study design.',
-      category: 'SARMs',
-      author: 'Dr. Amanda Wright',
-      authorRole: 'PhD in Sports Medicine',
-      date: 'May 20, 2026',
-      readTime: '10 min read',
-      views: 2103,
-      image: '/images/blog/sarms-vs-peptides.jpg',
-      tags: ['SARMs', 'Peptides', 'Research', 'Comparison'],
-      featured: false,
-      popular: true
-    },
-    {
-      id: 6,
-      title: 'Optimizing Peptide Stability and Storage for Research',
-      excerpt: 'Essential guidelines for peptide handling, reconstitution, and long-term storage to maintain structural integrity and bioactivity in laboratory settings.',
-      category: 'Research Guides',
-      author: 'Dr. David Kim',
-      authorRole: 'PhD in Biochemistry',
-      date: 'May 15, 2026',
-      readTime: '5 min read',
-      views: 678,
-      image: '/images/blog/peptide-storage.jpg',
-      tags: ['Storage', 'Stability', 'Lab Techniques', 'Research'],
-      featured: false,
-      popular: false
-    },
-    {
-      id: 7,
-      title: 'The Future of Peptide Therapeutics in Metabolic Medicine',
-      excerpt: 'Exploring upcoming peptide-based therapies and their potential to revolutionize the treatment of metabolic syndrome, diabetes, and obesity.',
-      category: 'Research Trends',
-      author: 'Dr. Rachel Lee',
-      authorRole: 'PhD in Metabolism',
-      date: 'May 8, 2026',
-      readTime: '7 min read',
-      views: 934,
-      image: '/images/blog/future-peptides.jpg',
-      tags: ['Future', 'Therapeutics', 'Innovation', 'Research'],
-      featured: false,
-      popular: false
-    },
-    {
-      id: 8,
-      title: 'Semaglutide vs. Tirzepatide: A Comparative Research Review',
-      excerpt: 'A detailed comparison of two leading GLP-1 receptor agonists, examining their mechanisms, efficacy, and applications in metabolic research.',
-      category: 'GLP-1 Agonists',
-      author: 'Dr. Robert Yang',
-      authorRole: 'PhD in Clinical Research',
-      date: 'May 1, 2026',
-      readTime: '11 min read',
-      views: 2876,
-      image: '/images/blog/semaglutide-vs-tirzepatide.jpg',
-      tags: ['Semaglutide', 'Tirzepatide', 'GLP-1', 'Comparison'],
-      featured: false,
-      popular: true
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const fetchPosts = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await axios.get(`${API_URL}/blog-posts`);
+      const postsData = res.data.data || res.data || [];
+      setPosts(postsData);
+    } catch (error) {
+      console.error('Error fetching blog posts:', error);
+      setError('Failed to load blog posts. Please try again later.');
+      setPosts([]);
     }
-  ];
+    setLoading(false);
+  };
 
   // ============================================================
   // FILTER AND SEARCH LOGIC
@@ -159,21 +69,58 @@ const Blog = () => {
 
   const filteredPosts = posts
     .filter(post => {
-      const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           post.excerpt.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           post.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesSearch = post.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           post.excerpt?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           post.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesCategory = selectedCategory === 'All' || post.category === selectedCategory;
       return matchesSearch && matchesCategory;
     })
     .sort((a, b) => {
-      if (sortBy === 'newest') return new Date(b.date) - new Date(a.date);
-      if (sortBy === 'oldest') return new Date(a.date) - new Date(b.date);
-      if (sortBy === 'popular') return b.views - a.views;
+      if (sortBy === 'newest') return new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date);
+      if (sortBy === 'oldest') return new Date(a.createdAt || a.date) - new Date(b.createdAt || b.date);
+      if (sortBy === 'popular') return (b.views || 0) - (a.views || 0);
       return 0;
     });
 
   // Featured posts (top 2)
   const featuredPosts = posts.filter(p => p.featured).slice(0, 2);
+
+  // ============================================================
+  // LOADING STATE
+  // ============================================================
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 size={48} className="mx-auto text-[#2563EB] animate-spin mb-4" />
+          <p className="text-gray-500">Loading articles...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ============================================================
+  // ERROR STATE
+  // ============================================================
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center max-w-md px-4">
+          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertCircle size={40} className="text-red-500" />
+          </div>
+          <h3 className="text-xl font-bold text-gray-800 mb-2">Oops! Something went wrong</h3>
+          <p className="text-gray-500">{error}</p>
+          <button
+            onClick={fetchPosts}
+            className="mt-4 px-6 py-2 bg-[#2563EB] text-white rounded-xl hover:bg-[#1E40AF] transition"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -204,6 +151,15 @@ const Blog = () => {
             The latest scientific developments, research findings, and expert perspectives 
             on peptide therapeutics and metabolic health.
           </p>
+          
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <span className="bg-white/10 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full border border-white/20">
+              {posts.length} Articles
+            </span>
+            <span className="bg-white/10 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full border border-white/20">
+              {categories.length - 1} Categories
+            </span>
+          </div>
         </div>
         
         <div className="absolute bottom-0 left-0 right-0">
@@ -231,19 +187,28 @@ const Blog = () => {
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {featuredPosts.map((post) => (
-                <Link key={post.id} to={`/blog/${post.id}`} className="group">
+                <Link key={post._id || post.id} to={`/blog/${post._id || post.id}`} className="group">
                   <div className="relative rounded-2xl overflow-hidden bg-gray-900 h-[320px] shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                     <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent z-10" />
-                    <div className="absolute inset-0 bg-gray-700 flex items-center justify-center text-gray-500">
-                      <FlaskConical size={48} className="opacity-20" />
-                    </div>
+                    {post.image ? (
+                      <img 
+                        src={post.image} 
+                        alt={post.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => { e.target.src = ''; }}
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-gray-700 flex items-center justify-center text-gray-500">
+                        <FlaskConical size={48} className="opacity-20" />
+                      </div>
+                    )}
                     <div className="absolute top-4 left-4 z-20">
                       <span className="bg-[#2563EB]/20 backdrop-blur-sm text-[#2563EB] text-xs font-semibold px-3 py-1 rounded-full border border-[#2563EB]/30">
                         {post.category}
                       </span>
                     </div>
                     <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
-                      <h3 className="text-xl font-bold text-white mb-2 group-hover:text-[#2563EB] transition">
+                      <h3 className="text-xl font-bold text-white mb-2 group-hover:text-[#2563EB] transition line-clamp-2">
                         {post.title}
                       </h3>
                       <p className="text-gray-300 text-sm line-clamp-2 mb-3">{post.excerpt}</p>
@@ -252,10 +217,10 @@ const Blog = () => {
                           <User size={12} /> {post.author}
                         </span>
                         <span className="flex items-center gap-1">
-                          <Calendar size={12} /> {post.date}
+                          <Calendar size={12} /> {post.date || new Date(post.createdAt).toLocaleDateString()}
                         </span>
                         <span className="flex items-center gap-1">
-                          <Clock size={12} /> {post.readTime}
+                          <Clock size={12} /> {post.readTime || '5 min read'}
                         </span>
                       </div>
                     </div>
@@ -331,57 +296,80 @@ const Blog = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredPosts.map((post) => (
-                <article key={post.id} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100">
-                  <Link to={`/blog/${post.id}`}>
-                    <div className="h-48 bg-gray-200 relative flex items-center justify-center">
-                      <FlaskConical size={36} className="text-gray-400" />
-                      {post.popular && (
-                        <span className="absolute top-3 right-3 bg-gradient-to-r from-[#F59E0B] to-[#F97316] text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1">
-                          <TrendingUp size={12} /> Popular
+              {filteredPosts.map((post) => {
+                const postId = post._id || post.id;
+                const isPopular = (post.views || 0) > 1000;
+                
+                return (
+                  <article key={postId} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100">
+                    <Link to={`/blog/${postId}`}>
+                      <div className="h-48 bg-gray-200 relative flex items-center justify-center">
+                        {post.image ? (
+                          <img 
+                            src={post.image} 
+                            alt={post.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => { e.target.src = ''; }}
+                          />
+                        ) : (
+                          <FlaskConical size={36} className="text-gray-400" />
+                        )}
+                        {isPopular && (
+                          <span className="absolute top-3 right-3 bg-gradient-to-r from-[#F59E0B] to-[#F97316] text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                            <TrendingUp size={12} /> Popular
+                          </span>
+                        )}
+                        {post.featured && (
+                          <span className="absolute top-3 right-3 bg-[#2563EB] text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                            <Star size={12} /> Featured
+                          </span>
+                        )}
+                        <span className="absolute top-3 left-3 bg-[#2563EB]/90 text-white text-[10px] font-semibold px-2.5 py-1 rounded-full">
+                          {post.category}
                         </span>
-                      )}
-                      <span className="absolute top-3 left-3 bg-[#2563EB]/90 text-white text-[10px] font-semibold px-2.5 py-1 rounded-full">
-                        {post.category}
-                      </span>
-                    </div>
-                  </Link>
-                  
-                  <div className="p-5">
-                    <Link to={`/blog/${post.id}`}>
-                      <h3 className="text-lg font-bold text-gray-800 mb-2 group-hover:text-[#2563EB] transition line-clamp-2">
-                        {post.title}
-                      </h3>
+                      </div>
                     </Link>
                     
-                    <p className="text-gray-500 text-sm line-clamp-2 mb-3">{post.excerpt}</p>
-                    
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {post.tags.slice(0, 3).map((tag) => (
-                        <span key={tag} className="text-[10px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-                    
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                      <div>
-                        <p className="text-xs font-medium text-gray-700">{post.author}</p>
-                        <div className="flex items-center gap-3 text-[10px] text-gray-400">
-                          <span className="flex items-center gap-1"><Calendar size={10} /> {post.date}</span>
-                          <span className="flex items-center gap-1"><Clock size={10} /> {post.readTime}</span>
-                        </div>
-                      </div>
-                      <Link
-                        to={`/blog/${post.id}`}
-                        className="text-[#2563EB] hover:text-[#1E40AF] transition"
-                      >
-                        <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                    <div className="p-5">
+                      <Link to={`/blog/${postId}`}>
+                        <h3 className="text-lg font-bold text-gray-800 mb-2 group-hover:text-[#2563EB] transition line-clamp-2">
+                          {post.title}
+                        </h3>
                       </Link>
+                      
+                      <p className="text-gray-500 text-sm line-clamp-2 mb-3">{post.excerpt}</p>
+                      
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {post.tags?.slice(0, 3).map((tag) => (
+                          <span key={tag} className="text-[10px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                      
+                      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                        <div>
+                          <p className="text-xs font-medium text-gray-700">{post.author}</p>
+                          <div className="flex items-center gap-3 text-[10px] text-gray-400">
+                            <span className="flex items-center gap-1">
+                              <Calendar size={10} /> {post.date || new Date(post.createdAt).toLocaleDateString()}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock size={10} /> {post.readTime || '5 min read'}
+                            </span>
+                          </div>
+                        </div>
+                        <Link
+                          to={`/blog/${postId}`}
+                          className="text-[#2563EB] hover:text-[#1E40AF] transition"
+                        >
+                          <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                        </Link>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              ))}
+                  </article>
+                );
+              })}
             </div>
           )}
         </div>
