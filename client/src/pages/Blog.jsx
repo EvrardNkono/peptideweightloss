@@ -19,7 +19,7 @@ import {
   Heart,
   Share2,
   Filter,
-  Loader2,
+  
     AlertCircle,  // ← AJOUTER
   Star,         // ← AJOUTER
   Loader2       // ← AJOUTER
