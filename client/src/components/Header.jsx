@@ -5,7 +5,7 @@ import {
   Search, User, ShoppingCart, Menu, X, Activity, ChevronDown, 
   FlaskConical, Beaker, FlaskRound as Flask, Microscope, Pill, 
   Syringe, TestTube, Building2, Trophy, Star, Award, Store, 
-  Package, Layers, FileText, Stethoscope, MapPin
+  Package, Layers, FileText, Stethoscope, MapPin, BookOpen
 } from 'lucide-react';
 import CartDropdown from './CartDropdown';
 import { useCart } from '../context/CartContext';
@@ -89,6 +89,9 @@ const Header = ({
     { name: 'African Products', href: '/marketplace/african-products', icon: <MapPin size={16} className="text-[#10B981]" />, description: 'Premium African products' },
   ];
 
+  // ============================================================
+  // NAVIGATION ITEMS - AJOUT DU BLOG
+  // ============================================================
   const navItems = [
     { 
       name: 'BUY PEPTIDES', 
@@ -116,6 +119,7 @@ const Header = ({
     },
     { name: 'PRESCRIPTION', href: '/prescription', hasDropdown: false },
     { name: 'ABOUT US', href: '/about', hasDropdown: false },
+    { name: 'BLOG', href: '/blog', hasDropdown: false }, // ← AJOUT DU BLOG
     { name: 'KNOWLEDGE CENTER', href: '/knowledge', hasDropdown: false },
     { name: 'CONTACT US', href: '/contact', hasDropdown: false },
   ];

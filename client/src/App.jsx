@@ -20,6 +20,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import ProductDetail from './pages/ProductDetail';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
+import Blog from './pages/Blog'; // ✅ IMPORT DU BLOG
 
 const AppContent = () => {
   const location = useLocation();
@@ -83,6 +84,12 @@ const AppContent = () => {
           <Route path="/prescription" element={<Prescription />} />
           <Route path="/labs" element={<Labs />} />
           <Route path="/labs/:labId" element={<Labs />} />
+          
+          {/* ✅ BLOG ROUTES */}
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:id" element={<Blog />} /> {/* Pour les articles individuels (à créer plus tard) */}
+          
+          {/* ✅ ADMIN ROUTES */}
           <Route path="/admin/*" element={<AdminDashboard onLogout={() => {}} token={token} />} />
           
           {/* ✅ ROUTE 404 - FALLBACK */}
