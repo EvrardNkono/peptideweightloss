@@ -9,17 +9,11 @@ import {
   CheckCircle, 
   AlertCircle,
   MessageCircle,
-  Globe,
-  Shield,
-  FlaskConical,
-  Beaker,
-  Atom,
   Microscope,
   Briefcase,
-  
-  
   Camera
 } from 'lucide-react';
+import { CONTACT_CONFIG } from '../config/contact';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -29,37 +23,114 @@ const Contact = () => {
     message: ''
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState('');
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     if (errors[e.target.name]) {
       setErrors({ ...errors, [e.target.name]: '' });
     }
+    if (submitError) setSubmitError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validation
     const newErrors = {};
-    if (!formData.name) newErrors.name = 'Name is required';
-    if (!formData.email) newErrors.email = 'Email is required';
-    if (!formData.message) newErrors.message = 'Message is required';
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
+    if (!formData.message.trim()) newErrors.message = 'Message is required';
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-    
-    setIsSubmitted(true);
-    setTimeout(() => setIsSubmitted(false), 5000);
-    setFormData({ name: '', email: '', subject: '', message: '' });
+
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      // ✅ On utilise la MÊME API que le checkout
+      // On mappe les champs du contact vers le format attendu par l'API
+      const response = await fetch('https://peptideweightloss.vercel.app/api/send-order-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          // On utilise les champs existants de l'API
+          formData: {
+            firstName: formData.name,        // name → firstName
+            lastName: '',                    // champ existant mais vide
+            email: formData.email,           // email → email
+            phone: '',                       // champ existant mais vide
+            address: formData.message,       // message → address (pour que ce soit envoyé)
+            // On peut aussi ajouter le sujet dans un champ existant
+            orderNotes: `Subject: ${formData.subject || 'N/A'}\n\n${formData.message}`,
+            // Champs obligatoires vides
+            apartment: '',
+            city: '',
+            state: '',
+            zipCode: '',
+            country: 'US',
+            agreeTerms: true,
+          },
+          // On envoie un panier vide pour ne pas casser l'API
+          cart: [],
+          total: 0,
+          shipping: 0,
+          grandTotal: 0
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setIsSubmitted(true);
+        setFormData({ name: '', email: '', subject: '', message: '' });
+        setTimeout(() => setIsSubmitted(false), 5000);
+      } else {
+        setSubmitError(result.message || 'Failed to send message. Please try again.');
+      }
+    } catch (error) {
+      console.error('❌ Error sending contact form:', error);
+      setSubmitError('Network error. Please check your connection and try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const contactInfo = [
-    { icon: <Mail size={20} />, title: 'Email Us', value: 'support@peptideweightloss.com', href: 'mailto:support@peptideweightloss.com', color: '#2563EB' },
-    { icon: <Phone size={20} />, title: 'Call Us', value: '+1 (888) 123-4567', href: 'tel:+18881234567', color: '#10B981' },
-    { icon: <MapPin size={20} />, title: 'Visit Us', value: '123 Research Drive, Wilmington, DE 19801, USA', color: '#F59E0B' },
-    { icon: <Clock size={20} />, title: 'Hours', value: 'Mon-Fri: 9AM-6PM EST | 24/7 Email Support', color: '#2563EB' }
+    { 
+      icon: <Mail size={20} />, 
+      title: 'Email Us', 
+      value: CONTACT_CONFIG.email, 
+      href: `mailto:${CONTACT_CONFIG.email}`, 
+      color: '#2563EB' 
+    },
+    { 
+      icon: <Phone size={20} />, 
+      title: 'Call Us', 
+      value: CONTACT_CONFIG.phone, 
+      href: `tel:${CONTACT_CONFIG.phoneRaw}`, 
+      color: '#10B981' 
+    },
+    { 
+      icon: <MapPin size={20} />, 
+      title: 'Visit Us', 
+      value: CONTACT_CONFIG.address, 
+      color: '#F59E0B' 
+    },
+    { 
+      icon: <Clock size={20} />, 
+      title: 'Hours', 
+      value: 'Mon-Fri: 9AM-6PM EST | 24/7 Email Support', 
+      color: '#2563EB' 
+    }
   ];
 
   const faqs = [
@@ -72,9 +143,8 @@ const Contact = () => {
   return (
     <div className="min-h-screen bg-white overflow-hidden">
       
-      {/* Hero Section avec effet chimique */}
+      {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-slate-900 via-[#0F172A] to-[#1E1B4B] py-20 overflow-hidden">
-        {/* Particules flottantes */}
         <div className="absolute inset-0 opacity-30">
           <div className="absolute top-20 left-10 w-32 h-32 border-2 border-[#2563EB]/30 rounded-full animate-pulse" />
           <div className="absolute bottom-32 right-20 w-40 h-40 border-2 border-[#10B981]/30 rounded-full animate-bounce-slow" />
@@ -101,7 +171,6 @@ const Contact = () => {
           </p>
         </div>
         
-        {/* Vague décorative */}
         <div className="absolute bottom-0 left-0 right-0">
           <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="relative h-12 w-full">
             <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" fill="white" />
@@ -148,13 +217,23 @@ const Contact = () => {
                 <p className="text-gray-500 text-sm mt-1">Fill out the form and our team will respond within 24 hours.</p>
               </div>
 
+              {submitError && (
+                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-4 flex items-center gap-2">
+                  <AlertCircle size={18} />
+                  <span>{submitError}</span>
+                </div>
+              )}
+
               {isSubmitted ? (
                 <div className="bg-[#10B981]/10 border border-[#10B981]/20 rounded-xl p-6 text-center">
                   <div className="w-16 h-16 bg-[#10B981]/20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <CheckCircle size={32} className="text-[#10B981]" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">Message Sent!</h3>
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">Message Sent! ✅</h3>
                   <p className="text-gray-600">Thank you for reaching out. We'll get back to you shortly.</p>
+                  <p className="text-xs text-gray-400 mt-2">
+                    A copy has been sent to <strong>{CONTACT_CONFIG.email}</strong>
+                  </p>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-5">
@@ -167,6 +246,7 @@ const Contact = () => {
                       onChange={handleChange}
                       className={`w-full px-4 py-3 rounded-xl border ${errors.name ? 'border-red-500' : 'border-gray-200'} focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 outline-none transition`}
                       placeholder="Dr. John Smith"
+                      disabled={isSubmitting}
                     />
                     {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                   </div>
@@ -180,6 +260,7 @@ const Contact = () => {
                       onChange={handleChange}
                       className={`w-full px-4 py-3 rounded-xl border ${errors.email ? 'border-red-500' : 'border-gray-200'} focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 outline-none transition`}
                       placeholder="research@university.edu"
+                      disabled={isSubmitting}
                     />
                     {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                   </div>
@@ -193,6 +274,7 @@ const Contact = () => {
                       onChange={handleChange}
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 outline-none transition"
                       placeholder="Product inquiry / Research question / Order support"
+                      disabled={isSubmitting}
                     />
                   </div>
 
@@ -205,16 +287,30 @@ const Contact = () => {
                       rows={5}
                       className={`w-full px-4 py-3 rounded-xl border ${errors.message ? 'border-red-500' : 'border-gray-200'} focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 outline-none transition resize-none`}
                       placeholder="Please provide details about your inquiry..."
+                      disabled={isSubmitting}
                     />
                     {errors.message && <p className="text-red-500 text-xs mt-1">{errors.message}</p>}
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-[#2563EB] via-[#10B981] to-[#F59E0B] text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 group"
+                    disabled={isSubmitting}
+                    className="w-full bg-gradient-to-r from-[#2563EB] via-[#10B981] to-[#F59E0B] text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span>Send Message</span>
-                    <Send size={18} className="group-hover:translate-x-1 transition-transform" />
+                    {isSubmitting ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <span>Send Message</span>
+                        <Send size={18} className="group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
                   </button>
                 </form>
               )}
@@ -222,7 +318,6 @@ const Contact = () => {
 
             {/* Scientific Credentials & Info */}
             <div className="space-y-6">
-              {/* Map / Location */}
               <div className="bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100">
                 <div className="h-48 bg-gray-200 relative">
                   <iframe
@@ -239,13 +334,12 @@ const Contact = () => {
                     <MapPin size={20} className="text-[#2563EB] flex-shrink-0" />
                     <div>
                       <h3 className="font-bold text-gray-800">Research Facility</h3>
-                      <p className="text-gray-500 text-sm">123 Research Drive, Wilmington, DE 19801, USA</p>
+                      <p className="text-gray-500 text-sm">{CONTACT_CONFIG.address}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Scientific Support */}
               <div className="bg-gradient-to-r from-[#2563EB]/5 via-[#10B981]/5 to-[#F59E0B]/5 rounded-3xl p-6 border border-gray-100">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-[#2563EB]/10 rounded-full flex items-center justify-center">
@@ -263,15 +357,12 @@ const Contact = () => {
                 </div>
               </div>
 
-              {/* Social Links */}
               <div className="bg-white rounded-3xl p-6 border border-gray-100">
                 <h3 className="font-bold text-gray-800 mb-4">Follow Our Research</h3>
                 <div className="flex gap-4">
                   <a href="#" className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-[#2563EB] hover:text-white transition group">
                     <Briefcase size={18} className="text-gray-500 group-hover:text-white" />
                   </a>
-                  
-                  
                   <a href="#" className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-[#2563EB] hover:text-white transition group">
                     <Camera size={18} className="text-gray-500 group-hover:text-white" />
                   </a>
@@ -321,7 +412,6 @@ const Contact = () => {
         </div>
       </section>
 
-      {/* Animation styles */}
       <style>{`
         @keyframes spin-slow {
           from { transform: rotate(0deg); }
