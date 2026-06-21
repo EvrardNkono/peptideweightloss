@@ -199,7 +199,7 @@ const Footer = () => {
               <li className="flex items-start gap-3 text-sm text-gray-400">
                 <Mail size={16} className="text-[#2563EB] mt-0.5 flex-shrink-0" />
                 <a href="mailto:info@peptidesweight-loss.com" className="hover:text-white transition-colors">
-                  info@peptidesweight-loss.com
+                  contact@peptidesweight-loss.com
                 </a>
               </li>
               <li className="flex items-start gap-3 text-sm text-gray-400">
@@ -208,10 +208,7 @@ const Footer = () => {
                   +1 (315) 746-7760
                 </a>
               </li>
-              <li className="flex items-start gap-3 text-sm text-gray-400">
-                <MapPin size={16} className="text-[#F59E0B] mt-0.5 flex-shrink-0" />
-                <span>123 Research Blvd, Lab City, CA 90210</span>
-              </li>
+              
               <li className="flex items-start gap-3 text-sm text-gray-400">
                 <Clock size={16} className="text-[#8B5CF6] mt-0.5 flex-shrink-0" />
                 <span>24/7 Customer Support</span>
