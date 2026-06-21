@@ -115,7 +115,7 @@ const Header = ({
       dropdownKey: 'shop',
       dropdownItems: [
         { name: 'Peptides', href: '/shop/peptides', icon: <FlaskConical size={16} /> },
-        { name: 'Peptide Blends', href: '/shop/blends', icon: <Beaker size={16} /> }
+        
       ]
     },
     { 

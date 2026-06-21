@@ -89,16 +89,7 @@ const BlogPostSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// ✅ Générer un slug à partir du titre avant de sauvegarder
-BlogPostSchema.pre('save', function(next) {
-  if (this.title && !this.slug) {
-    this.slug = this.title
-      .toLowerCase()
-      .replace(/[^\w\s]/g, '')
-      .replace(/\s+/g, '-');
-  }
-  next();
-});
+// ✅ PAS DE MIDDLEWARE - Solution la plus simple et fiable
 
 // ✅ Index pour la recherche
 BlogPostSchema.index({ title: 'text', excerpt: 'text', content: 'text', tags: 'text' });
