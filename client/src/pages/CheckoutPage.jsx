@@ -1,258 +1,239 @@
-// src/pages/Contact.jsx
+// src/pages/CheckoutPage.jsx
 import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Clock, 
-  Send, 
-  CheckCircle, 
-  AlertCircle,
-  MessageCircle,
-  Microscope,
-  Briefcase,
-  Camera
+  ArrowLeft,
+  ArrowRight,
+  ShoppingBag,
+  Truck,
+  Shield,
+  Clock,
+  Package,
+  Sparkles,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Building,
+  CreditCard,
+  CheckCircle,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
+import { useCart } from '../context/CartContext';
 
-// ✅ Les coordonnées en dur (pas besoin de fichier config)
-const CONTACT_EMAIL = 'info@peptidesweight-loss.com';
-const CONTACT_PHONE = '+1 (315) 746-7760';
-const CONTACT_PHONE_RAW = '+13157467760';
-const CONTACT_ADDRESS = '123 Research Blvd, Lab City, CA 90210';
-
-const Contact = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: ''
-  });
-  const [isSubmitted, setIsSubmitted] = useState(false);
+const CheckoutPage = () => {
+  const navigate = useNavigate();
+  const { cart, getCartTotal, getItemCount, getCartSavings, clearCart } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    address: '',
+    apartment: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: 'US',
+    orderNotes: '',
+    agreeTerms: false
+  });
+
   const [errors, setErrors] = useState({});
-  const [submitError, setSubmitError] = useState('');
+
+  const total = getCartTotal();
+  const itemCount = getItemCount();
+  const savings = getCartSavings();
+  const shipping = total > 200 ? 0 : 9.99;
+  const grandTotal = total - savings + shipping;
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    if (errors[e.target.name]) {
-      setErrors({ ...errors, [e.target.name]: '' });
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
-    if (submitError) setSubmitError('');
   };
 
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
+    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
+    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
+    if (!formData.address.trim()) newErrors.address = 'Address is required';
+    if (!formData.city.trim()) newErrors.city = 'City is required';
+    if (!formData.state.trim()) newErrors.state = 'State/Province is required';
+    if (!formData.zipCode.trim()) newErrors.zipCode = 'ZIP code is required';
+    if (!formData.agreeTerms) newErrors.agreeTerms = 'You must agree to the terms';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // ✅ VERSION AVEC URL COMPLETE VERCEL
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validation
-    const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
-    if (!formData.message.trim()) newErrors.message = 'Message is required';
-    
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+    if (!validateForm()) {
+      const firstError = document.querySelector('.error-message');
+      if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
     setIsSubmitting(true);
-    setSubmitError('');
 
     try {
-      // ✅ On utilise la MÊME API que Checkout avec les MÊMES champs
       const response = await fetch('https://peptideweightloss.vercel.app/api/send-order-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          // ✅ Les mêmes champs que Checkout !!!
-          formData: {
-            firstName: formData.name,
-            lastName: 'Contact Form', // Pour identifier que c'est un contact
-            email: formData.email,
-            phone: '', // Pas de téléphone dans le formulaire contact
-            address: formData.message,
-            apartment: '',
-            city: '',
-            state: '',
-            zipCode: '',
-            country: 'US',
-            orderNotes: `Subject: ${formData.subject || 'N/A'}\n\n${formData.message}`,
-            agreeTerms: true,
-          },
-          // ✅ Panier vide (car c'est un contact, pas une commande)
-          cart: [],
-          total: 0,
-          shipping: 0,
-          grandTotal: 0
+          formData,
+          cart,
+          total,
+          shipping,
+          grandTotal
         }),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        setIsSubmitted(true);
-        setFormData({ name: '', email: '', subject: '', message: '' });
-        setTimeout(() => setIsSubmitted(false), 5000);
+        clearCart();
+        setIsSuccess(true);
       } else {
-        setSubmitError(result.message || 'Failed to send message. Please try again.');
+        setErrors({ submit: result.message || 'Failed to send order' });
       }
     } catch (error) {
-      console.error('❌ Error sending contact form:', error);
-      setSubmitError('Network error. Please check your connection and try again.');
+      console.error('❌ Error:', error);
+      setErrors({ submit: 'Failed to send order. Please try again.' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const contactInfo = [
-    { 
-      icon: <Mail size={20} />, 
-      title: 'Email Us', 
-      value: CONTACT_EMAIL, 
-      href: `mailto:${CONTACT_EMAIL}`, 
-      color: '#2563EB' 
-    },
-    { 
-      icon: <Phone size={20} />, 
-      title: 'Call Us', 
-      value: CONTACT_PHONE, 
-      href: `tel:${CONTACT_PHONE_RAW}`, 
-      color: '#10B981' 
-    },
-    { 
-      icon: <MapPin size={20} />, 
-      title: 'Visit Us', 
-      value: CONTACT_ADDRESS, 
-      color: '#F59E0B' 
-    },
-    { 
-      icon: <Clock size={20} />, 
-      title: 'Hours', 
-      value: 'Mon-Fri: 9AM-6PM EST | 24/7 Email Support', 
-      color: '#2563EB' 
-    }
-  ];
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md px-4">
+          <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle size={48} className="text-green-500" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Order Placed!</h2>
+          <p className="text-gray-500 mb-6">
+            Your order has been received. Check your email for the payment request.
+          </p>
+          <p className="text-sm text-gray-400 mb-6">
+            A confirmation email has been sent to <strong>contact@peptidesweight-loss.com</strong>
+          </p>
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 bg-[#2563EB] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#1E40AF] transition"
+          >
+            Return Home <ArrowRight size={18} />
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
-  const faqs = [
-    { question: 'What is your shipping policy?', answer: 'We offer discreet worldwide shipping with tracking. Orders are processed within 24-48 hours.' },
-    { question: 'Do you offer bulk pricing?', answer: 'Yes, for research institutions and volume orders, please contact our sales team directly.' },
-    { question: 'How do I track my order?', answer: 'Once shipped, you will receive a tracking number via email.' },
-    { question: 'What is your return policy?', answer: 'We offer a 30-day satisfaction guarantee for unopened products.' }
-  ];
+  if (cart.length === 0) {
+    return (
+      <div className="min-h-[60vh] bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md px-4">
+          <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <ShoppingBag size={40} className="text-gray-300" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Your Cart is Empty</h2>
+          <p className="text-gray-500 mb-6">
+            You cannot proceed to checkout with an empty cart.
+          </p>
+          <Link
+            to="/marketplace"
+            className="inline-flex items-center gap-2 bg-[#2563EB] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#1E40AF] transition"
+          >
+            <ArrowLeft size={18} />
+            Start Shopping
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-white overflow-hidden">
-      
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-slate-900 via-[#0F172A] to-[#1E1B4B] py-20 overflow-hidden">
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-20 left-10 w-32 h-32 border-2 border-[#2563EB]/30 rounded-full animate-pulse" />
-          <div className="absolute bottom-32 right-20 w-40 h-40 border-2 border-[#10B981]/30 rounded-full animate-bounce-slow" />
-          <div className="absolute top-1/2 right-1/4 w-20 h-20 border-4 border-[#F59E0B]/20 rounded-lg animate-spin-slow" />
-          <svg className="absolute inset-0 w-full h-full">
-            <line x1="10%" y1="20%" x2="30%" y2="40%" stroke="#2563EB" strokeWidth="1" strokeOpacity="0.3" className="animate-dash" />
-            <line x1="70%" y1="30%" x2="85%" y2="60%" stroke="#10B981" strokeWidth="1" strokeOpacity="0.3" className="animate-dash-delay" />
-          </svg>
-        </div>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4">
         
-        <div className="relative max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 bg-[#2563EB]/20 backdrop-blur-sm rounded-full px-4 py-1.5 mb-6">
-            <MessageCircle size={14} className="text-[#2563EB]" />
-            <span className="text-sm font-semibold text-white tracking-wide">GET IN TOUCH</span>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <Link to="/cart" className="text-gray-400 hover:text-gray-600 transition">
+              <ArrowLeft size={24} />
+            </Link>
+            <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+              <CreditCard size={28} className="text-[#2563EB]" />
+              Checkout
+            </h1>
           </div>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4">
-            Contact{' '}
-            <span className="bg-gradient-to-r from-[#2563EB] via-[#10B981] to-[#F59E0B] bg-clip-text text-transparent">
-              Us
-            </span>
-          </h1>
-          <p className="text-white/80 text-lg max-w-2xl mx-auto">
-            Have questions about our research peptides? Our scientific support team is here to help.
-          </p>
+          <span className="text-gray-500 text-sm">
+            {itemCount} {itemCount === 1 ? 'item' : 'items'}
+          </span>
         </div>
-        
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="relative h-12 w-full">
-            <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" fill="white" />
-          </svg>
-        </div>
-      </section>
 
-      {/* Contact Info Cards */}
-      <section className="py-16 bg-white">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 -mt-16 relative z-10">
-            {contactInfo.map((info, idx) => (
-              <div key={idx} className="group bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-all duration-300 group-hover:scale-110" style={{ backgroundColor: `${info.color}15` }}>
-                  <div style={{ color: info.color }}>{info.icon}</div>
-                </div>
-                <h3 className="font-bold text-gray-800 mb-2">{info.title}</h3>
-                {info.href ? (
-                  <a href={info.href} className="text-gray-500 text-sm hover:text-[#2563EB] transition">
-                    {info.value}
-                  </a>
-                ) : (
-                  <p className="text-gray-500 text-sm">{info.value}</p>
-                )}
-              </div>
-            ))}
+        {errors.submit && (
+          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-6 flex items-center gap-2">
+            <AlertCircle size={18} />
+            <span>{errors.submit}</span>
           </div>
-        </div>
-      </section>
+        )}
 
-      {/* Contact Form & Map Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            
-            {/* Contact Form */}
-            <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
-              <div className="mb-6">
-                <div className="inline-flex items-center gap-2 bg-[#2563EB]/10 rounded-full px-3 py-1 mb-4">
-                  <Mail size={12} className="text-[#2563EB]" />
-                  <span className="text-xs font-semibold text-[#2563EB]">SEND US A MESSAGE</span>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-800">We'd Love to Hear From You</h2>
-                <p className="text-gray-500 text-sm mt-1">Fill out the form and our team will respond within 24 hours.</p>
-              </div>
-
-              {submitError && (
-                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-4 flex items-center gap-2">
-                  <AlertCircle size={18} />
-                  <span>{submitError}</span>
-                </div>
-              )}
-
-              {isSubmitted ? (
-                <div className="bg-[#10B981]/10 border border-[#10B981]/20 rounded-xl p-6 text-center">
-                  <div className="w-16 h-16 bg-[#10B981]/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle size={32} className="text-[#10B981]" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">Message Sent! ✅</h3>
-                  <p className="text-gray-600">Thank you for reaching out. We'll get back to you shortly.</p>
-                  <p className="text-xs text-gray-400 mt-2">
-                    A copy has been sent to <strong>{CONTACT_EMAIL}</strong>
-                  </p>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          <div className="lg:col-span-2">
+            <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm p-6">
+              
+              <div className="mb-8">
+                <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                  <User size={18} className="text-[#2563EB]" />
+                  Personal Information
+                </h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
                     <input
                       type="text"
-                      name="name"
-                      value={formData.name}
+                      name="firstName"
+                      value={formData.firstName}
                       onChange={handleChange}
-                      className={`w-full px-4 py-3 rounded-xl border ${errors.name ? 'border-red-500' : 'border-gray-200'} focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 outline-none transition`}
-                      placeholder="Dr. John Smith"
-                      disabled={isSubmitting}
+                      className={`w-full px-4 py-2.5 rounded-xl border ${errors.firstName ? 'border-red-500' : 'border-gray-200'} focus:border-[#2563EB] outline-none transition`}
+                      placeholder="John"
                     />
-                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+                    {errors.firstName && <p className="text-red-500 text-xs mt-1 error-message">{errors.firstName}</p>}
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+                    <input
+                      type="text"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      className={`w-full px-4 py-2.5 rounded-xl border ${errors.lastName ? 'border-red-500' : 'border-gray-200'} focus:border-[#2563EB] outline-none transition`}
+                      placeholder="Doe"
+                    />
+                    {errors.lastName && <p className="text-red-500 text-xs mt-1 error-message">{errors.lastName}</p>}
+                  </div>
+                </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
                     <input
@@ -260,190 +241,247 @@ const Contact = () => {
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      className={`w-full px-4 py-3 rounded-xl border ${errors.email ? 'border-red-500' : 'border-gray-200'} focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 outline-none transition`}
-                      placeholder="research@university.edu"
-                      disabled={isSubmitting}
+                      className={`w-full px-4 py-2.5 rounded-xl border ${errors.email ? 'border-red-500' : 'border-gray-200'} focus:border-[#2563EB] outline-none transition`}
+                      placeholder="john.doe@email.com"
                     />
-                    {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                    {errors.email && <p className="text-red-500 text-xs mt-1 error-message">{errors.email}</p>}
+                    <p className="text-xs text-gray-400 mt-1">We'll send the payment request here</p>
                   </div>
-
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
                     <input
-                      type="text"
-                      name="subject"
-                      value={formData.subject}
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 outline-none transition"
-                      placeholder="Product inquiry / Research question / Order support"
-                      disabled={isSubmitting}
+                      className={`w-full px-4 py-2.5 rounded-xl border ${errors.phone ? 'border-red-500' : 'border-gray-200'} focus:border-[#2563EB] outline-none transition`}
+                      placeholder="+1 234 567 890"
                     />
+                    {errors.phone && <p className="text-red-500 text-xs mt-1 error-message">{errors.phone}</p>}
                   </div>
+                </div>
+              </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Message *</label>
-                    <textarea
-                      name="message"
-                      value={formData.message}
-                      onChange={handleChange}
-                      rows={5}
-                      className={`w-full px-4 py-3 rounded-xl border ${errors.message ? 'border-red-500' : 'border-gray-200'} focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 outline-none transition resize-none`}
-                      placeholder="Please provide details about your inquiry..."
-                      disabled={isSubmitting}
-                    />
-                    {errors.message && <p className="text-red-500 text-xs mt-1">{errors.message}</p>}
-                  </div>
+              <div className="mb-8">
+                <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                  <Truck size={18} className="text-[#2563EB]" />
+                  Shipping Address
+                </h2>
 
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full bg-gradient-to-r from-[#2563EB] via-[#10B981] to-[#F59E0B] text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <span>Send Message</span>
-                        <Send size={18} className="group-hover:translate-x-1 transition-transform" />
-                      </>
-                    )}
-                  </button>
-                </form>
-              )}
-            </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Street Address *</label>
+                  <input
+                    type="text"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2.5 rounded-xl border ${errors.address ? 'border-red-500' : 'border-gray-200'} focus:border-[#2563EB] outline-none transition`}
+                    placeholder="123 Main Street"
+                  />
+                  {errors.address && <p className="text-red-500 text-xs mt-1 error-message">{errors.address}</p>}
+                </div>
 
-            {/* Scientific Credentials & Info */}
-            <div className="space-y-6">
-              <div className="bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100">
-                <div className="h-48 bg-gray-200 relative">
-                  <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2464.0!2d-75.5!3d39.8!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMznCsDQ4JzAwLjAiTiA3NcKwMzAnMDAuMCJX!5e0!3m2!1sen!2sus!4v1"
-                    className="w-full h-full"
-                    style={{ border: 0 }}
-                    allowFullScreen
-                    loading="lazy"
-                    title="Location Map"
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Apartment, Suite, etc. (optional)</label>
+                  <input
+                    type="text"
+                    name="apartment"
+                    value={formData.apartment}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#2563EB] outline-none transition"
+                    placeholder="Apt 4B"
                   />
                 </div>
-                <div className="p-6">
-                  <div className="flex items-start gap-3">
-                    <MapPin size={20} className="text-[#2563EB] flex-shrink-0" />
-                    <div>
-                      <h3 className="font-bold text-gray-800">Research Facility</h3>
-                      <p className="text-gray-500 text-sm">{CONTACT_ADDRESS}</p>
-                    </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                  <div className="col-span-2 md:col-span-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
+                    <input
+                      type="text"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleChange}
+                      className={`w-full px-4 py-2.5 rounded-xl border ${errors.city ? 'border-red-500' : 'border-gray-200'} focus:border-[#2563EB] outline-none transition`}
+                      placeholder="New York"
+                    />
+                    {errors.city && <p className="text-red-500 text-xs mt-1 error-message">{errors.city}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">State/Province *</label>
+                    <input
+                      type="text"
+                      name="state"
+                      value={formData.state}
+                      onChange={handleChange}
+                      className={`w-full px-4 py-2.5 rounded-xl border ${errors.state ? 'border-red-500' : 'border-gray-200'} focus:border-[#2563EB] outline-none transition`}
+                      placeholder="NY"
+                    />
+                    {errors.state && <p className="text-red-500 text-xs mt-1 error-message">{errors.state}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">ZIP Code *</label>
+                    <input
+                      type="text"
+                      name="zipCode"
+                      value={formData.zipCode}
+                      onChange={handleChange}
+                      className={`w-full px-4 py-2.5 rounded-xl border ${errors.zipCode ? 'border-red-500' : 'border-gray-200'} focus:border-[#2563EB] outline-none transition`}
+                      placeholder="10001"
+                    />
+                    {errors.zipCode && <p className="text-red-500 text-xs mt-1 error-message">{errors.zipCode}</p>}
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                  <select
+                    name="country"
+                    value={formData.country}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#2563EB] outline-none transition"
+                  >
+                    <option value="US">United States</option>
+                    <option value="CA">Canada</option>
+                    <option value="UK">United Kingdom</option>
+                    <option value="FR">France</option>
+                    <option value="DE">Germany</option>
+                    <option value="AU">Australia</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mb-8">
+                <h2 className="text-lg font-bold text-gray-800 mb-4">Additional Information</h2>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Order Notes (optional)</label>
+                  <textarea
+                    name="orderNotes"
+                    value={formData.orderNotes}
+                    onChange={handleChange}
+                    rows="3"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#2563EB] outline-none transition resize-none"
+                    placeholder="Any special instructions for delivery..."
+                  />
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    name="agreeTerms"
+                    checked={formData.agreeTerms}
+                    onChange={handleChange}
+                    className="mt-1 w-4 h-4 text-[#2563EB] border-gray-300 rounded focus:ring-[#2563EB]"
+                  />
+                  <div>
+                    <label className="text-sm text-gray-600">
+                      I agree to the{' '}
+                      <a href="/terms" className="text-[#2563EB] hover:underline">Terms and Conditions</a>
+                      {' '}and confirm that I have read the{' '}
+                      <a href="/privacy" className="text-[#2563EB] hover:underline">Privacy Policy</a>.
+                      <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    {errors.agreeTerms && <p className="text-red-500 text-xs mt-1 error-message">{errors.agreeTerms}</p>}
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-r from-[#2563EB]/5 via-[#10B981]/5 to-[#F59E0B]/5 rounded-3xl p-6 border border-gray-100">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-[#2563EB]/10 rounded-full flex items-center justify-center">
-                    <Microscope size={20} className="text-[#2563EB]" />
-                  </div>
-                  <h3 className="font-bold text-gray-800">Scientific Support Team</h3>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-gradient-to-r from-[#2563EB] to-[#10B981] text-white py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={20} className="animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    Place Order
+                    <ArrowRight size={20} />
+                  </>
+                )}
+              </button>
+
+              <p className="text-center text-xs text-gray-400 mt-4">
+                🔒 Your information is secure. We do not store payment details.
+              </p>
+            </form>
+          </div>
+
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-2xl shadow-sm p-6 sticky top-24">
+              <h2 className="text-lg font-bold text-gray-800 mb-4">Order Summary</h2>
+              
+              <div className="space-y-3 border-b border-gray-100 pb-4">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Subtotal ({itemCount} items)</span>
+                  <span className="font-medium">${total.toFixed(2)}</span>
                 </div>
-                <p className="text-gray-600 text-sm mb-4">
-                  Our team of PhD scientists is available to answer technical questions about peptide research, 
-                  solubility, storage, and experimental design.
-                </p>
-                <div className="flex items-center gap-4 text-sm">
-                  <span className="flex items-center gap-1 text-[#10B981]"><CheckCircle size={14} /> PhD-level support</span>
-                  <span className="flex items-center gap-1 text-[#10B981]"><CheckCircle size={14} /> 24h response</span>
+                {savings > 0 && (
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>Savings</span>
+                    <span>-${savings.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Shipping</span>
+                  <span className="font-medium">
+                    {shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}
+                  </span>
                 </div>
               </div>
 
-              <div className="bg-white rounded-3xl p-6 border border-gray-100">
-                <h3 className="font-bold text-gray-800 mb-4">Follow Our Research</h3>
-                <div className="flex gap-4">
-                  <a href="#" className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-[#2563EB] hover:text-white transition group">
-                    <Briefcase size={18} className="text-gray-500 group-hover:text-white" />
-                  </a>
-                  <a href="#" className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-[#2563EB] hover:text-white transition group">
-                    <Camera size={18} className="text-gray-500 group-hover:text-white" />
-                  </a>
+              <div className="py-4 border-b border-gray-100 max-h-60 overflow-y-auto">
+                {cart.map((item) => (
+                  <div key={item.id} className="flex justify-between text-sm py-2">
+                    <span className="text-gray-600 truncate max-w-[150px]">
+                      {item.name} <span className="text-gray-400">x{item.quantity}</span>
+                    </span>
+                    <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-4">
+                <div className="flex justify-between text-lg font-bold">
+                  <span>Total</span>
+                  <span className="text-[#2563EB]">${grandTotal.toFixed(2)}</span>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-50 p-3 rounded-lg mt-4">
+                  <Shield size={14} />
+                  <span>Secure checkout</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[10px] text-gray-400 text-center pt-4">
+                  <div className="flex flex-col items-center gap-1">
+                    <Shield size={14} />
+                    <span>Secure Payment</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <Clock size={14} />
+                    <span>Fast Delivery</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <Package size={14} />
+                    <span>Discreet Packaging</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <Sparkles size={14} />
+                    <span>Premium Quality</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section className="py-16 bg-white">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-[#10B981]/10 rounded-full px-4 py-1.5 mb-4">
-              <MessageCircle size={14} className="text-[#10B981]" />
-              <span className="text-xs font-semibold text-[#10B981] tracking-wide">FAQ</span>
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-3">
-              Frequently Asked Questions
-            </h2>
-            <p className="text-gray-500 max-w-2xl mx-auto">
-              Quick answers to common questions about our products and services
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {faqs.map((faq, idx) => (
-              <div key={idx} className="bg-gray-50 rounded-xl p-6 hover:shadow-md transition">
-                <h3 className="font-semibold text-gray-800 mb-2">{faq.question}</h3>
-                <p className="text-gray-500 text-sm">{faq.answer}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-r from-[#2563EB] to-[#10B981]">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">Need Scientific Consultation?</h2>
-          <p className="text-white/90 mb-8 max-w-2xl mx-auto">
-            Our PhD scientists are available for technical discussions about peptide research applications.
-          </p>
-          <button className="bg-white text-[#2563EB] px-8 py-3 rounded-full font-semibold hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5">
-            Request a Consultation
-          </button>
-        </div>
-      </section>
-
-      <style>{`
-        @keyframes spin-slow {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        @keyframes bounce-slow {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-30px); }
-        }
-        @keyframes dash {
-          to { stroke-dashoffset: -100; }
-        }
-        .animate-spin-slow {
-          animation: spin-slow 8s linear infinite;
-        }
-        .animate-bounce-slow {
-          animation: bounce-slow 4s ease-in-out infinite;
-        }
-        .animate-dash {
-          stroke-dasharray: 10;
-          animation: dash 2s linear infinite;
-        }
-        .animate-dash-delay {
-          stroke-dasharray: 10;
-          animation: dash 2s linear infinite;
-          animation-delay: 1s;
-        }
-      `}</style>
+      </div>
     </div>
   );
 };
 
-export default Contact;
+export default CheckoutPage;

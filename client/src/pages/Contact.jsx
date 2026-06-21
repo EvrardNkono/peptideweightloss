@@ -13,7 +13,12 @@ import {
   Briefcase,
   Camera
 } from 'lucide-react';
-import { CONTACT_CONFIG } from '../config/contact';
+
+// ✅ Les coordonnées en dur (pas besoin de fichier config)
+const CONTACT_EMAIL = 'info@peptidesweight-loss.com';
+const CONTACT_PHONE = '+1 (315) 746-7760';
+const CONTACT_PHONE_RAW = '+13157467760';
+const CONTACT_ADDRESS = '123 Research Blvd, Lab City, CA 90210';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -54,32 +59,29 @@ const Contact = () => {
     setSubmitError('');
 
     try {
-      // ✅ On utilise la MÊME API que le checkout
-      // On mappe les champs du contact vers le format attendu par l'API
+      // ✅ On utilise la MÊME API que Checkout avec les MÊMES champs
       const response = await fetch('https://peptideweightloss.vercel.app/api/send-order-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          // On utilise les champs existants de l'API
+          // ✅ Les mêmes champs que Checkout !!!
           formData: {
-            firstName: formData.name,        // name → firstName
-            lastName: '',                    // champ existant mais vide
-            email: formData.email,           // email → email
-            phone: '',                       // champ existant mais vide
-            address: formData.message,       // message → address (pour que ce soit envoyé)
-            // On peut aussi ajouter le sujet dans un champ existant
-            orderNotes: `Subject: ${formData.subject || 'N/A'}\n\n${formData.message}`,
-            // Champs obligatoires vides
+            firstName: formData.name,
+            lastName: 'Contact Form', // Pour identifier que c'est un contact
+            email: formData.email,
+            phone: '', // Pas de téléphone dans le formulaire contact
+            address: formData.message,
             apartment: '',
             city: '',
             state: '',
             zipCode: '',
             country: 'US',
+            orderNotes: `Subject: ${formData.subject || 'N/A'}\n\n${formData.message}`,
             agreeTerms: true,
           },
-          // On envoie un panier vide pour ne pas casser l'API
+          // ✅ Panier vide (car c'est un contact, pas une commande)
           cart: [],
           total: 0,
           shipping: 0,
@@ -108,21 +110,21 @@ const Contact = () => {
     { 
       icon: <Mail size={20} />, 
       title: 'Email Us', 
-      value: CONTACT_CONFIG.email, 
-      href: `mailto:${CONTACT_CONFIG.email}`, 
+      value: CONTACT_EMAIL, 
+      href: `mailto:${CONTACT_EMAIL}`, 
       color: '#2563EB' 
     },
     { 
       icon: <Phone size={20} />, 
       title: 'Call Us', 
-      value: CONTACT_CONFIG.phone, 
-      href: `tel:${CONTACT_CONFIG.phoneRaw}`, 
+      value: CONTACT_PHONE, 
+      href: `tel:${CONTACT_PHONE_RAW}`, 
       color: '#10B981' 
     },
     { 
       icon: <MapPin size={20} />, 
       title: 'Visit Us', 
-      value: CONTACT_CONFIG.address, 
+      value: CONTACT_ADDRESS, 
       color: '#F59E0B' 
     },
     { 
@@ -232,7 +234,7 @@ const Contact = () => {
                   <h3 className="text-xl font-bold text-gray-800 mb-2">Message Sent! ✅</h3>
                   <p className="text-gray-600">Thank you for reaching out. We'll get back to you shortly.</p>
                   <p className="text-xs text-gray-400 mt-2">
-                    A copy has been sent to <strong>{CONTACT_CONFIG.email}</strong>
+                    A copy has been sent to <strong>{CONTACT_EMAIL}</strong>
                   </p>
                 </div>
               ) : (
@@ -334,7 +336,7 @@ const Contact = () => {
                     <MapPin size={20} className="text-[#2563EB] flex-shrink-0" />
                     <div>
                       <h3 className="font-bold text-gray-800">Research Facility</h3>
-                      <p className="text-gray-500 text-sm">{CONTACT_CONFIG.address}</p>
+                      <p className="text-gray-500 text-sm">{CONTACT_ADDRESS}</p>
                     </div>
                   </div>
                 </div>
