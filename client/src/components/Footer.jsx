@@ -12,7 +12,8 @@ import {
   Star,
   ArrowRight,
   Award,
-  CheckCircle
+  CheckCircle,
+  Globe
 } from 'lucide-react';
 
 // ✅ Icônes sociales en SVG inline (évite les problèmes de version lucide-react)
@@ -127,7 +128,7 @@ const Footer = () => {
 
       {/* Main Footer */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
           
           {/* Quick Links */}
           <div>
@@ -189,7 +190,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Contact - MIS À JOUR AVEC LES VRAIES INFORMATIONS */}
+          {/* Contact */}
           <div>
             <h4 className="text-sm font-semibold uppercase tracking-wider text-gray-400 mb-4">
               Contact Us
@@ -216,6 +217,41 @@ const Footer = () => {
                 <span>24/7 Customer Support</span>
               </li>
             </ul>
+          </div>
+
+          {/* 🌍 Worldwide Delivery - NOUVEAU */}
+          <div>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-gray-400 mb-4">
+              <Globe size={16} className="inline mr-2 text-[#10B981]" />
+              Worldwide Delivery
+            </h4>
+            <div className="space-y-3">
+              <p className="text-sm text-gray-300 font-medium">
+                Vente et livraison dans le monde entier
+              </p>
+              <p className="text-xs text-gray-500">
+                Sales and delivery worldwide
+              </p>
+              
+              {/* Badges continentaux */}
+              <div className="flex flex-wrap gap-2 pt-2">
+                <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-gray-400 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700">
+                  <span className="text-[#10B981]">●</span> Europe
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-gray-400 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700">
+                  <span className="text-[#F59E0B]">●</span> Afrique
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-gray-400 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700">
+                  <span className="text-[#2563EB]">●</span> Amériques
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-gray-400 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700">
+                  <span className="text-[#8B5CF6]">●</span> Asie
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-gray-400 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700">
+                  <span className="text-[#EC4899]">●</span> Océanie
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
