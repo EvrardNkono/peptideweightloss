@@ -5,7 +5,8 @@ import {
   Search, User, ShoppingCart, Menu, X, Activity, ChevronDown, 
   FlaskConical, Beaker, FlaskRound as Flask, Microscope, Pill, 
   Syringe, TestTube, Building2, Trophy, Star, Award, Store, 
-  Package, Layers, FileText, Stethoscope, MapPin, BookOpen
+  Package, Layers, FileText, Stethoscope, MapPin, BookOpen,
+  Info, Mail, PenTool
 } from 'lucide-react';
 import CartDropdown from './CartDropdown';
 import { useCart } from '../context/CartContext';
@@ -19,9 +20,11 @@ const Header = ({
   const { getItemCount } = useCart();
   const [isShopDropdownOpen, setIsShopDropdownOpen] = useState(false);
   const [isLabsDropdownOpen, setIsLabsDropdownOpen] = useState(false);
+  const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
   const timeoutRef = useRef(null);
   const labsTimeoutRef = useRef(null);
   const marketplaceTimeoutRef = useRef(null);
+  const companyTimeoutRef = useRef(null);
 
   const itemCount = getItemCount();
 
@@ -58,11 +61,23 @@ const Header = ({
     }, 150);
   };
 
+  const handleCompanyMouseEnter = () => {
+    if (companyTimeoutRef.current) clearTimeout(companyTimeoutRef.current);
+    setIsCompanyDropdownOpen(true);
+  };
+
+  const handleCompanyMouseLeave = () => {
+    companyTimeoutRef.current = setTimeout(() => {
+      setIsCompanyDropdownOpen(false);
+    }, 150);
+  };
+
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       if (labsTimeoutRef.current) clearTimeout(labsTimeoutRef.current);
       if (marketplaceTimeoutRef.current) clearTimeout(marketplaceTimeoutRef.current);
+      if (companyTimeoutRef.current) clearTimeout(companyTimeoutRef.current);
     };
   }, []);
 
@@ -90,7 +105,7 @@ const Header = ({
   ];
 
   // ============================================================
-  // NAVIGATION ITEMS - AJOUT DU BLOG
+  // NAVIGATION ITEMS - NOUVEAU MENU "COMPANY"
   // ============================================================
   const navItems = [
     { 
@@ -118,10 +133,18 @@ const Header = ({
       dropdownItems: topLabs
     },
     { name: 'PRESCRIPTION', href: '/prescription', hasDropdown: false },
-    { name: 'ABOUT US', href: '/about', hasDropdown: false },
-    { name: 'BLOG', href: '/blog', hasDropdown: false }, // ← AJOUT DU BLOG
     { name: 'KNOWLEDGE CENTER', href: '/knowledge', hasDropdown: false },
-    { name: 'CONTACT US', href: '/contact', hasDropdown: false },
+    { 
+      name: 'COMPANY', 
+      href: '#',
+      hasDropdown: true,
+      dropdownKey: 'company',
+      dropdownItems: [
+        { name: 'About Us', href: '/about', icon: <Info size={16} />, description: 'Learn about our mission' },
+        { name: 'Blog', href: '/blog', icon: <BookOpen size={16} />, description: 'Research insights' },
+        { name: 'Contact Us', href: '/contact', icon: <Mail size={16} />, description: 'Get in touch' },
+      ]
+    },
   ];
 
   const getDropdownHandlers = (dropdownKey) => {
@@ -132,6 +155,8 @@ const Header = ({
         return { onMouseEnter: handleMarketplaceMouseEnter, onMouseLeave: handleMarketplaceMouseLeave, isOpen: isMarketplaceDropdownOpen };
       case 'labs':
         return { onMouseEnter: handleLabsMouseEnter, onMouseLeave: handleLabsMouseLeave, isOpen: isLabsDropdownOpen };
+      case 'company':
+        return { onMouseEnter: handleCompanyMouseEnter, onMouseLeave: handleCompanyMouseLeave, isOpen: isCompanyDropdownOpen };
       default:
         return { onMouseEnter: () => {}, onMouseLeave: () => {}, isOpen: false };
     }
@@ -256,6 +281,37 @@ const Header = ({
               <span>10 verified partners</span>
             </div>
           </div>
+        </div>
+      );
+    }
+
+    // ✅ NOUVEAU : Menu "COMPANY"
+    if (item.dropdownKey === 'company') {
+      return handlers.isOpen && (
+        <div 
+          className="absolute top-full left-0 mt-1 w-64 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50"
+          onMouseEnter={handlers.onMouseEnter}
+          onMouseLeave={handlers.onMouseLeave}
+        >
+          {item.dropdownItems.map((subItem) => (
+            <Link
+              key={subItem.name}
+              to={subItem.href}
+              className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 hover:text-[#2563EB] transition-colors group"
+            >
+              <span className="text-[#2563EB] group-hover:text-[#10B981] transition-colors">
+                {subItem.icon}
+              </span>
+              <div>
+                <p className="text-sm font-medium text-gray-700 group-hover:text-[#2563EB]">
+                  {subItem.name}
+                </p>
+                {subItem.description && (
+                  <p className="text-xs text-gray-400">{subItem.description}</p>
+                )}
+              </div>
+            </Link>
+          ))}
         </div>
       );
     }

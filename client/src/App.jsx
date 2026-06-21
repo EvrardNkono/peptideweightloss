@@ -20,7 +20,8 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import ProductDetail from './pages/ProductDetail';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
-import Blog from './pages/Blog'; // ✅ IMPORT DU BLOG
+import Blog from './pages/Blog';
+import BlogPost from './pages/BlogPost'; // ✅ IMPORT DU BLOG POST
 
 const AppContent = () => {
   const location = useLocation();
@@ -87,7 +88,7 @@ const AppContent = () => {
           
           {/* ✅ BLOG ROUTES */}
           <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:id" element={<Blog />} /> {/* Pour les articles individuels (à créer plus tard) */}
+          <Route path="/blog/:id" element={<BlogPost />} /> {/* ✅ ARTICLE COMPLET */}
           
           {/* ✅ ADMIN ROUTES */}
           <Route path="/admin/*" element={<AdminDashboard onLogout={() => {}} token={token} />} />
