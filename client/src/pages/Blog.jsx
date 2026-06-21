@@ -19,7 +19,10 @@ import {
   Heart,
   Share2,
   Filter,
-  Loader2
+  Loader2,
+    AlertCircle,  // ← AJOUTER
+  Star,         // ← AJOUTER
+  Loader2       // ← AJOUTER
 } from 'lucide-react';
 import axios from 'axios';
 
