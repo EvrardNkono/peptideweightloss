@@ -1,15 +1,16 @@
 // src/components/Header.jsx
 import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Search, User, ShoppingCart, Menu, X, Activity, ChevronDown, 
   FlaskConical, Beaker, FlaskRound as Flask, Microscope, Pill, 
   Syringe, TestTube, Building2, Trophy, Star, Award, Store, 
   Package, Layers, FileText, Stethoscope, MapPin, BookOpen,
-  Info, Mail, PenTool
+  Info, Mail, PenTool, XCircle
 } from 'lucide-react';
 import CartDropdown from './CartDropdown';
 import { useCart } from '../context/CartContext';
+import { useProducts } from '../context/ProductContext';
 
 const Header = ({ 
   isMobileMenuOpen, 
@@ -18,15 +19,77 @@ const Header = ({
   setIsMarketplaceDropdownOpen
 }) => {
   const { getItemCount } = useCart();
+  const { searchProducts } = useProducts();
+  const navigate = useNavigate();
+  
   const [isShopDropdownOpen, setIsShopDropdownOpen] = useState(false);
   const [isLabsDropdownOpen, setIsLabsDropdownOpen] = useState(false);
   const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
+  
+  // États de recherche
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  
   const timeoutRef = useRef(null);
   const labsTimeoutRef = useRef(null);
   const marketplaceTimeoutRef = useRef(null);
   const companyTimeoutRef = useRef(null);
+  const searchInputRef = useRef(null);
+  const searchContainerRef = useRef(null);
 
   const itemCount = getItemCount();
+
+  // Gestion de la recherche côté client
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    const results = searchProducts(query);
+    setSearchResults(results);
+  };
+
+  // Fermeture au clic extérieur
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+        setIsSearchOpen(false);
+        setSearchQuery('');
+        setSearchResults([]);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Focus sur l'input
+  useEffect(() => {
+    if (isSearchOpen && searchInputRef.current) {
+      setTimeout(() => searchInputRef.current.focus(), 100);
+    }
+  }, [isSearchOpen]);
+
+  // Raccourci clavier CMD+K / CTRL+K
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+      if (e.key === 'Escape' && isSearchOpen) {
+        setIsSearchOpen(false);
+        setSearchQuery('');
+        setSearchResults([]);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isSearchOpen]);
+
+  const handleProductClick = (productId) => {
+    setIsSearchOpen(false);
+    setSearchQuery('');
+    setSearchResults([]);
+    navigate(`/marketplace/${productId}`);
+  };
 
   const handleShopMouseEnter = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -104,9 +167,6 @@ const Header = ({
     { name: 'African Products', href: '/marketplace/african-products', icon: <MapPin size={16} className="text-[#10B981]" />, description: 'Premium African products' },
   ];
 
-  // ============================================================
-  // NAVIGATION ITEMS - NOUVEAU MENU "COMPANY"
-  // ============================================================
   const navItems = [
     { 
       name: 'BUY PEPTIDES', 
@@ -115,7 +175,6 @@ const Header = ({
       dropdownKey: 'shop',
       dropdownItems: [
         { name: 'Peptides', href: '/shop/peptides', icon: <FlaskConical size={16} /> },
-        
       ]
     },
     { 
@@ -285,7 +344,6 @@ const Header = ({
       );
     }
 
-    // ✅ NOUVEAU : Menu "COMPANY"
     if (item.dropdownKey === 'company') {
       return handlers.isOpen && (
         <div 
@@ -390,10 +448,128 @@ const Header = ({
             })}
           </nav>
 
+          {/* Actions avec recherche */}
           <div className="flex items-center gap-4">
-            <button className="text-gray-600 hover:text-[#2563EB] transition">
-              <Search size={20} />
-            </button>
+            {/* Bouton de recherche avec modale */}
+            <div ref={searchContainerRef} className="relative">
+              <button
+                onClick={() => setIsSearchOpen(!isSearchOpen)}
+                className="text-gray-600 hover:text-[#2563EB] transition p-2 rounded-full hover:bg-gray-100"
+                aria-label="Rechercher"
+              >
+                <Search size={20} />
+              </button>
+
+              {/* Modale de recherche */}
+              {isSearchOpen && (
+                <div className="absolute right-0 mt-2 w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50">
+                  <div className="p-4">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                      <input
+                        ref={searchInputRef}
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => handleSearch(e.target.value)}
+                        placeholder="Rechercher un produit..."
+                        className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent transition"
+                      />
+                      {searchQuery && (
+                        <button
+                          onClick={() => {
+                            setSearchQuery('');
+                            setSearchResults([]);
+                            searchInputRef.current?.focus();
+                          }}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          <XCircle size={18} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Résultats */}
+                  {searchQuery.trim().length >= 2 && (
+                    <div className="max-h-96 overflow-y-auto border-t border-gray-100">
+                      {searchResults.length === 0 ? (
+                        <div className="p-6 text-center text-gray-500">
+                          <Search size={32} className="mx-auto mb-2 text-gray-300" />
+                          <p className="text-sm">Aucun résultat pour "<span className="font-medium">{searchQuery}</span>"</p>
+                          <p className="text-xs text-gray-400 mt-1">Essayez avec d'autres mots-clés</p>
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-gray-100">
+                          {searchResults.slice(0, 8).map((product) => (
+                            <button
+                              key={product.id}
+                              onClick={() => handleProductClick(product.id)}
+                              className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center gap-4 group"
+                            >
+                              <div className="w-12 h-12 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden">
+                                {product.image ? (
+                                  <img 
+                                    src={product.image} 
+                                    alt={product.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <FlaskConical size={24} className="m-3 text-gray-400" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-800 group-hover:text-[#2563EB] truncate">
+                                  {product.name}
+                                </p>
+                                <div className="flex items-center gap-2 text-xs text-gray-500">
+                                  <span>{product.category || 'Peptide'}</span>
+                                  <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                                  <span className="text-[#10B981] font-medium">
+                                    ${product.price}
+                                  </span>
+                                </div>
+                              </div>
+                              {product.isBestSeller && (
+                                <span className="text-[8px] font-bold uppercase bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
+                                  Best Seller
+                                </span>
+                              )}
+                            </button>
+                          ))}
+                          {searchResults.length > 8 && (
+                            <div className="p-3 text-center border-t border-gray-100">
+                              <Link
+                                to={`/marketplace?search=${encodeURIComponent(searchQuery)}`}
+                                onClick={() => {
+                                  setIsSearchOpen(false);
+                                  setSearchQuery('');
+                                  setSearchResults([]);
+                                }}
+                                className="text-sm text-[#2563EB] hover:underline font-medium"
+                              >
+                                Voir tous les résultats ({searchResults.length})
+                              </Link>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {searchQuery.trim().length < 2 && searchQuery.trim().length > 0 && (
+                    <div className="p-6 text-center text-gray-400 text-sm">
+                      <p>💡 Tapez au moins 2 caractères</p>
+                    </div>
+                  )}
+
+                  {/* Raccourci clavier */}
+                  <div className="px-4 py-2 bg-gray-50 border-t border-gray-100 text-xs text-gray-400 flex items-center justify-between">
+                    <span>Appuyez sur <kbd className="px-1.5 py-0.5 bg-white border border-gray-200 rounded text-[10px] font-mono">ESC</kbd> pour fermer</span>
+                    <span>⌘K pour rechercher</span>
+                  </div>
+                </div>
+              )}
+            </div>
             
             <CartDropdown />
             

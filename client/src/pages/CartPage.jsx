@@ -244,7 +244,7 @@ const CartPage = () => {
 
                 <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-50 p-3 rounded-lg">
                   <Truck size={14} />
-                  <span>Free shipping on orders $200+</span>
+                  <span>Free shipping on orders $1000+</span>
                 </div>
 
                 <Link

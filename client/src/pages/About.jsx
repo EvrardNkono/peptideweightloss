@@ -64,7 +64,7 @@ const About = () => {
     { text: "100% transparent lab results", icon: <FileText size={18} /> },
     { text: "Privacy-Protected Delivery & shipping", icon: <Lock size={18} /> },
     { text: "30-day satisfaction guarantee", icon: <RefreshCw size={18} /> },
-    { text: "Free shipping on orders $200+", icon: <Truck size={18} /> },
+    { text: "Free shipping on orders $1000+", icon: <Truck size={18} /> },
     { text: "Loyalty rewards program", icon: <Trophy size={18} /> },
     { text: "Eco-friendly packaging", icon: <Leaf size={18} /> }
   ];

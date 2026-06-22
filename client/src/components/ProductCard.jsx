@@ -285,7 +285,7 @@ const ProductCard = ({
 
         <div className="flex items-center justify-center gap-1 mt-3">
           <TrendingUp size={10} className="text-[#10B981]" />
-          <span className="text-[10px] text-gray-400">Free shipping on orders $200+</span>
+          <span className="text-[10px] text-gray-400">Free shipping on orders $1000+</span>
         </div>
       </div>
 
