@@ -5,7 +5,6 @@ import {
   FlaskConical, 
   Mail, 
   Phone, 
-  MapPin, 
   Clock, 
   Shield,
   Truck,
@@ -16,7 +15,7 @@ import {
   Globe
 } from 'lucide-react';
 
-// ✅ Icônes sociales en SVG inline (évite les problèmes de version lucide-react)
+// ✅ Social icons in SVG inline (avoids lucide-react version issues)
 const FacebookIcon = () => (
   <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
     <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
@@ -190,7 +189,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* Contact - No physical address */}
           <div>
             <h4 className="text-sm font-semibold uppercase tracking-wider text-gray-400 mb-4">
               Contact Us
@@ -198,7 +197,7 @@ const Footer = () => {
             <ul className="space-y-3">
               <li className="flex items-start gap-3 text-sm text-gray-400">
                 <Mail size={16} className="text-[#2563EB] mt-0.5 flex-shrink-0" />
-                <a href="mailto:info@peptidesweight-loss.com" className="hover:text-white transition-colors">
+                <a href="mailto:contact@peptidesweight-loss.com" className="hover:text-white transition-colors">
                   contact@peptidesweight-loss.com
                 </a>
               </li>
@@ -208,7 +207,6 @@ const Footer = () => {
                   +1 (315) 746-7760
                 </a>
               </li>
-              
               <li className="flex items-start gap-3 text-sm text-gray-400">
                 <Clock size={16} className="text-[#8B5CF6] mt-0.5 flex-shrink-0" />
                 <span>24/7 Customer Support</span>
@@ -216,37 +214,47 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* 🌍 Worldwide Delivery - NOUVEAU */}
+          {/* 🌍 Worldwide Delivery */}
           <div>
             <h4 className="text-sm font-semibold uppercase tracking-wider text-gray-400 mb-4">
               <Globe size={16} className="inline mr-2 text-[#10B981]" />
-              Worldwide Delivery
+              Worldwide Shipping
             </h4>
             <div className="space-y-3">
               <p className="text-sm text-gray-300 font-medium">
-                Vente et livraison dans le monde entier
+                We deliver to every corner of the globe
               </p>
               <p className="text-xs text-gray-500">
-                Sales and delivery worldwide
+                Fast, discrete, and trackable shipping worldwide
               </p>
               
-              {/* Badges continentaux */}
+              {/* Continental Badges */}
               <div className="flex flex-wrap gap-2 pt-2">
                 <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-gray-400 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700">
                   <span className="text-[#10B981]">●</span> Europe
                 </span>
                 <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-gray-400 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700">
-                  <span className="text-[#F59E0B]">●</span> Afrique
+                  <span className="text-[#F59E0B]">●</span> Africa
                 </span>
                 <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-gray-400 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700">
-                  <span className="text-[#2563EB]">●</span> Amériques
+                  <span className="text-[#2563EB]">●</span> Americas
                 </span>
                 <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-gray-400 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700">
-                  <span className="text-[#8B5CF6]">●</span> Asie
+                  <span className="text-[#8B5CF6]">●</span> Asia
                 </span>
                 <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-gray-400 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700">
-                  <span className="text-[#EC4899]">●</span> Océanie
+                  <span className="text-[#EC4899]">●</span> Oceania
                 </span>
+              </div>
+
+              {/* Delivery highlight */}
+              <div className="mt-3 p-3 bg-[#2563EB]/10 rounded-lg border border-[#2563EB]/20">
+                <p className="text-xs text-gray-300">
+                  <span className="text-[#10B981] font-semibold">✓</span> No fixed location — we ship worldwide
+                </p>
+                <p className="text-[10px] text-gray-500 mt-1">
+                  International shipping available to all countries
+                </p>
               </div>
             </div>
           </div>
