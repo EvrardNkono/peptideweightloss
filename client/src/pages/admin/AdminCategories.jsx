@@ -72,22 +72,20 @@ const AdminCategories = ({ token, onCategoriesChange }) => {
   const [editingCat, setEditingCat] = useState(null);
   const [error, setError] = useState('');
 
-  // ✅ Récupération du token
-  const getToken = () => {
-    return token || localStorage.getItem('token');
+  // ✅ COMME DANS AdminBlog.jsx - Configuration axios avec le token
+  const axiosConfig = {
+    headers: { Authorization: `Bearer ${token}` }
   };
 
+  // ✅ Récupérer toutes les catégories (admin seulement) - COMME DANS AdminBlog
   const fetchCategories = async () => {
     setLoading(true);
-    setError('');
     try {
-      const token = getToken();
-      const res = await axios.get(`${API_URL}/categories/all`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setCategories(res.data.data || []);
-    } catch (err) {
-      console.error('Error fetching categories:', err);
+      const res = await axios.get(`${API_URL}/categories/all`, axiosConfig);
+      setCategories(res.data.data || res.data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      setCategories([]);
       setError('Failed to load categories');
     }
     setLoading(false);
@@ -99,63 +97,52 @@ const AdminCategories = ({ token, onCategoriesChange }) => {
 
   const handleSave = async (data) => {
     try {
-      const token = getToken();
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      
       if (editingCat) {
-        const res = await axios.put(`${API_URL}/categories/${editingCat._id}`, data, config);
+        const res = await axios.put(`${API_URL}/categories/${editingCat._id}`, data, axiosConfig);
         setCategories(prev => prev.map(c => c._id === editingCat._id ? res.data.data : c));
       } else {
-        const res = await axios.post(`${API_URL}/categories`, data, config);
+        const res = await axios.post(`${API_URL}/categories`, data, axiosConfig);
         setCategories(prev => [res.data.data, ...prev]);
       }
-      
       setShowModal(false);
       setEditingCat(null);
       if (onCategoriesChange) onCategoriesChange();
       return { success: true };
     } catch (err) {
-      console.error('Save error:', err);
-      return { 
-        success: false, 
-        message: err.response?.data?.message || err.message || 'Error saving category' 
-      };
+      console.error('Error saving category:', err);
+      return { success: false, message: err.response?.data?.message || 'Error saving category' };
     }
   };
 
   const handleToggleActive = async (cat) => {
     try {
-      const token = getToken();
       const res = await axios.put(
         `${API_URL}/categories/${cat._id}`,
         { isActive: !cat.isActive },
-        { headers: { Authorization: `Bearer ${token}` } }
+        axiosConfig
       );
       setCategories(prev => prev.map(c => c._id === cat._id ? res.data.data : c));
       if (onCategoriesChange) onCategoriesChange();
-    } catch (err) {
-      console.error('Toggle error:', err);
-      setError('Failed to toggle category status');
+    } catch (error) {
+      console.error('Toggle error:', error);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this category?')) return;
+    if (!window.confirm('Delete this category? Products using it will keep their type slug.')) return;
     try {
-      const token = getToken();
-      await axios.delete(`${API_URL}/categories/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.delete(`${API_URL}/categories/${id}`, axiosConfig);
       setCategories(prev => prev.filter(c => c._id !== id));
       if (onCategoriesChange) onCategoriesChange();
-    } catch (err) {
-      console.error('Delete error:', err);
-      setError('Failed to delete category');
+    } catch (error) {
+      console.error('Delete error:', error);
     }
   };
 
+  // ─── Filtered list ───────────────────────────────────────────────────────
   const filtered = categories.filter(c => {
-    const matchSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchSearch =
+      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (c.description || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchSection = sectionFilter === 'all' || c.section === sectionFilter;
     return matchSearch && matchSection;
@@ -164,6 +151,7 @@ const AdminCategories = ({ token, onCategoriesChange }) => {
   const peptidesCats = filtered.filter(c => c.section === 'peptides');
   const marketplaceCats = filtered.filter(c => c.section === 'marketplace');
 
+  // ─── Loading ─────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -175,7 +163,7 @@ const AdminCategories = ({ token, onCategoriesChange }) => {
 
   return (
     <div>
-      {/* Toolbar */}
+      {/* ── Toolbar ── */}
       <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
         <div className="flex gap-3 flex-wrap">
           <div className="relative">
@@ -221,27 +209,21 @@ const AdminCategories = ({ token, onCategoriesChange }) => {
         </div>
       )}
 
-      {/* Stats */}
+      {/* ── Stats ── */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <p className="text-xs text-gray-500">Total Categories</p>
-          <p className="text-2xl font-bold mt-1 text-[#2563EB]">{categories.length}</p>
-        </div>
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <p className="text-xs text-gray-500">Peptides Shop</p>
-          <p className="text-2xl font-bold mt-1 text-[#10B981]">
-            {categories.filter(c => c.section === 'peptides').length}
-          </p>
-        </div>
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <p className="text-xs text-gray-500">Marketplace</p>
-          <p className="text-2xl font-bold mt-1 text-[#8B5CF6]">
-            {categories.filter(c => c.section === 'marketplace').length}
-          </p>
-        </div>
+        {[
+          { label: 'Total Categories', value: categories.length, color: '#2563EB' },
+          { label: 'Peptides Shop', value: categories.filter(c => c.section === 'peptides').length, color: '#10B981' },
+          { label: 'Marketplace', value: categories.filter(c => c.section === 'marketplace').length, color: '#8B5CF6' },
+        ].map((stat, i) => (
+          <div key={i} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+            <p className="text-xs text-gray-500">{stat.label}</p>
+            <p className="text-2xl font-bold mt-1" style={{ color: stat.color }}>{stat.value}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Peptides section */}
+      {/* ── Peptides section ── */}
       <SectionBlock
         title="🧬 Peptides Shop"
         subtitle="Visible in the 'BUY PEPTIDES' dropdown of the header"
@@ -252,7 +234,7 @@ const AdminCategories = ({ token, onCategoriesChange }) => {
         onDelete={handleDelete}
       />
 
-      {/* Marketplace section */}
+      {/* ── Marketplace section ── */}
       <SectionBlock
         title="🛒 General Marketplace"
         subtitle="Visible in the 'GENERAL MARKETPLACE' dropdown of the header"
@@ -277,7 +259,7 @@ const AdminCategories = ({ token, onCategoriesChange }) => {
         </div>
       )}
 
-      {/* Modal */}
+      {/* ── Modal ── */}
       {showModal && (
         <CategoryModal
           category={editingCat}
