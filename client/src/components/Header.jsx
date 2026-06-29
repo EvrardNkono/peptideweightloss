@@ -6,11 +6,21 @@ import {
   FlaskConical, Beaker, FlaskRound as Flask, Microscope, Pill, 
   Syringe, TestTube, Building2, Trophy, Star, Award, Store, 
   Package, Layers, FileText, Stethoscope, MapPin, BookOpen,
-  Info, Mail, PenTool, XCircle
+  Info, Mail, PenTool, XCircle, Tag, Loader2, ChevronRight
 } from 'lucide-react';
 import CartDropdown from './CartDropdown';
 import { useCart } from '../context/CartContext';
 import { useProducts } from '../context/ProductContext';
+import axios from 'axios';
+
+const getApiUrl = () => {
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://peptideweightloss.vercel.app/api';
+  }
+  return 'http://localhost:5000/api';
+};
+
+const API_URL = getApiUrl();
 
 const Header = ({ 
   isMobileMenuOpen, 
@@ -26,6 +36,11 @@ const Header = ({
   const [isLabsDropdownOpen, setIsLabsDropdownOpen] = useState(false);
   const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
   
+  // ✅ ÉTATS POUR LES CATÉGORIES DYNAMIQUES
+  const [peptideCategories, setPeptideCategories] = useState([]);
+  const [marketplaceCategories, setMarketplaceCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  
   // États de recherche
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,14 +55,51 @@ const Header = ({
 
   const itemCount = getItemCount();
 
-  // Gestion de la recherche côté client
+  // ✅ CHARGER LES CATÉGORIES DEPUIS L'API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/categories`);
+        if (res.data.success) {
+          const allCategories = res.data.data || [];
+          
+          // Séparer les catégories par section
+          const peptides = allCategories.filter(cat => cat.section === 'peptides' && cat.isActive);
+          const marketplace = allCategories.filter(cat => cat.section === 'marketplace' && cat.isActive);
+          
+          setPeptideCategories(peptides);
+          setMarketplaceCategories(marketplace);
+        }
+      } catch (error) {
+        console.error('Erreur chargement catégories:', error);
+        // Fallback en cas d'erreur
+        setPeptideCategories([
+          { name: 'Peptide Blends', slug: 'blends', color: '#10B981' },
+          { name: 'GLP-1 Agonists', slug: 'glp-1', color: '#2563EB' },
+          { name: 'Healing Peptides', slug: 'healing', color: '#8B5CF6' },
+        ]);
+        setMarketplaceCategories([
+          { name: 'SARMs', slug: 'sarms', color: '#8B5CF6' },
+          { name: 'HGH', slug: 'hgh', color: '#06B6D4' },
+          { name: 'Steroids', slug: 'steroids', color: '#EF4444' },
+          { name: 'Post Cycle Therapy', slug: 'pct', color: '#F59E0B' },
+          { name: 'Weight Loss', slug: 'weight-loss', color: '#10B981' },
+          { name: 'African Products', slug: 'african-products', color: '#8B5CF6' },
+        ]);
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Gestion de la recherche
   const handleSearch = (query) => {
     setSearchQuery(query);
     const results = searchProducts(query);
     setSearchResults(results);
   };
 
-  // Fermeture au clic extérieur
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
@@ -60,14 +112,12 @@ const Header = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Focus sur l'input
   useEffect(() => {
     if (isSearchOpen && searchInputRef.current) {
       setTimeout(() => searchInputRef.current.focus(), 100);
     }
   }, [isSearchOpen]);
 
-  // Raccourci clavier CMD+K / CTRL+K
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -157,15 +207,45 @@ const Header = ({
     { name: 'Morph', href: '/labs/morph', rank: 10, icon: <Award size={16} />, description: 'High Potential' },
   ];
 
-  const marketplaceItems = [
-    { name: 'All Products', href: '/marketplace', icon: <Store size={16} />, description: 'Browse everything' },
-    { name: 'SARMs', href: '/marketplace/sarms', icon: <FlaskConical size={16} />, description: 'Selective Androgen Receptor Modulators' },
-    { name: 'HGH', href: '/marketplace/hgh', icon: <Activity size={16} />, description: 'Human Growth Hormone' },
-    { name: 'Steroids', href: '/marketplace/steroids', icon: <Pill size={16} />, description: 'Anabolic compounds' },
-    { name: 'Post Cycle Therapy', href: '/marketplace/pct', icon: <Package size={16} />, description: 'PCT & ancillaries' },
-    { name: 'Weight Loss', href: '/marketplace/weight-loss', icon: <Beaker size={16} />, description: 'Semaglutide, Tirzepatide & more' },
-    { name: 'African Products', href: '/marketplace/african-products', icon: <MapPin size={16} className="text-[#10B981]" />, description: 'Premium African products' },
-  ];
+  // ✅ ÉLÉMENTS DU MENU "BUY PEPTIDES" avec les catégories dynamiques
+  const getShopItems = () => {
+    // Catégorie principale "Peptides" en dur
+    const baseItems = [
+      { name: 'Peptides', href: '/shop/peptides', icon: <FlaskConical size={16} />, isMain: true }
+    ];
+    
+    // Ajouter les sous-catégories de peptides
+    const subItems = peptideCategories.map(cat => ({
+      name: cat.name,
+      href: `/shop/peptides/${cat.slug}`,
+      icon: <ChevronRight size={14} style={{ color: cat.color || '#6B7280' }} />,
+      isSub: true,
+      color: cat.color
+    }));
+    
+    return [...baseItems, ...subItems];
+  };
+
+  // ✅ ÉLÉMENTS DU MENU "GENERAL MARKETPLACE"
+  const getMarketplaceItems = () => {
+    const baseItems = [
+      { name: 'All Products', href: '/marketplace', icon: <Store size={16} />, description: 'Browse everything', isMain: true }
+    ];
+    
+    const categoryItems = marketplaceCategories.map(cat => ({
+      name: cat.name,
+      href: `/marketplace/${cat.slug}`,
+      icon: <Tag size={16} style={{ color: cat.color || '#6B7280' }} />,
+      description: cat.description || '',
+      color: cat.color
+    }));
+    
+    return [...baseItems, ...categoryItems];
+  };
+
+  // ✅ ITEMS DYNAMIQUES
+  const shopItems = getShopItems();
+  const marketplaceItems = getMarketplaceItems();
 
   const navItems = [
     { 
@@ -173,9 +253,7 @@ const Header = ({
       href: '/shop',
       hasDropdown: true,
       dropdownKey: 'shop',
-      dropdownItems: [
-        { name: 'Peptides', href: '/shop/peptides', icon: <FlaskConical size={16} /> },
-      ]
+      dropdownItems: shopItems
     },
     { 
       name: 'GENERAL MARKETPLACE', 
@@ -224,28 +302,77 @@ const Header = ({
   const renderDropdownContent = (item) => {
     const handlers = getDropdownHandlers(item.dropdownKey);
     
+    // ✅ DROPDOWN "BUY PEPTIDES"
     if (item.dropdownKey === 'shop') {
+      if (categoriesLoading) {
+        return handlers.isOpen && (
+          <div 
+            className="absolute top-full left-0 mt-1 w-60 bg-white rounded-xl shadow-xl border border-gray-100 py-4 z-50"
+            onMouseEnter={handlers.onMouseEnter}
+            onMouseLeave={handlers.onMouseLeave}
+          >
+            <div className="flex items-center justify-center gap-2 text-gray-500 py-4">
+              <Loader2 size={16} className="animate-spin text-[#2563EB]" />
+              <span className="text-sm">Chargement...</span>
+            </div>
+          </div>
+        );
+      }
+      
       return handlers.isOpen && (
         <div 
-          className="absolute top-full left-0 mt-1 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50"
+          className="absolute top-full left-0 mt-1 w-64 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50"
           onMouseEnter={handlers.onMouseEnter}
           onMouseLeave={handlers.onMouseLeave}
         >
-          {item.dropdownItems.map((subItem) => (
-            <Link
-              key={subItem.name}
-              to={subItem.href}
-              className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-[#2563EB] transition-colors"
-            >
-              <span className="text-[#2563EB]">{subItem.icon}</span>
-              <span className="text-sm font-medium">{subItem.name}</span>
-            </Link>
-          ))}
+          {item.dropdownItems.map((subItem, index) => {
+            // ✅ Si c'est l'élément principal "Peptides"
+            if (subItem.isMain) {
+              return (
+                <Link
+                  key={subItem.name}
+                  to={subItem.href}
+                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-[#2563EB] transition-colors border-b border-gray-100"
+                >
+                  <span className="text-[#2563EB]">{subItem.icon}</span>
+                  <span className="text-sm font-bold">{subItem.name}</span>
+                </Link>
+              );
+            }
+            
+            // ✅ Sous-catégories avec indentation
+            return (
+              <Link
+                key={subItem.name}
+                to={subItem.href}
+                className="flex items-center gap-3 px-4 py-2.5 pl-10 text-gray-600 hover:bg-gray-50 hover:text-[#2563EB] transition-colors"
+              >
+                <span style={{ color: subItem.color || '#9CA3AF' }}>{subItem.icon}</span>
+                <span className="text-sm">{subItem.name}</span>
+              </Link>
+            );
+          })}
         </div>
       );
     }
     
+    // ✅ DROPDOWN "GENERAL MARKETPLACE"
     if (item.dropdownKey === 'marketplace') {
+      if (categoriesLoading) {
+        return handlers.isOpen && (
+          <div 
+            className="absolute top-full left-0 mt-1 w-80 bg-white rounded-xl shadow-xl border border-gray-100 py-4 z-50"
+            onMouseEnter={handlers.onMouseEnter}
+            onMouseLeave={handlers.onMouseLeave}
+          >
+            <div className="flex items-center justify-center gap-2 text-gray-500 py-4">
+              <Loader2 size={16} className="animate-spin text-[#2563EB]" />
+              <span className="text-sm">Chargement des catégories...</span>
+            </div>
+          </div>
+        );
+      }
+      
       return handlers.isOpen && (
         <div 
           className="absolute top-full left-0 mt-1 w-80 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50"
@@ -255,6 +382,9 @@ const Header = ({
           <Link
             to="/marketplace"
             className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-[#F59E0B]/5 to-[#2563EB]/5 hover:from-[#F59E0B]/10 hover:to-[#2563EB]/10 transition-colors"
+            onClick={() => {
+              setIsMarketplaceDropdownOpen(false);
+            }}
           >
             <span className="font-bold text-[#F59E0B]">🛒 ALL MARKETPLACE</span>
             <span className="text-xs text-[#2563EB]">view all →</span>
@@ -265,13 +395,18 @@ const Header = ({
               <Link
                 key={subItem.name}
                 to={subItem.href}
-                className="flex flex-col items-start gap-1 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors group"
+                className={`flex flex-col items-start gap-1 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors group ${
+                  subItem.isMain ? 'col-span-2 bg-gray-50/50' : ''
+                }`}
+                onClick={() => {
+                  setIsMarketplaceDropdownOpen(false);
+                }}
               >
                 <div className="flex items-center gap-2">
                   <span className={`${subItem.name === 'African Products' ? 'text-[#10B981]' : 'text-[#F59E0B]'} group-hover:text-[#2563EB] transition-colors`}>
                     {subItem.icon}
                   </span>
-                  <span className={`text-sm font-medium ${subItem.name === 'African Products' ? 'text-[#10B981]' : 'text-gray-700'} group-hover:text-[#2563EB]`}>
+                  <span className={`text-sm font-medium ${subItem.isMain ? 'font-bold' : ''} ${subItem.name === 'African Products' ? 'text-[#10B981]' : 'text-gray-700'} group-hover:text-[#2563EB]`}>
                     {subItem.name}
                   </span>
                 </div>
@@ -294,6 +429,7 @@ const Header = ({
       );
     }
     
+    // ... labs et company inchangés
     if (item.dropdownKey === 'labs') {
       return handlers.isOpen && (
         <div 
@@ -379,7 +515,7 @@ const Header = ({
 
   return (
     <header className="bg-white shadow-md sticky top-0 z-50">
-      {/* Top bar - Support email + My Account */}
+      {/* Top bar */}
       <div className="border-b border-gray-100">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-2 text-xs sm:text-sm">
@@ -450,7 +586,6 @@ const Header = ({
 
           {/* Actions avec recherche */}
           <div className="flex items-center gap-4">
-            {/* Bouton de recherche avec modale */}
             <div ref={searchContainerRef} className="relative">
               <button
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
@@ -460,7 +595,6 @@ const Header = ({
                 <Search size={20} />
               </button>
 
-              {/* Modale de recherche */}
               {isSearchOpen && (
                 <div className="absolute right-0 mt-2 w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50">
                   <div className="p-4">
@@ -489,7 +623,6 @@ const Header = ({
                     </div>
                   </div>
 
-                  {/* Résultats */}
                   {searchQuery.trim().length >= 2 && (
                     <div className="max-h-96 overflow-y-auto border-t border-gray-100">
                       {searchResults.length === 0 ? (
@@ -562,7 +695,6 @@ const Header = ({
                     </div>
                   )}
 
-                  {/* Raccourci clavier */}
                   <div className="px-4 py-2 bg-gray-50 border-t border-gray-100 text-xs text-gray-400 flex items-center justify-between">
                     <span>Appuyez sur <kbd className="px-1.5 py-0.5 bg-white border border-gray-200 rounded text-[10px] font-mono">ESC</kbd> pour fermer</span>
                     <span>⌘K pour rechercher</span>
@@ -583,6 +715,7 @@ const Header = ({
         </div>
       </div>
 
+      {/* Mobile menu */}
       {isMobileMenuOpen && (
         <div className="lg:hidden bg-white border-t border-gray-100 shadow-lg max-h-[80vh] overflow-y-auto">
           <div className="px-4 py-2 space-y-1">
@@ -598,7 +731,9 @@ const Header = ({
                         <Link
                           key={subItem.name}
                           to={subItem.href}
-                          className="flex items-center gap-3 py-2 text-gray-600 hover:text-[#2563EB] transition-colors text-sm"
+                          className={`flex items-center gap-3 py-2 text-gray-600 hover:text-[#2563EB] transition-colors text-sm ${
+                            subItem.isSub ? 'pl-4' : ''
+                          }`}
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
                           <span className="text-[#F59E0B]">
