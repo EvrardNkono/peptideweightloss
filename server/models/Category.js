@@ -17,7 +17,7 @@ const categorySchema = new mongoose.Schema({
   },
   icon: {
     type: String,
-    default: 'Package'  // Nom de l'icône lucide-react
+    default: 'Package'
   },
   color: {
     type: String,
@@ -25,7 +25,7 @@ const categorySchema = new mongoose.Schema({
   },
   bgColor: {
     type: String,
-    default: '#EFF6FF'  // bg-blue-50 equivalent
+    default: '#EFF6FF'
   },
   section: {
     type: String,
@@ -49,17 +49,16 @@ const categorySchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Auto-generate slug from name before saving
-categorySchema.pre('save', function (next) {
-  if (this.isModified('name') && !this.slug) {
+// CORRECTION ICI : Changé 'save' pour 'validate' et passage en ASYNC (sans next)
+categorySchema.pre('validate', function () {
+  if (this.name && (this.isModified('name') || !this.slug)) {
     this.slug = this.name
       .toLowerCase()
       .replace(/\s+/g, '-')
       .replace(/[^a-z0-9-]/g, '')
       .replace(/-+/g, '-')
-      .trim();
+      .replace(/^-+|-+$/g, ''); // Nettoie aussi les tirets au début et à la fin
   }
-  next();
 });
 
 module.exports = mongoose.model('Category', categorySchema);
