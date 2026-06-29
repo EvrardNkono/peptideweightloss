@@ -69,7 +69,8 @@ const AdminDashboard = ({ onLogout, token }) => {
   // FIX: catégories dynamiques chargées depuis l'API
   const [productTypes, setProductTypes] = useState([]);
 
-  const axiosConfig = { headers: { Authorization: `Bearer ${token}` } };
+  const storedToken = token || localStorage.getItem('token') || localStorage.getItem('adminToken');
+const axiosConfig = { headers: { Authorization: `Bearer ${storedToken}` } };
 
   // ── Fetch categories ───────────────────────────────────────────────────────
   const fetchCategories = async () => {

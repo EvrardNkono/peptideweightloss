@@ -26,21 +26,27 @@ import BlogPost from './pages/BlogPost'; // ✅ IMPORT DU BLOG POST
 
 const AppContent = () => {
   const location = useLocation();
-  const token = localStorage.getItem('token');
   
+  // FIX: token réactif au lieu d'une lecture statique
+  const [token, setToken] = useState(() => localStorage.getItem('token'));
+
   const isAdminPage = location.pathname.startsWith('/admin');
 
-  // ✅ ÉTATS PARTAGÉS POUR LES MENUS
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMarketplaceDropdownOpen, setIsMarketplaceDropdownOpen] = useState(false);
 
-  // ✅ FONCTION POUR OUVRIR LE BON MENU SELON L'APPAREIL
   const openMarketplaceMenu = () => {
     if (window.innerWidth < 1024) {
       setIsMobileMenuOpen(true);
     } else {
       setIsMarketplaceDropdownOpen(true);
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setToken(null);
+    window.location.href = '/';
   };
 
   console.log('📍 Pathname:', location.pathname);

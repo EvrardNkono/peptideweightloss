@@ -73,7 +73,8 @@ const AdminCategories = ({ token, onCategoriesChange }) => {
   const [error, setError]                 = useState('');
 
   // FIX: mémorise la config pour éviter les re-renders infinis
-  const axiosConfig = { headers: { Authorization: `Bearer ${token}` } };
+  const storedToken = token || localStorage.getItem('token') || localStorage.getItem('adminToken');
+const axiosConfig = { headers: { Authorization: `Bearer ${storedToken}` } };
 
   const fetchCategories = async () => {
     setLoading(true);
