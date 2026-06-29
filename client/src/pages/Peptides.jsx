@@ -3,10 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Filter, X, Star, ShoppingCart, Eye, ChevronDown, Grid3x3, List, SlidersHorizontal, FlaskConical, Beaker, Droplets, Zap, Activity, TrendingUp, Clock } from 'lucide-react';
 import axios from 'axios';
-// ✅ IMPORT DU COMPOSANT PRODUCTCARD
 import ProductCard from '../components/ProductCard';
 
-// ✅ CONFIGURATION AUTOMATIQUE DE L'URL BACKEND
 const getApiUrl = () => {
   if (process.env.NODE_ENV === 'production') {
     return 'https://peptideweightloss.vercel.app/api';
@@ -29,55 +27,7 @@ const Peptides = () => {
   const [visibleCount, setVisibleCount] = useState(20);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState([
-    { id: 'all', name: 'All Peptides', icon: <FlaskConical size={16} />, count: 0 },
-    { id: 'peptide', name: 'Peptides', icon: <FlaskConical size={16} />, count: 0 },
-    { id: 'blend', name: 'Peptide Blends', icon: <Beaker size={16} />, count: 0 },
-  ]);
-
-  // Données statiques de fallback
-  const staticProducts = [
-    { id: 1, name: 'Semaglutide', dosage: '5mg/vial', purity: '≥99%', price: 89.99, oldPrice: 129.99, rating: 4.9, reviews: 234, category: 'peptide', type: 'peptide', isPopular: true, isNew: false, image: '/images/pept.png' },
-    { id: 2, name: 'Tirzepatide', dosage: '10mg/vial', purity: '≥99%', price: 99.99, oldPrice: 149.99, rating: 4.8, reviews: 189, category: 'peptide', type: 'peptide', isPopular: true, isNew: false, image: '/images/pept.png' },
-    { id: 3, name: 'Liraglutide', dosage: '6mg/vial', purity: '≥98%', price: 79.99, oldPrice: 109.99, rating: 4.7, reviews: 112, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    { id: 4, name: 'Dulaglutide', dosage: '4mg/vial', purity: '≥99%', price: 84.99, oldPrice: 119.99, rating: 4.6, reviews: 78, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    { id: 5, name: 'Ipamorelin', dosage: '5mg/vial', purity: '≥99%', price: 54.99, oldPrice: 74.99, rating: 4.8, reviews: 167, category: 'peptide', type: 'peptide', isPopular: true, isNew: false, image: '/images/pept.png' },
-    { id: 6, name: 'GHRP-2', dosage: '5mg/vial', purity: '≥99%', price: 49.99, oldPrice: 69.99, rating: 4.7, reviews: 134, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    { id: 7, name: 'GHRP-6', dosage: '5mg/vial', purity: '≥99%', price: 49.99, oldPrice: 69.99, rating: 4.7, reviews: 128, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    { id: 8, name: 'Hexarelin', dosage: '2mg/vial', purity: '≥98%', price: 59.99, oldPrice: 89.99, rating: 4.8, reviews: 89, category: 'peptide', type: 'peptide', isPopular: false, isNew: true, image: '/images/pept.png' },
-    { id: 9, name: 'Sermorelin', dosage: '5mg/vial', purity: '≥99%', price: 64.99, oldPrice: 89.99, rating: 4.7, reviews: 93, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    { id: 10, name: 'CJC-1295', dosage: '2mg/vial', purity: '≥99%', price: 69.99, oldPrice: 99.99, rating: 4.8, reviews: 145, category: 'peptide', type: 'peptide', isPopular: true, isNew: false, image: '/images/pept.png' },
-    { id: 11, name: 'Tesamorelin', dosage: '2mg/vial', purity: '≥99%', price: 89.99, oldPrice: 129.99, rating: 4.9, reviews: 76, category: 'peptide', type: 'peptide', isPopular: false, isNew: true, image: '/images/pept.png' },
-    { id: 12, name: 'BPC-157', dosage: '5mg/vial', purity: '≥99%', price: 59.99, oldPrice: 79.99, rating: 4.9, reviews: 312, category: 'peptide', type: 'peptide', isPopular: true, isNew: false, image: '/images/pept.png' },
-    { id: 13, name: 'TB-500', dosage: '5mg/vial', purity: '≥99%', price: 64.99, oldPrice: 84.99, rating: 4.8, reviews: 178, category: 'peptide', type: 'peptide', isPopular: true, isNew: false, image: '/images/pept.png' },
-    { id: 14, name: 'KPV', dosage: '10mg/vial', purity: '≥99%', price: 49.99, rating: 4.7, reviews: 56, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    { id: 15, name: 'LL-37', dosage: '5mg/vial', purity: '≥98%', price: 69.99, rating: 4.8, reviews: 67, category: 'peptide', type: 'peptide', isPopular: false, isNew: true, image: '/images/pept.png' },
-    { id: 16, name: 'Thymosin Alpha-1', dosage: '10mg/vial', purity: '≥99%', price: 79.99, rating: 4.9, reviews: 89, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    { id: 17, name: 'Thymosin Beta-4', dosage: '5mg/vial', purity: '≥99%', price: 74.99, rating: 4.8, reviews: 92, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    { id: 18, name: 'AOD-9604', dosage: '5mg/vial', purity: '≥99%', price: 69.99, oldPrice: 89.99, rating: 4.7, reviews: 156, category: 'peptide', type: 'peptide', isPopular: true, isNew: true, image: '/images/pept.png' },
-    { id: 19, name: 'MOTS-c', dosage: '10mg/vial', purity: '≥99%', price: 79.99, rating: 4.8, reviews: 98, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    { id: 20, name: 'Tesofensine', dosage: '1mg/vial', purity: '≥99%', price: 89.99, rating: 4.8, reviews: 67, category: 'peptide', type: 'peptide', isPopular: false, isNew: true, image: '/images/pept.png' },
-    { id: 21, name: '5-Amino-1MQ', dosage: '50mg/vial', purity: '≥98%', price: 99.99, rating: 4.7, reviews: 45, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    { id: 22, name: 'Melanotan II', dosage: '10mg/vial', purity: '≥99%', price: 44.99, rating: 4.6, reviews: 234, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    { id: 23, name: 'PT-141', dosage: '10mg/vial', purity: '≥99%', price: 54.99, rating: 4.7, reviews: 178, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    { id: 24, name: 'Epithalon', dosage: '10mg/vial', purity: '≥99%', price: 49.99, rating: 4.7, reviews: 89, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    { id: 25, name: 'GHK-Cu', dosage: '50mg/vial', purity: '≥99%', price: 49.99, rating: 4.7, reviews: 145, category: 'peptide', type: 'peptide', isPopular: false, isNew: true, image: '/images/pept.png' },
-    { id: 26, name: 'BPC-157 + TB-500', dosage: '5/5mg', purity: '≥99%', price: 109.99, oldPrice: 149.99, rating: 4.9, reviews: 234, category: 'blend', type: 'blend', isPopular: true, isNew: false, image: '/images/pept.png' },
-    { id: 27, name: 'GLOW Blend', dosage: '35/10/5mg', purity: '≥99%', price: 129.99, rating: 4.8, reviews: 89, category: 'blend', type: 'blend', isPopular: false, isNew: true, image: '/images/pept.png' },
-    { id: 28, name: 'Wolverine Stack', dosage: '10/10mg', purity: '≥99%', price: 119.99, rating: 4.9, reviews: 156, category: 'blend', type: 'blend', isPopular: true, isNew: false, image: '/images/pept.png' },
-    { id: 29, name: 'CJC-1295 + Ipamorelin', dosage: '5/5mg', purity: '≥99%', price: 114.99, oldPrice: 149.99, rating: 4.8, reviews: 167, category: 'blend', type: 'blend', isPopular: true, isNew: false, image: '/images/pept.png' },
-    { id: 30, name: 'Selank', dosage: '10mg/vial', purity: '≥99%', price: 44.99, rating: 4.6, reviews: 78, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    { id: 31, name: 'Semax', dosage: '10mg/vial', purity: '≥99%', price: 49.99, rating: 4.7, reviews: 89, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    { id: 32, name: 'NAD+', dosage: '250mg/vial', purity: '≥99%', price: 79.99, rating: 4.8, reviews: 123, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    { id: 33, name: 'FOXO4-DRI', dosage: '5mg/vial', purity: '≥98%', price: 149.99, rating: 4.9, reviews: 45, category: 'peptide', type: 'peptide', isPopular: false, isNew: true, image: '/images/pept.png' },
-    { id: 34, name: 'SS-31', dosage: '10mg/vial', purity: '≥99%', price: 89.99, rating: 4.8, reviews: 67, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    { id: 35, name: 'Humanin', dosage: '10mg/vial', purity: '≥99%', price: 69.99, rating: 4.7, reviews: 56, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    { id: 36, name: 'Frag 176-191', dosage: '5mg/vial', purity: '≥99%', price: 59.99, rating: 4.7, reviews: 89, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    { id: 37, name: 'HGH 191AA', dosage: '10mg/vial', purity: '≥99%', price: 84.99, rating: 4.8, reviews: 134, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    { id: 38, name: 'IGF-1 LR3', dosage: '1mg/vial', purity: '≥98%', price: 99.99, rating: 4.9, reviews: 89, category: 'peptide', type: 'peptide', isPopular: false, isNew: true, image: '/images/pept.png' },
-    { id: 39, name: 'MGF', dosage: '2mg/vial', purity: '≥99%', price: 74.99, rating: 4.7, reviews: 78, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' },
-    { id: 40, name: 'PEG-MGF', dosage: '2mg/vial', purity: '≥99%', price: 89.99, rating: 4.8, reviews: 67, category: 'peptide', type: 'peptide', isPopular: false, isNew: false, image: '/images/pept.png' }
-  ];
+  const [categories, setCategories] = useState([]);
 
   const getFullImageUrl = (imageUrl) => {
     if (!imageUrl || imageUrl === '/images/pept.png') {
@@ -96,12 +46,22 @@ const Peptides = () => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
+        // ✅ Récupérer les catégories peptides
+        const categoriesRes = await axios.get(`${API_URL}/categories?section=peptides`);
+        const peptideCategories = categoriesRes.data.data || [];
+        
+        // ✅ Récupérer tous les produits
         const response = await axios.get(`${API_URL}/products`);
         let apiProducts = response.data.data || response.data;
-        apiProducts = apiProducts.filter(p => p.type === 'peptide' || p.type === 'blend');
         
-        if (apiProducts.length > 0) {
-          const formattedProducts = apiProducts.map((p, index) => ({
+        // ✅ Filtrer les produits qui appartiennent aux catégories peptides
+        const peptideSlugs = peptideCategories.map(c => c.slug);
+        const filteredApiProducts = apiProducts.filter(p => 
+          peptideSlugs.includes(p.type) || peptideSlugs.includes(p.category) || p.type === 'peptide' || p.type === 'blend'
+        );
+        
+        if (filteredApiProducts.length > 0) {
+          const formattedProducts = filteredApiProducts.map((p, index) => ({
             _id: p._id || p.id || index,
             id: p._id || p.id || index,
             name: p.name,
@@ -111,8 +71,8 @@ const Peptides = () => {
             oldPrice: p.oldPrice || null,
             rating: p.rating || 4.8,
             reviews: p.reviews || Math.floor(Math.random() * 200) + 10,
-            category: p.type === 'blend' ? 'blend' : 'peptide',
-            type: p.type,
+            category: p.category || p.type || 'peptide',
+            type: p.type || 'peptide',
             isPopular: p.isPopular || false,
             isNew: p.isNew || false,
             isBestSeller: p.isBestSeller || false,
@@ -121,26 +81,61 @@ const Peptides = () => {
           }));
           setProducts(formattedProducts);
           
-          setCategories([
-            { id: 'all', name: 'All Peptides', icon: <FlaskConical size={16} />, count: formattedProducts.length },
-            { id: 'peptide', name: 'Peptides', icon: <FlaskConical size={16} />, count: formattedProducts.filter(p => p.type === 'peptide').length },
-            { id: 'blend', name: 'Peptide Blends', icon: <Beaker size={16} />, count: formattedProducts.filter(p => p.type === 'blend').length },
-          ]);
+          // ✅ Générer les catégories dynamiquement
+          const allCategories = [
+            { id: 'all', name: 'All Peptides', icon: <FlaskConical size={16} />, count: formattedProducts.length }
+          ];
+          
+          // Ajouter les catégories peptides
+          peptideCategories.forEach(cat => {
+            const count = formattedProducts.filter(p => 
+              p.type === cat.slug || p.category === cat.slug
+            ).length;
+            if (count > 0) {
+              allCategories.push({
+                id: cat.slug,
+                name: cat.name,
+                icon: <Beaker size={16} style={{ color: cat.color || '#6B7280' }} />,
+                count: count,
+                color: cat.color
+              });
+            }
+          });
+          
+          // Ajouter "Peptides" et "Blends" génériques si des produits existent
+          const peptideCount = formattedProducts.filter(p => p.type === 'peptide').length;
+          const blendCount = formattedProducts.filter(p => p.type === 'blend').length;
+          
+          if (peptideCount > 0) {
+            allCategories.push({
+              id: 'peptide',
+              name: 'Peptides',
+              icon: <FlaskConical size={16} />,
+              count: peptideCount
+            });
+          }
+          if (blendCount > 0) {
+            allCategories.push({
+              id: 'blend',
+              name: 'Peptide Blends',
+              icon: <Beaker size={16} />,
+              count: blendCount
+            });
+          }
+          
+          setCategories(allCategories);
         } else {
-          setProducts(staticProducts);
+          // Fallback avec données statiques
+          setProducts([]);
           setCategories([
-            { id: 'all', name: 'All Peptides', icon: <FlaskConical size={16} />, count: staticProducts.length },
-            { id: 'peptide', name: 'Peptides', icon: <FlaskConical size={16} />, count: staticProducts.filter(p => p.type === 'peptide').length },
-            { id: 'blend', name: 'Peptide Blends', icon: <Beaker size={16} />, count: staticProducts.filter(p => p.type === 'blend').length },
+            { id: 'all', name: 'All Peptides', icon: <FlaskConical size={16} />, count: 0 }
           ]);
         }
       } catch (error) {
         console.error('Error fetching products:', error);
-        setProducts(staticProducts);
+        setProducts([]);
         setCategories([
-          { id: 'all', name: 'All Peptides', icon: <FlaskConical size={16} />, count: staticProducts.length },
-          { id: 'peptide', name: 'Peptides', icon: <FlaskConical size={16} />, count: staticProducts.filter(p => p.type === 'peptide').length },
-          { id: 'blend', name: 'Peptide Blends', icon: <Beaker size={16} />, count: staticProducts.filter(p => p.type === 'blend').length },
+          { id: 'all', name: 'All Peptides', icon: <FlaskConical size={16} />, count: 0 }
         ]);
       } finally {
         setLoading(false);
@@ -151,7 +146,7 @@ const Peptides = () => {
   }, []);
 
   const filteredProducts = products.filter(product => {
-    if (selectedCategory !== 'all' && product.category !== selectedCategory) return false;
+    if (selectedCategory !== 'all' && product.category !== selectedCategory && product.type !== selectedCategory) return false;
     if (product.price < priceRange[0] || product.price > priceRange[1]) return false;
     if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
@@ -167,7 +162,6 @@ const Peptides = () => {
 
   const displayedProducts = sortedProducts.slice(0, visibleCount);
 
-  // Fonctions pour le panier et vue rapide
   const handleAddToCart = (product) => {
     console.log('🛒 Adding to cart:', product);
     alert(`Added ${product.name} to cart!`);
@@ -299,7 +293,10 @@ const Peptides = () => {
                           : 'hover:bg-gray-50 text-gray-600'
                       }`}
                     >
-                      <span className="flex items-center gap-2">{cat.icon} {cat.name}</span>
+                      <span className="flex items-center gap-2">
+                        <span style={{ color: cat.color || '#6B7280' }}>{cat.icon}</span>
+                        {cat.name}
+                      </span>
                       <span className="text-xs text-gray-400">({cat.count})</span>
                     </button>
                   ))}
