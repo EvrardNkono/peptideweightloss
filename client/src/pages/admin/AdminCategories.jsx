@@ -64,95 +64,106 @@ export const renderIcon = (iconName, size = 16, color = 'currentColor') => {
 // Main Component
 // ════════════════════════════════════════════════════════════════════════════
 const AdminCategories = ({ token, onCategoriesChange }) => {
-  const [categories, setCategories]       = useState([]);
-  const [loading, setLoading]             = useState(true);
-  const [searchTerm, setSearchTerm]       = useState('');
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const [sectionFilter, setSectionFilter] = useState('all');
-  const [showModal, setShowModal]         = useState(false);
-  const [editingCat, setEditingCat]       = useState(null);
-  const [error, setError]                 = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [editingCat, setEditingCat] = useState(null);
+  const [error, setError] = useState('');
 
-  // FIX: mémorise la config pour éviter les re-renders infinis
-  const storedToken = token || localStorage.getItem('token') || localStorage.getItem('adminToken');
-const axiosConfig = { headers: { Authorization: `Bearer ${storedToken}` } };
+  // ✅ Récupération du token
+  const getToken = () => {
+    return token || localStorage.getItem('token');
+  };
 
   const fetchCategories = async () => {
     setLoading(true);
     setError('');
     try {
-      const res = await axios.get(`${API_URL}/categories/all`, axiosConfig);
+      const token = getToken();
+      const res = await axios.get(`${API_URL}/categories/all`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setCategories(res.data.data || []);
     } catch (err) {
       console.error('Error fetching categories:', err);
-      setError('Failed to load categories. Check the API connection.');
+      setError('Failed to load categories');
     }
     setLoading(false);
   };
 
-  // FIX: dépendance sur token uniquement
   useEffect(() => {
     fetchCategories();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, []);
 
   const handleSave = async (data) => {
     try {
+      const token = getToken();
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      
       if (editingCat) {
-        const res = await axios.put(`${API_URL}/categories/${editingCat._id}`, data, axiosConfig);
+        const res = await axios.put(`${API_URL}/categories/${editingCat._id}`, data, config);
         setCategories(prev => prev.map(c => c._id === editingCat._id ? res.data.data : c));
       } else {
-        const res = await axios.post(`${API_URL}/categories`, data, axiosConfig);
+        const res = await axios.post(`${API_URL}/categories`, data, config);
         setCategories(prev => [res.data.data, ...prev]);
       }
+      
       setShowModal(false);
       setEditingCat(null);
-      // FIX: notifie le Dashboard parent pour resync les catégories
       if (onCategoriesChange) onCategoriesChange();
       return { success: true };
     } catch (err) {
-      return { success: false, message: err.response?.data?.message || 'Error saving category' };
+      console.error('Save error:', err);
+      return { 
+        success: false, 
+        message: err.response?.data?.message || err.message || 'Error saving category' 
+      };
     }
   };
 
   const handleToggleActive = async (cat) => {
     try {
+      const token = getToken();
       const res = await axios.put(
         `${API_URL}/categories/${cat._id}`,
         { isActive: !cat.isActive },
-        axiosConfig
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       setCategories(prev => prev.map(c => c._id === cat._id ? res.data.data : c));
       if (onCategoriesChange) onCategoriesChange();
     } catch (err) {
       console.error('Toggle error:', err);
+      setError('Failed to toggle category status');
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this category? Products using it will keep their type slug.')) return;
+    if (!window.confirm('Delete this category?')) return;
     try {
-      await axios.delete(`${API_URL}/categories/${id}`, axiosConfig);
+      const token = getToken();
+      await axios.delete(`${API_URL}/categories/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setCategories(prev => prev.filter(c => c._id !== id));
-      // FIX: notifie le parent après suppression
       if (onCategoriesChange) onCategoriesChange();
     } catch (err) {
       console.error('Delete error:', err);
+      setError('Failed to delete category');
     }
   };
 
-  // ─── Filtered list ───────────────────────────────────────────────────────
   const filtered = categories.filter(c => {
-    const matchSearch =
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (c.description || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchSection = sectionFilter === 'all' || c.section === sectionFilter;
     return matchSearch && matchSection;
   });
 
-  const peptidesCats    = filtered.filter(c => c.section === 'peptides');
+  const peptidesCats = filtered.filter(c => c.section === 'peptides');
   const marketplaceCats = filtered.filter(c => c.section === 'marketplace');
 
-  // ─── Loading ─────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -164,7 +175,7 @@ const axiosConfig = { headers: { Authorization: `Bearer ${storedToken}` } };
 
   return (
     <div>
-      {/* ── Toolbar ── */}
+      {/* Toolbar */}
       <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
         <div className="flex gap-3 flex-wrap">
           <div className="relative">
@@ -210,21 +221,27 @@ const axiosConfig = { headers: { Authorization: `Bearer ${storedToken}` } };
         </div>
       )}
 
-      {/* ── Stats ── */}
+      {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        {[
-          { label: 'Total Categories', value: categories.length,                                        color: '#2563EB' },
-          { label: 'Peptides Shop',    value: categories.filter(c => c.section === 'peptides').length,  color: '#10B981' },
-          { label: 'Marketplace',      value: categories.filter(c => c.section === 'marketplace').length, color: '#8B5CF6' },
-        ].map((stat, i) => (
-          <div key={i} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-            <p className="text-xs text-gray-500">{stat.label}</p>
-            <p className="text-2xl font-bold mt-1" style={{ color: stat.color }}>{stat.value}</p>
-          </div>
-        ))}
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <p className="text-xs text-gray-500">Total Categories</p>
+          <p className="text-2xl font-bold mt-1 text-[#2563EB]">{categories.length}</p>
+        </div>
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <p className="text-xs text-gray-500">Peptides Shop</p>
+          <p className="text-2xl font-bold mt-1 text-[#10B981]">
+            {categories.filter(c => c.section === 'peptides').length}
+          </p>
+        </div>
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <p className="text-xs text-gray-500">Marketplace</p>
+          <p className="text-2xl font-bold mt-1 text-[#8B5CF6]">
+            {categories.filter(c => c.section === 'marketplace').length}
+          </p>
+        </div>
       </div>
 
-      {/* ── Peptides section ── */}
+      {/* Peptides section */}
       <SectionBlock
         title="🧬 Peptides Shop"
         subtitle="Visible in the 'BUY PEPTIDES' dropdown of the header"
@@ -235,7 +252,7 @@ const axiosConfig = { headers: { Authorization: `Bearer ${storedToken}` } };
         onDelete={handleDelete}
       />
 
-      {/* ── Marketplace section ── */}
+      {/* Marketplace section */}
       <SectionBlock
         title="🛒 General Marketplace"
         subtitle="Visible in the 'GENERAL MARKETPLACE' dropdown of the header"
@@ -260,7 +277,7 @@ const axiosConfig = { headers: { Authorization: `Bearer ${storedToken}` } };
         </div>
       )}
 
-      {/* ── Modal ── */}
+      {/* Modal */}
       {showModal && (
         <CategoryModal
           category={editingCat}
@@ -388,7 +405,7 @@ const CategoryModal = ({ category, onClose, onSave }) => {
     isActive:    category?.isActive    ?? true,
     order:       category?.order       || 0,
   });
-  const [saving, setSaving]       = useState(false);
+  const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
 
   const handleColorPreset = (preset) => {
@@ -398,7 +415,7 @@ const CategoryModal = ({ category, onClose, onSave }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name.trim()) { setFormError('Name is required'); return; }
-    if (!form.section)     { setFormError('Please choose a section'); return; }
+    if (!form.section) { setFormError('Please choose a section'); return; }
     setSaving(true);
     setFormError('');
     const result = await onSave(form);
@@ -419,7 +436,6 @@ const CategoryModal = ({ category, onClose, onSave }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
-
           {formError && (
             <div className="p-3 bg-red-50 text-red-700 rounded-xl text-sm flex items-center gap-2">
               <AlertCircle size={15} /> {formError}
@@ -470,7 +486,7 @@ const CategoryModal = ({ category, onClose, onSave }) => {
             <label className="block text-sm font-medium text-gray-700 mb-2">Section *</label>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { value: 'peptides',    label: '🧬 Peptides Shop',       sub: '"BUY PEPTIDES" dropdown' },
+                { value: 'peptides', label: '🧬 Peptides Shop', sub: '"BUY PEPTIDES" dropdown' },
                 { value: 'marketplace', label: '🛒 General Marketplace', sub: '"GENERAL MARKETPLACE" dropdown' },
               ].map(opt => (
                 <label
@@ -604,6 +620,6 @@ const CategoryModal = ({ category, onClose, onSave }) => {
       </div>
     </div>
   );
-}; 
+};
 
 export default AdminCategories;
