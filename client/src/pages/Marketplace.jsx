@@ -22,9 +22,9 @@ const BACKEND_URL = API_URL.replace('/api', '');
 
 console.log(`🔧 Marketplace - API URL: ${API_URL}`);
 
-// ✅ FONCTION DE MÉLANGE AVEC CONTRAINTE DE CATÉGORIE (copiée depuis Home)
+// ✅ FONCTION DE MÉLANGE AVEC CONTRAINTE DE CATÉGORIE
 const shuffleProductsWithCategoryConstraint = (products) => {
-  if (products.length <= 1) return products;
+  if (!products || products.length <= 1) return products || [];
   
   // Séparer les produits par catégorie
   const productsByCategory = {};
@@ -158,6 +158,7 @@ const Marketplace = () => {
         
         // ✅ Appliquer le mélange initial
         const shuffled = shuffleProductsWithCategoryConstraint(formattedProducts);
+        console.log('Produits mélangés:', shuffled);
         setFilteredProducts(shuffled);
       } catch (error) {
         console.error('Error fetching products:', error);
@@ -179,44 +180,56 @@ const Marketplace = () => {
     setVisibleCount(20);
   }, [category]);
 
-  // ✅ Effet pour filtrer et mélanger les produits quand le type ou la recherche change
+  // ✅ Effet pour le filtrage et le mélange (recalculé quand le type ou la recherche change)
   useEffect(() => {
+    if (products.length === 0) return;
+    
+    console.log('Filtrage et mélange - Type:', selectedType, 'Recherche:', searchQuery);
+    
     let filtered = products.filter(product => {
       if (selectedType !== 'all' && product.type !== selectedType) return false;
       if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       return true;
     });
-
-    // ✅ Appliquer le mélange avec contrainte de catégorie
+    
+    console.log('Produits filtrés (avant mélange):', filtered.length);
+    
+    // ✅ Mélanger avec contrainte de catégorie
     const shuffled = shuffleProductsWithCategoryConstraint(filtered);
+    console.log('Produits après mélange:', shuffled.length);
+    
     setFilteredProducts(shuffled);
     setVisibleCount(20);
   }, [selectedType, searchQuery, products]);
 
-  // ✅ Effet pour le tri (sans mélanger, juste trier le résultat déjà mélangé)
+  // ✅ Effet pour le tri (appliqué sur les produits déjà mélangés)
   useEffect(() => {
-    if (sortBy === 'popular') {
-      setFilteredProducts(prev => {
-        const sorted = [...prev].sort((a, b) => b.rating - a.rating);
-        // ✅ On remélange après le tri pour garder l'alternance des catégories
-        return shuffleProductsWithCategoryConstraint(sorted);
-      });
-    } else if (sortBy === 'price-low') {
-      setFilteredProducts(prev => {
-        const sorted = [...prev].sort((a, b) => a.price - b.price);
-        return shuffleProductsWithCategoryConstraint(sorted);
-      });
-    } else if (sortBy === 'price-high') {
-      setFilteredProducts(prev => {
-        const sorted = [...prev].sort((a, b) => b.price - a.price);
-        return shuffleProductsWithCategoryConstraint(sorted);
-      });
-    } else if (sortBy === 'newest') {
-      setFilteredProducts(prev => {
-        const sorted = [...prev].sort((a, b) => (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0));
-        return shuffleProductsWithCategoryConstraint(sorted);
-      });
+    if (filteredProducts.length === 0) return;
+    
+    console.log('Application du tri:', sortBy);
+    
+    // On garde une copie des produits mélangés
+    let sorted = [...filteredProducts];
+    
+    switch(sortBy) {
+      case 'popular':
+        sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        break;
+      case 'price-low':
+        sorted.sort((a, b) => (a.price || 0) - (b.price || 0));
+        break;
+      case 'price-high':
+        sorted.sort((a, b) => (b.price || 0) - (a.price || 0));
+        break;
+      case 'newest':
+        sorted.sort((a, b) => (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0));
+        break;
+      default:
+        break;
     }
+    
+    // ✅ On garde l'ordre trié sans remélanger
+    setFilteredProducts(sorted);
   }, [sortBy]);
 
   const getTypeCount = (typeId) => {
@@ -234,7 +247,7 @@ const Marketplace = () => {
     }
   };
 
-  // ✅ Fonction pour la vue rapide (sans alerte)
+  // ✅ Fonction pour la vue rapide
   const handleQuickView = (product) => {
     console.log('Quick view:', product);
     navigate(`/product/${product._id}`);
@@ -242,9 +255,7 @@ const Marketplace = () => {
 
   const displayedProducts = filteredProducts.slice(0, visibleCount);
 
-  console.log('selectedType:', selectedType);
-  console.log('filteredProducts count:', filteredProducts.length);
-  console.log('displayedProducts:', displayedProducts);
+  console.log('Affichage final:', displayedProducts.length, 'produits sur', filteredProducts.length);
 
   if (loading) {
     return (
