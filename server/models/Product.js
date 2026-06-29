@@ -7,11 +7,12 @@ const productSchema = new mongoose.Schema({
     required: [true, 'Please add a product name'],
     trim: true
   },
+  // ✅ SUPPRIMEZ L'ENUM pour accepter toutes les catégories
   type: {
     type: String,
-    enum: ['peptide', 'blend', 'sarm', 'steroid', 'hgh', 'pct', 'weight-loss', 'african'],
     required: true,
     default: 'peptide'
+    // ❌ enum: ['peptide', 'blend', 'sarm', 'steroid', 'hgh', 'pct', 'weight-loss', 'african'],
   },
   
   // ✅ NOUVEAU : More Details (remplace dosage pour plus d'infos)
@@ -99,7 +100,6 @@ const productSchema = new mongoose.Schema({
     default: 0,
     min: 0
   },
-  
   
 });
 
