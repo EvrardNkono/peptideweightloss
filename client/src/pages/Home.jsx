@@ -18,7 +18,68 @@ const getApiUrl = () => {
 const API_URL = getApiUrl();
 const BACKEND_URL = API_URL.replace('/api', '');
 
-// ✅ AJOUT DE LA PROP onOpenMarketplace
+// ✅ FONCTION DE MÉLANGE AVEC CONTRAINTE DE CATÉGORIE
+const shuffleProductsWithCategoryConstraint = (products) => {
+  if (products.length <= 1) return products;
+  
+  // Séparer les produits par catégorie
+  const productsByCategory = {};
+  products.forEach(product => {
+    const category = product.category || 'Other';
+    if (!productsByCategory[category]) {
+      productsByCategory[category] = [];
+    }
+    productsByCategory[category].push(product);
+  });
+  
+  // Mélanger chaque catégorie individuellement
+  Object.keys(productsByCategory).forEach(category => {
+    for (let i = productsByCategory[category].length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [productsByCategory[category][i], productsByCategory[category][j]] = 
+        [productsByCategory[category][j], productsByCategory[category][i]];
+    }
+  });
+  
+  // Obtenir les catégories avec leur nombre de produits
+  const categoryCounts = Object.keys(productsByCategory).map(cat => ({
+    category: cat,
+    count: productsByCategory[cat].length,
+    products: productsByCategory[cat],
+    index: 0
+  }));
+  
+  // Trier par ordre décroissant pour commencer par les catégories avec le plus de produits
+  categoryCounts.sort((a, b) => b.count - a.count);
+  
+  const result = [];
+  let lastCategory = null;
+  
+  // Tant qu'il reste des produits à placer
+  while (categoryCounts.some(cat => cat.index < cat.count)) {
+    // Filtrer les catégories qui ont encore des produits et qui ne sont pas la dernière utilisée
+    let availableCategories = categoryCounts.filter(cat => 
+      cat.index < cat.count && cat.category !== lastCategory
+    );
+    
+    // Si aucune catégorie disponible (uniquement la dernière catégorie reste), on prend celle-ci
+    if (availableCategories.length === 0) {
+      availableCategories = categoryCounts.filter(cat => cat.index < cat.count);
+    }
+    
+    // Choisir une catégorie aléatoirement parmi celles disponibles
+    const randomIndex = Math.floor(Math.random() * availableCategories.length);
+    const selectedCategory = availableCategories[randomIndex];
+    
+    // Ajouter le prochain produit de cette catégorie
+    result.push(selectedCategory.products[selectedCategory.index]);
+    selectedCategory.index++;
+    lastCategory = selectedCategory.category;
+  }
+  
+  return result;
+};
+
 const Home = ({ onOpenMarketplace }) => {
   const [allProducts, setAllProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -65,7 +126,10 @@ const Home = ({ onOpenMarketplace }) => {
           stock: p.stock || 0
         }));
         setAllProducts(formattedProducts);
-        setFilteredProducts(formattedProducts);
+        
+        // ✅ APPLIQUER LE MÉLANGE DÈS LE CHARGEMENT
+        const shuffled = shuffleProductsWithCategoryConstraint(formattedProducts);
+        setFilteredProducts(shuffled);
       } catch (error) {
         console.error('Error fetching products:', error);
         setError('Impossible de charger les produits');
@@ -79,13 +143,21 @@ const Home = ({ onOpenMarketplace }) => {
 
   useEffect(() => {
     if (activeFilter === 'all') {
-      setFilteredProducts(allProducts);
+      // ✅ Mélanger tous les produits avec la contrainte de catégorie
+      const shuffled = shuffleProductsWithCategoryConstraint(allProducts);
+      setFilteredProducts(shuffled);
     } else if (activeFilter === 'bestseller') {
-      setFilteredProducts(allProducts.filter(p => p.isBestSeller === true));
+      const filtered = allProducts.filter(p => p.isBestSeller === true);
+      const shuffled = shuffleProductsWithCategoryConstraint(filtered);
+      setFilteredProducts(shuffled);
     } else if (activeFilter === 'popular') {
-      setFilteredProducts(allProducts.filter(p => p.isPopular === true));
+      const filtered = allProducts.filter(p => p.isPopular === true);
+      const shuffled = shuffleProductsWithCategoryConstraint(filtered);
+      setFilteredProducts(shuffled);
     } else if (activeFilter === 'new') {
-      setFilteredProducts(allProducts.filter(p => p.isNew === true));
+      const filtered = allProducts.filter(p => p.isNew === true);
+      const shuffled = shuffleProductsWithCategoryConstraint(filtered);
+      setFilteredProducts(shuffled);
     }
   }, [activeFilter, allProducts]);
 
@@ -137,7 +209,6 @@ const Home = ({ onOpenMarketplace }) => {
 
   return (
     <div>
-      {/* ✅ PASSER LA PROP À HERO */}
       <Hero onOpenMarketplace={onOpenMarketplace} />
 
       {/* Features Section */}
