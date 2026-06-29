@@ -4,7 +4,7 @@ import {
   Plus, Edit, Trash2, Search, X, Loader2,
   Package, FlaskConical, Beaker, Pill, Syringe,
   Activity, MapPin, Tag, Globe, Store, Layers,
-  CheckCircle, AlertCircle, ChevronDown, RefreshCw
+  AlertCircle, RefreshCw
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -15,7 +15,7 @@ const getApiUrl = () =>
 
 const API_URL = getApiUrl();
 
-// ─── Icônes disponibles (noms lucide-react) ─────────────────────────────────
+// ─── Icônes disponibles ──────────────────────────────────────────────────────
 const AVAILABLE_ICONS = [
   { name: 'Package',      component: <Package size={18} /> },
   { name: 'FlaskConical', component: <FlaskConical size={18} /> },
@@ -42,7 +42,7 @@ const COLOR_PRESETS = [
   { color: '#14B8A6', bg: '#F0FDFA', label: 'Teal' },
 ];
 
-// ─── Helper: render icon by name ────────────────────────────────────────────
+// ─── Helper: render icon by name ─────────────────────────────────────────────
 export const renderIcon = (iconName, size = 16, color = 'currentColor') => {
   const props = { size, color };
   switch (iconName) {
@@ -63,30 +63,36 @@ export const renderIcon = (iconName, size = 16, color = 'currentColor') => {
 // ════════════════════════════════════════════════════════════════════════════
 // Main Component
 // ════════════════════════════════════════════════════════════════════════════
-const AdminCategories = ({ token }) => {
-  const [categories, setCategories]   = useState([]);
-  const [loading, setLoading]         = useState(true);
-  const [searchTerm, setSearchTerm]   = useState('');
+const AdminCategories = ({ token, onCategoriesChange }) => {
+  const [categories, setCategories]       = useState([]);
+  const [loading, setLoading]             = useState(true);
+  const [searchTerm, setSearchTerm]       = useState('');
   const [sectionFilter, setSectionFilter] = useState('all');
-  const [showModal, setShowModal]     = useState(false);
-  const [editingCat, setEditingCat]   = useState(null);
-  const [error, setError]             = useState('');
+  const [showModal, setShowModal]         = useState(false);
+  const [editingCat, setEditingCat]       = useState(null);
+  const [error, setError]                 = useState('');
 
+  // FIX: mémorise la config pour éviter les re-renders infinis
   const axiosConfig = { headers: { Authorization: `Bearer ${token}` } };
 
   const fetchCategories = async () => {
     setLoading(true);
+    setError('');
     try {
       const res = await axios.get(`${API_URL}/categories/all`, axiosConfig);
       setCategories(res.data.data || []);
     } catch (err) {
       console.error('Error fetching categories:', err);
-      setError('Failed to load categories');
+      setError('Failed to load categories. Check the API connection.');
     }
     setLoading(false);
   };
 
-  useEffect(() => { fetchCategories(); }, []);
+  // FIX: dépendance sur token uniquement
+  useEffect(() => {
+    fetchCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   const handleSave = async (data) => {
     try {
@@ -99,6 +105,8 @@ const AdminCategories = ({ token }) => {
       }
       setShowModal(false);
       setEditingCat(null);
+      // FIX: notifie le Dashboard parent pour resync les catégories
+      if (onCategoriesChange) onCategoriesChange();
       return { success: true };
     } catch (err) {
       return { success: false, message: err.response?.data?.message || 'Error saving category' };
@@ -113,6 +121,7 @@ const AdminCategories = ({ token }) => {
         axiosConfig
       );
       setCategories(prev => prev.map(c => c._id === cat._id ? res.data.data : c));
+      if (onCategoriesChange) onCategoriesChange();
     } catch (err) {
       console.error('Toggle error:', err);
     }
@@ -123,23 +132,26 @@ const AdminCategories = ({ token }) => {
     try {
       await axios.delete(`${API_URL}/categories/${id}`, axiosConfig);
       setCategories(prev => prev.filter(c => c._id !== id));
+      // FIX: notifie le parent après suppression
+      if (onCategoriesChange) onCategoriesChange();
     } catch (err) {
       console.error('Delete error:', err);
     }
   };
 
-  // ─── Filtered list ──────────────────────────────────────────────────────
+  // ─── Filtered list ───────────────────────────────────────────────────────
   const filtered = categories.filter(c => {
-    const matchSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchSearch =
+      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (c.description || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchSection = sectionFilter === 'all' || c.section === sectionFilter;
     return matchSearch && matchSection;
   });
 
-  const peptidesCats   = filtered.filter(c => c.section === 'peptides');
+  const peptidesCats    = filtered.filter(c => c.section === 'peptides');
   const marketplaceCats = filtered.filter(c => c.section === 'marketplace');
 
-  // ─── Loading ────────────────────────────────────────────────────────────
+  // ─── Loading ─────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -200,9 +212,9 @@ const AdminCategories = ({ token }) => {
       {/* ── Stats ── */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         {[
-          { label: 'Total Categories', value: categories.length, color: '#2563EB' },
-          { label: 'Peptides Shop', value: categories.filter(c => c.section === 'peptides').length, color: '#10B981' },
-          { label: 'Marketplace', value: categories.filter(c => c.section === 'marketplace').length, color: '#8B5CF6' },
+          { label: 'Total Categories', value: categories.length,                                        color: '#2563EB' },
+          { label: 'Peptides Shop',    value: categories.filter(c => c.section === 'peptides').length,  color: '#10B981' },
+          { label: 'Marketplace',      value: categories.filter(c => c.section === 'marketplace').length, color: '#8B5CF6' },
         ].map((stat, i) => (
           <div key={i} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
             <p className="text-xs text-gray-500">{stat.label}</p>
@@ -233,14 +245,14 @@ const AdminCategories = ({ token }) => {
         onDelete={handleDelete}
       />
 
-      {filtered.length === 0 && (
+      {filtered.length === 0 && !error && (
         <div className="text-center py-16 bg-white rounded-2xl">
           <Tag size={48} className="mx-auto text-gray-200 mb-4" />
           <h3 className="text-lg font-medium text-gray-600">No categories yet</h3>
           <p className="text-gray-400 text-sm mt-1">Create your first category to organise products</p>
           <button
             onClick={() => { setEditingCat(null); setShowModal(true); }}
-            className="mt-4 flex items-center gap-2 bg-[#2563EB] text-white px-5 py-2.5 rounded-xl hover:bg-[#1E40AF] transition mx-auto"
+            className="mt-4 inline-flex items-center gap-2 bg-[#2563EB] text-white px-5 py-2.5 rounded-xl hover:bg-[#1E40AF] transition"
           >
             <Plus size={16} /> Create Category
           </button>
@@ -303,11 +315,10 @@ const CategoryCard = ({ cat, onEdit, onToggle, onDelete }) => (
     cat.isActive ? 'border-gray-100' : 'border-gray-200 opacity-60'
   }`}>
     <div className="flex items-start justify-between gap-2">
-      {/* Icon + name */}
       <div className="flex items-center gap-3">
         <div
           className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-          style={{ backgroundColor: cat.bgColor }}
+          style={{ backgroundColor: cat.bgColor || '#EFF6FF' }}
         >
           {renderIcon(cat.icon, 18, cat.color)}
         </div>
@@ -317,7 +328,6 @@ const CategoryCard = ({ cat, onEdit, onToggle, onDelete }) => (
         </div>
       </div>
 
-      {/* Actions */}
       <div className="flex gap-1 flex-shrink-0">
         <button
           onClick={() => onEdit(cat)}
@@ -340,15 +350,12 @@ const CategoryCard = ({ cat, onEdit, onToggle, onDelete }) => (
       <p className="text-xs text-gray-400 mt-2 line-clamp-2">{cat.description}</p>
     )}
 
-    {/* Footer */}
     <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
-      {/* Color dot */}
       <div className="flex items-center gap-2">
         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
         <span className="text-xs text-gray-400">{cat.color}</span>
       </div>
 
-      {/* Active toggle */}
       <button
         onClick={() => onToggle(cat)}
         className={`relative w-10 h-5 rounded-full transition-colors ${
@@ -380,10 +387,9 @@ const CategoryModal = ({ category, onClose, onSave }) => {
     isActive:    category?.isActive    ?? true,
     order:       category?.order       || 0,
   });
-  const [saving, setSaving]   = useState(false);
+  const [saving, setSaving]       = useState(false);
   const [formError, setFormError] = useState('');
 
-  // Auto-set bgColor when choosing a preset color
   const handleColorPreset = (preset) => {
     setForm(f => ({ ...f, color: preset.color, bgColor: preset.bg }));
   };
@@ -402,7 +408,6 @@ const CategoryModal = ({ category, onClose, onSave }) => {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
         <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center rounded-t-2xl">
           <h2 className="text-lg font-bold text-gray-800">
             {category ? 'Edit Category' : 'New Category'}
@@ -531,16 +536,13 @@ const CategoryModal = ({ category, onClose, onSave }) => {
                   title={preset.label}
                 />
               ))}
-              {/* Custom color input */}
-              <div className="relative">
-                <input
-                  type="color"
-                  value={form.color}
-                  onChange={e => setForm(f => ({ ...f, color: e.target.value }))}
-                  className="w-8 h-8 rounded-full cursor-pointer border-2 border-gray-300"
-                  title="Custom color"
-                />
-              </div>
+              <input
+                type="color"
+                value={form.color}
+                onChange={e => setForm(f => ({ ...f, color: e.target.value }))}
+                className="w-8 h-8 rounded-full cursor-pointer border-2 border-gray-300"
+                title="Custom color"
+              />
             </div>
           </div>
 
