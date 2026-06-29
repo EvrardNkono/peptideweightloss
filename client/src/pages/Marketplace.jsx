@@ -22,6 +22,68 @@ const BACKEND_URL = API_URL.replace('/api', '');
 
 console.log(`🔧 Marketplace - API URL: ${API_URL}`);
 
+// ✅ FONCTION DE MÉLANGE AVEC CONTRAINTE DE CATÉGORIE (copiée depuis Home)
+const shuffleProductsWithCategoryConstraint = (products) => {
+  if (products.length <= 1) return products;
+  
+  // Séparer les produits par catégorie
+  const productsByCategory = {};
+  products.forEach(product => {
+    const category = product.category || product.type || 'Other';
+    if (!productsByCategory[category]) {
+      productsByCategory[category] = [];
+    }
+    productsByCategory[category].push(product);
+  });
+  
+  // Mélanger chaque catégorie individuellement
+  Object.keys(productsByCategory).forEach(category => {
+    for (let i = productsByCategory[category].length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [productsByCategory[category][i], productsByCategory[category][j]] = 
+        [productsByCategory[category][j], productsByCategory[category][i]];
+    }
+  });
+  
+  // Obtenir les catégories avec leur nombre de produits
+  const categoryCounts = Object.keys(productsByCategory).map(cat => ({
+    category: cat,
+    count: productsByCategory[cat].length,
+    products: productsByCategory[cat],
+    index: 0
+  }));
+  
+  // Trier par ordre décroissant pour commencer par les catégories avec le plus de produits
+  categoryCounts.sort((a, b) => b.count - a.count);
+  
+  const result = [];
+  let lastCategory = null;
+  
+  // Tant qu'il reste des produits à placer
+  while (categoryCounts.some(cat => cat.index < cat.count)) {
+    // Filtrer les catégories qui ont encore des produits et qui ne sont pas la dernière utilisée
+    let availableCategories = categoryCounts.filter(cat => 
+      cat.index < cat.count && cat.category !== lastCategory
+    );
+    
+    // Si aucune catégorie disponible (uniquement la dernière catégorie reste), on prend celle-ci
+    if (availableCategories.length === 0) {
+      availableCategories = categoryCounts.filter(cat => cat.index < cat.count);
+    }
+    
+    // Choisir une catégorie aléatoirement parmi celles disponibles
+    const randomIndex = Math.floor(Math.random() * availableCategories.length);
+    const selectedCategory = availableCategories[randomIndex];
+    
+    // Ajouter le prochain produit de cette catégorie
+    result.push(selectedCategory.products[selectedCategory.index]);
+    selectedCategory.index++;
+    lastCategory = selectedCategory.category;
+  }
+  
+  return result;
+};
+
 const Marketplace = () => {
   const { category } = useParams();
   const navigate = useNavigate();
@@ -33,6 +95,7 @@ const Marketplace = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [visibleCount, setVisibleCount] = useState(20);
   const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const categoryToTypeMap = {
@@ -82,7 +145,7 @@ const Marketplace = () => {
           rating: p.rating || 4.8,
           reviews: p.reviews || Math.floor(Math.random() * 200) + 10,
           type: p.type,
-          category: p.category || p.type,
+          category: p.category || p.type || 'Other',
           isPopular: p.isPopular || false,
           isBestSeller: p.isBestSeller || false,
           isNew: p.isNew || false,
@@ -92,9 +155,14 @@ const Marketplace = () => {
         
         console.log('Produits formatés:', formattedProducts);
         setProducts(formattedProducts);
+        
+        // ✅ Appliquer le mélange initial
+        const shuffled = shuffleProductsWithCategoryConstraint(formattedProducts);
+        setFilteredProducts(shuffled);
       } catch (error) {
         console.error('Error fetching products:', error);
         setProducts([]);
+        setFilteredProducts([]);
       } finally {
         setLoading(false);
       }
@@ -110,6 +178,46 @@ const Marketplace = () => {
     }
     setVisibleCount(20);
   }, [category]);
+
+  // ✅ Effet pour filtrer et mélanger les produits quand le type ou la recherche change
+  useEffect(() => {
+    let filtered = products.filter(product => {
+      if (selectedType !== 'all' && product.type !== selectedType) return false;
+      if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      return true;
+    });
+
+    // ✅ Appliquer le mélange avec contrainte de catégorie
+    const shuffled = shuffleProductsWithCategoryConstraint(filtered);
+    setFilteredProducts(shuffled);
+    setVisibleCount(20);
+  }, [selectedType, searchQuery, products]);
+
+  // ✅ Effet pour le tri (sans mélanger, juste trier le résultat déjà mélangé)
+  useEffect(() => {
+    if (sortBy === 'popular') {
+      setFilteredProducts(prev => {
+        const sorted = [...prev].sort((a, b) => b.rating - a.rating);
+        // ✅ On remélange après le tri pour garder l'alternance des catégories
+        return shuffleProductsWithCategoryConstraint(sorted);
+      });
+    } else if (sortBy === 'price-low') {
+      setFilteredProducts(prev => {
+        const sorted = [...prev].sort((a, b) => a.price - b.price);
+        return shuffleProductsWithCategoryConstraint(sorted);
+      });
+    } else if (sortBy === 'price-high') {
+      setFilteredProducts(prev => {
+        const sorted = [...prev].sort((a, b) => b.price - a.price);
+        return shuffleProductsWithCategoryConstraint(sorted);
+      });
+    } else if (sortBy === 'newest') {
+      setFilteredProducts(prev => {
+        const sorted = [...prev].sort((a, b) => (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0));
+        return shuffleProductsWithCategoryConstraint(sorted);
+      });
+    }
+  }, [sortBy]);
 
   const getTypeCount = (typeId) => {
     if (typeId === 'all') return products.length;
@@ -132,22 +240,7 @@ const Marketplace = () => {
     navigate(`/product/${product._id}`);
   };
 
-  // Filtrer les produits
-  const filteredProducts = products.filter(product => {
-    if (selectedType !== 'all' && product.type !== selectedType) return false;
-    if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    return true;
-  });
-
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    if (sortBy === 'popular') return b.rating - a.rating;
-    if (sortBy === 'price-low') return a.price - b.price;
-    if (sortBy === 'price-high') return b.price - a.price;
-    if (sortBy === 'newest') return (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0);
-    return 0;
-  });
-
-  const displayedProducts = sortedProducts.slice(0, visibleCount);
+  const displayedProducts = filteredProducts.slice(0, visibleCount);
 
   console.log('selectedType:', selectedType);
   console.log('filteredProducts count:', filteredProducts.length);
