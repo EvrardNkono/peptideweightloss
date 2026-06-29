@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
-import { ProductProvider } from './context/ProductContext'; // ✅ SEUL AJOUT ICI
+import { ProductProvider } from './context/ProductContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import WhatsAppButton from './components/WhatsAppButton';
@@ -22,12 +22,10 @@ import ProductDetail from './pages/ProductDetail';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import Blog from './pages/Blog';
-import BlogPost from './pages/BlogPost'; // ✅ IMPORT DU BLOG POST
+import BlogPost from './pages/BlogPost';
 
 const AppContent = () => {
   const location = useLocation();
-  
-  // FIX: token réactif au lieu d'une lecture statique
   const [token, setToken] = useState(() => localStorage.getItem('token'));
 
   const isAdminPage = location.pathname.startsWith('/admin');
@@ -64,13 +62,14 @@ const AppContent = () => {
         <Routes>
           <Route path="/" element={<Home onOpenMarketplace={openMarketplaceMenu} />} />
           
-          {/* ✅ ROUTES SHOP */}
+          {/* ✅ ROUTES SHOP - AVEC SOUS-CATEGORIES */}
           <Route path="/shop" element={<Marketplace />} />
           <Route path="/shop/peptides" element={<Peptides />} />
+          <Route path="/shop/peptides/:categorySlug" element={<Peptides />} /> {/* ✅ NOUVEAU */}
           <Route path="/shop/blends" element={<PeptideBlends />} />
           <Route path="/shop/:category" element={<Marketplace />} />
           
-          {/* ✅ ROUTES MARKETPLACE */}
+          {/* ✅ ROUTES MARKETPLACE - AVEC SOUS-CATEGORIES */}
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/marketplace/:category" element={<Marketplace />} />
           
@@ -95,33 +94,37 @@ const AppContent = () => {
           
           {/* ✅ BLOG ROUTES */}
           <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:id" element={<BlogPost />} /> {/* ✅ ARTICLE COMPLET */}
+          <Route path="/blog/:id" element={<BlogPost />} />
           
           {/* ✅ ADMIN ROUTES */}
-          <Route path="/admin/*" element={<AdminDashboard onLogout={() => {}} token={token} />} />
+          <Route path="/admin/*" element={<AdminDashboard onLogout={handleLogout} token={token} />} />
           
-          {/* ✅ ROUTE 404 - FALLBACK */}
-          <Route path="*" element={<div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <div className="text-center">
-              <h1 className="text-4xl font-bold text-gray-800 mb-4">404</h1>
-              <p className="text-gray-500">Page not found</p>
-              <a href="/" className="mt-4 inline-block text-[#2563EB] hover:underline">Go back home</a>
-            </div>
-          </div>} />
+          {/* ✅ ROUTE 404 */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
       <Footer />
-      
-      {/* ✅ BOUTON WHATSAPP SUR TOUTES LES PAGES */}
       <WhatsAppButton />
     </div>
   );
 };
 
+// ✅ COMPOSANT 404
+const NotFound = () => (
+  <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 bg-gray-50">
+    <h1 className="text-6xl font-bold text-gray-300 mb-4">404</h1>
+    <h2 className="text-2xl font-semibold text-gray-700 mb-2">Page not found</h2>
+    <p className="text-gray-500 mb-6">The page you're looking for doesn't exist.</p>
+    <a href="/" className="px-6 py-3 bg-[#2563EB] text-white rounded-xl hover:bg-[#1E40AF] transition">
+      Go back home
+    </a>
+  </div>
+);
+
 function App() {
   return (
     <CartProvider>
-      <ProductProvider> {/* ✅ SEUL AJOUT ICI - ENCADRE Router */}
+      <ProductProvider>
         <Router>
           <AppContent />
         </Router>

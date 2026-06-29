@@ -1,6 +1,6 @@
 // src/pages/Peptides.jsx
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom'; // ✅ AJOUT DE useParams
 import { Search, Filter, X, Star, ShoppingCart, Eye, ChevronDown, Grid3x3, List, SlidersHorizontal, FlaskConical, Beaker, Droplets, Zap, Activity, TrendingUp, Clock } from 'lucide-react';
 import axios from 'axios';
 import ProductCard from '../components/ProductCard';
@@ -18,9 +18,11 @@ const BACKEND_URL = API_URL.replace('/api', '');
 console.log(`🔧 Peptides - API URL: ${API_URL}`);
 
 const Peptides = () => {
+  const { categorySlug } = useParams(); // ✅ RÉCUPÉRER LA CATÉGORIE DE L'URL
+  
   const [filterOpen, setFilterOpen] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState(categorySlug || 'all'); // ✅ UTILISER categorySlug
   const [priceRange, setPriceRange] = useState([0, 500]);
   const [sortBy, setSortBy] = useState('popular');
   const [searchQuery, setSearchQuery] = useState('');
@@ -28,6 +30,15 @@ const Peptides = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
+
+  // ✅ METTRE À JOUR selectedCategory quand l'URL change
+  useEffect(() => {
+    if (categorySlug) {
+      setSelectedCategory(categorySlug);
+    } else {
+      setSelectedCategory('all');
+    }
+  }, [categorySlug]);
 
   const getFullImageUrl = (imageUrl) => {
     if (!imageUrl || imageUrl === '/images/pept.png') {
@@ -125,7 +136,6 @@ const Peptides = () => {
           
           setCategories(allCategories);
         } else {
-          // Fallback avec données statiques
           setProducts([]);
           setCategories([
             { id: 'all', name: 'All Peptides', icon: <FlaskConical size={16} />, count: 0 }
@@ -171,6 +181,10 @@ const Peptides = () => {
     console.log('👁️ Quick view:', product);
   };
 
+  // ✅ Trouver le nom de la catégorie actuelle pour l'afficher dans le titre
+  const currentCategory = categories.find(c => c.id === selectedCategory);
+  const pageTitle = currentCategory ? currentCategory.name : 'Peptides';
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -194,10 +208,13 @@ const Peptides = () => {
         <div className="relative h-full flex items-center justify-center text-center">
           <div className="max-w-3xl px-4">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4">
-              Premium Research Peptides
+              {pageTitle}
             </h1>
             <p className="text-white/90 text-lg md:text-xl mb-6">
-              Discover our extensive collection of high-purity peptides for advanced research
+              {selectedCategory === 'all' 
+                ? 'Discover our extensive collection of high-purity peptides for advanced research'
+                : `Explore our premium ${pageTitle.toLowerCase()} for advanced research`
+              }
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
               <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full px-4 py-1.5 text-white text-sm">
@@ -286,7 +303,14 @@ const Peptides = () => {
                   {categories.map((cat) => (
                     <button
                       key={cat.id}
-                      onClick={() => setSelectedCategory(cat.id)}
+                      onClick={() => {
+                        setSelectedCategory(cat.id);
+                        // Mettre à jour l'URL
+                        const newPath = cat.id === 'all' 
+                          ? '/shop/peptides' 
+                          : `/shop/peptides/${cat.id}`;
+                        window.history.pushState(null, '', newPath);
+                      }}
                       className={`flex items-center justify-between w-full px-3 py-2 rounded-lg transition ${
                         selectedCategory === cat.id
                           ? 'bg-[#2563EB]/10 text-[#2563EB] font-medium'
@@ -337,6 +361,7 @@ const Peptides = () => {
                   setSelectedCategory('all');
                   setPriceRange([0, 500]);
                   setSearchQuery('');
+                  window.history.pushState(null, '', '/shop/peptides');
                 }}
                 className="w-full py-2 text-center text-[#2563EB] font-medium hover:bg-[#2563EB]/10 rounded-lg transition"
               >
