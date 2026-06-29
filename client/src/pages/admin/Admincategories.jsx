@@ -603,6 +603,6 @@ const CategoryModal = ({ category, onClose, onSave }) => {
       </div>
     </div>
   );
-};
+}; 
 
 export default AdminCategories;
