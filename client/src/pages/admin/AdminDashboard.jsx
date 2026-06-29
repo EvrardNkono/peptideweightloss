@@ -39,6 +39,7 @@ import {
 import axios from 'axios';
 import AdminHero from './AdminHero';
 import AdminBlog from './AdminBlog';
+import AdminCategories, { renderIcon } from './AdminCategories';
 
 // ✅ AUTOMATIC BACKEND URL CONFIGURATION
 const getApiUrl = () => {
@@ -72,23 +73,40 @@ const AdminDashboard = ({ onLogout, token }) => {
   const [prescriptionStatus, setPrescriptionStatus] = useState('');
   const [prescriptionNotes, setPrescriptionNotes] = useState('');
 
-  const productTypes = [
-    { value: 'peptide', label: 'Peptide', icon: <FlaskConical size={14} />, color: '#2563EB', bg: 'bg-blue-100', text: 'text-blue-700' },
-    { value: 'blend', label: 'Peptide Blend', icon: <Beaker size={14} />, color: '#10B981', bg: 'bg-green-100', text: 'text-green-700' },
-    { value: 'sarm', label: 'SARMs', icon: <Pill size={14} />, color: '#8B5CF6', bg: 'bg-purple-100', text: 'text-purple-700' },
-    { value: 'steroid', label: 'Steroid', icon: <Syringe size={14} />, color: '#EF4444', bg: 'bg-red-100', text: 'text-red-700' },
-    { value: 'hgh', label: 'HGH', icon: <Activity size={14} />, color: '#06B6D4', bg: 'bg-cyan-100', text: 'text-cyan-700' },
-    { value: 'pct', label: 'PCT', icon: <Package size={14} />, color: '#F59E0B', bg: 'bg-yellow-100', text: 'text-yellow-700' },
-    { value: 'weight-loss', label: 'Weight Loss', icon: <Beaker size={14} />, color: '#10B981', bg: 'bg-green-100', text: 'text-green-700' },
-    { value: 'african', label: 'African Product', icon: <MapPin size={14} />, color: '#8B5CF6', bg: 'bg-purple-100', text: 'text-purple-700' }
-  ];
+  // ✅ Catégories dynamiques (remplace le tableau hardcodé)
+  const [productTypes, setProductTypes] = useState([]);
 
   const axiosConfig = {
     headers: { Authorization: `Bearer ${token}` }
   };
 
+  // ✅ Charger les catégories depuis l'API
+  const fetchCategories = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/categories/all`, axiosConfig);
+      const cats = res.data.data || [];
+      setProductTypes(cats.map(cat => ({
+        value:   cat.slug,
+        label:   cat.name,
+        icon:    <span style={{ color: cat.color }}>{renderIcon(cat.icon, 14, cat.color)}</span>,
+        color:   cat.color,
+        bgRaw:   cat.bgColor,
+        textRaw: cat.color,
+        section: cat.section,
+      })));
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+      // Fallback minimal si l'API échoue
+      setProductTypes([
+        { value: 'peptide', label: 'Peptide', icon: null, color: '#2563EB', bgRaw: '#EFF6FF', textRaw: '#2563EB', section: 'peptides' },
+        { value: 'blend',   label: 'Blend',   icon: null, color: '#10B981', bgRaw: '#ECFDF5', textRaw: '#10B981', section: 'marketplace' },
+      ]);
+    }
+  };
+
   useEffect(() => {
     fetchData();
+    fetchCategories();
   }, []);
 
   const fetchData = async () => {
@@ -260,14 +278,15 @@ const AdminDashboard = ({ onLogout, token }) => {
     { title: 'Revenue', value: `$${orders.reduce((sum, o) => sum + (o.total || 0), 0).toFixed(0)}`, icon: <DollarSign size={24} />, color: '#2563EB' },
   ];
 
+  // ✅ getTypeBadge mis à jour pour utiliser bgRaw/textRaw
   const getTypeBadge = (type) => {
     const typeInfo = productTypes.find(t => t.value === type);
-    if (!typeInfo) return { label: type, bg: 'bg-gray-100', text: 'text-gray-700' };
-    return { 
-      label: typeInfo.label, 
-      bg: typeInfo.bg, 
-      text: typeInfo.text,
-      icon: typeInfo.icon 
+    if (!typeInfo) return { label: type, bgRaw: '#F3F4F6', textRaw: '#374151', icon: null };
+    return {
+      label:   typeInfo.label,
+      bgRaw:   typeInfo.bgRaw,
+      textRaw: typeInfo.textRaw,
+      icon:    typeInfo.icon,
     };
   };
 
@@ -366,9 +385,9 @@ const AdminDashboard = ({ onLogout, token }) => {
           ))}
         </div>
 
-        {/* Tabs - AJOUT DE L'ONGLET BLOG */}
+        {/* Tabs */}
         <div className="flex gap-2 mb-6 border-b border-gray-200 overflow-x-auto">
-          {['products', 'orders', 'users', 'prescriptions', 'blog', 'hero'].map((tab) => (
+          {['products', 'orders', 'users', 'prescriptions', 'blog', 'categories', 'hero'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -378,8 +397,9 @@ const AdminDashboard = ({ onLogout, token }) => {
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              {tab === 'blog' && <BookOpen size={16} />}
-              {tab === 'hero' && <ImageIcon size={16} />}
+              {tab === 'blog'       && <BookOpen size={16} />}
+              {tab === 'hero'       && <ImageIcon size={16} />}
+              {tab === 'categories' && <Tag size={16} />}
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
@@ -451,7 +471,11 @@ const AdminDashboard = ({ onLogout, token }) => {
                           />
                         </td>
                         <td className="px-4 py-3">
-                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${badge.bg} ${badge.text}`}>
+                          {/* ✅ Style inline pour les couleurs dynamiques */}
+                          <span
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
+                            style={{ backgroundColor: badge.bgRaw, color: badge.textRaw }}
+                          >
                             {badge.icon}
                             {badge.label}
                           </span>
@@ -694,9 +718,17 @@ const AdminDashboard = ({ onLogout, token }) => {
           </div>
         )}
 
-        {/* BLOG TAB - NOUVEAU */}
+        {/* BLOG TAB */}
         {activeTab === 'blog' && (
           <AdminBlog token={token} />
+        )}
+
+        {/* CATEGORIES TAB ✅ NOUVEAU */}
+        {activeTab === 'categories' && (
+          <AdminCategories
+            token={token}
+            onCategoriesChange={fetchCategories}
+          />
         )}
 
         {/* HERO TAB */}
@@ -825,7 +857,7 @@ const AdminDashboard = ({ onLogout, token }) => {
   );
 };
 
-// ✅ ProductModal with Toggle "Available/Out of Stock", "Likes" and "Reviews"
+// ✅ ProductModal — inchangé, reçoit productTypes dynamiques via props
 const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) => {
   const [formData, setFormData] = useState({
     id: product?._id || product?.id || null,
@@ -836,7 +868,7 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
     price: product?.price || '',
     category: product?.category || '',
     stock: product?.stock || 0,
-    type: product?.type || 'peptide',
+    type: product?.type || (productTypes[0]?.value || 'peptide'),
     image: product?.image || '/images/pept.png',
     isPopular: product?.isPopular || false,
     isNew: product?.isNew || false,
@@ -926,31 +958,37 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
           </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Product Type */}
+          {/* Product Type — dynamique */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Product Category</label>
-            <div className="grid grid-cols-2 gap-2">
-              {productTypes.map((type) => (
-                <label
-                  key={type.value}
-                  className={`flex items-center gap-2 cursor-pointer p-2 rounded-lg border transition-all ${
-                    formData.type === type.value
-                      ? 'border-[#2563EB] bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    value={type.value}
-                    checked={formData.type === type.value}
-                    onChange={(e) => setFormData({...formData, type: e.target.value})}
-                    className="w-4 h-4 text-[#2563EB]"
-                  />
-                  <span style={{ color: type.color }}>{type.icon}</span>
-                  <span className="text-sm font-medium text-gray-700">{type.label}</span>
-                </label>
-              ))}
-            </div>
+            {productTypes.length === 0 ? (
+              <p className="text-sm text-gray-400 italic p-3 bg-gray-50 rounded-xl">
+                No categories yet — create some in the Categories tab first.
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {productTypes.map((type) => (
+                  <label
+                    key={type.value}
+                    className={`flex items-center gap-2 cursor-pointer p-2 rounded-lg border transition-all ${
+                      formData.type === type.value
+                        ? 'border-[#2563EB] bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      value={type.value}
+                      checked={formData.type === type.value}
+                      onChange={(e) => setFormData({...formData, type: e.target.value})}
+                      className="w-4 h-4 text-[#2563EB]"
+                    />
+                    <span style={{ color: type.color }}>{type.icon}</span>
+                    <span className="text-sm font-medium text-gray-700">{type.label}</span>
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Product Name */}
@@ -1008,7 +1046,7 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
             />
           </div>
 
-          {/* STOCK - Toggle Available/Out of Stock */}
+          {/* STOCK */}
           <div className="border-t border-gray-100 pt-4">
             <label className="block text-sm font-medium text-gray-700 mb-3">
               <span className="flex items-center gap-2">
@@ -1016,7 +1054,6 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
                 Product Availability
               </span>
             </label>
-            
             <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
               <span className="text-sm text-gray-600">Status:</span>
               <button
@@ -1032,9 +1069,7 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
                   }`}
                 />
               </button>
-              <span className={`font-medium ${
-                formData.stock > 0 ? 'text-[#10B981]' : 'text-red-500'
-              }`}>
+              <span className={`font-medium ${formData.stock > 0 ? 'text-[#10B981]' : 'text-red-500'}`}>
                 {formData.stock > 0 ? '✅ Available' : '❌ Out of Stock'}
               </span>
             </div>
@@ -1043,7 +1078,7 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
             </p>
           </div>
 
-          {/* REVIEWS - Number of reviews */}
+          {/* REVIEWS */}
           <div className="border-t border-gray-100 pt-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               <span className="flex items-center gap-2">
@@ -1086,11 +1121,10 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
             />
           </div>
 
-          {/* TOGGLES - Best Seller, Popular, New */}
+          {/* BADGES */}
           <div className="space-y-3 border-t border-gray-100 pt-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">Product Badges</label>
             
-            {/* Best Seller Toggle */}
             <div className="flex items-center justify-between p-3 bg-amber-50 rounded-xl border border-amber-200">
               <div className="flex items-center gap-3">
                 <Star size={20} className="text-[#F59E0B] fill-[#F59E0B]" />
@@ -1102,19 +1136,12 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
               <button
                 type="button"
                 onClick={() => setFormData({...formData, isBestSeller: !formData.isBestSeller})}
-                className={`relative w-12 h-7 rounded-full transition-colors ${
-                  formData.isBestSeller ? 'bg-[#F59E0B]' : 'bg-gray-300'
-                }`}
+                className={`relative w-12 h-7 rounded-full transition-colors ${formData.isBestSeller ? 'bg-[#F59E0B]' : 'bg-gray-300'}`}
               >
-                <span 
-                  className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
-                    formData.isBestSeller ? 'translate-x-5' : ''
-                  }`}
-                />
+                <span className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${formData.isBestSeller ? 'translate-x-5' : ''}`} />
               </button>
             </div>
 
-            {/* Popular Toggle */}
             <div className="flex items-center justify-between p-3 bg-blue-50 rounded-xl border border-blue-200">
               <div className="flex items-center gap-3">
                 <TrendingUp size={20} className="text-[#2563EB]" />
@@ -1126,19 +1153,12 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
               <button
                 type="button"
                 onClick={() => setFormData({...formData, isPopular: !formData.isPopular})}
-                className={`relative w-12 h-7 rounded-full transition-colors ${
-                  formData.isPopular ? 'bg-[#2563EB]' : 'bg-gray-300'
-                }`}
+                className={`relative w-12 h-7 rounded-full transition-colors ${formData.isPopular ? 'bg-[#2563EB]' : 'bg-gray-300'}`}
               >
-                <span 
-                  className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
-                    formData.isPopular ? 'translate-x-5' : ''
-                  }`}
-                />
+                <span className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${formData.isPopular ? 'translate-x-5' : ''}`} />
               </button>
             </div>
 
-            {/* New Toggle */}
             <div className="flex items-center justify-between p-3 bg-green-50 rounded-xl border border-green-200">
               <div className="flex items-center gap-3">
                 <Sparkles size={20} className="text-[#10B981]" />
@@ -1150,15 +1170,9 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
               <button
                 type="button"
                 onClick={() => setFormData({...formData, isNew: !formData.isNew})}
-                className={`relative w-12 h-7 rounded-full transition-colors ${
-                  formData.isNew ? 'bg-[#10B981]' : 'bg-gray-300'
-                }`}
+                className={`relative w-12 h-7 rounded-full transition-colors ${formData.isNew ? 'bg-[#10B981]' : 'bg-gray-300'}`}
               >
-                <span 
-                  className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
-                    formData.isNew ? 'translate-x-5' : ''
-                  }`}
-                />
+                <span className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${formData.isNew ? 'translate-x-5' : ''}`} />
               </button>
             </div>
           </div>
@@ -1166,11 +1180,8 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
           {/* Image Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
-            
             <div className="flex gap-2">
-              <label className={`flex items-center gap-2 px-4 py-2 rounded-xl border cursor-pointer transition ${
-                uploading ? 'bg-gray-100 cursor-not-allowed' : 'bg-white hover:bg-gray-50'
-              }`}>
+              <label className={`flex items-center gap-2 px-4 py-2 rounded-xl border cursor-pointer transition ${uploading ? 'bg-gray-100 cursor-not-allowed' : 'bg-white hover:bg-gray-50'}`}>
                 {uploading ? (
                   <Loader2 size={16} className="animate-spin text-[#2563EB]" />
                 ) : (
@@ -1213,10 +1224,7 @@ const ProductModal = ({ product, onClose, onSave, productTypes, backendUrl }) =>
                 </div>
                 <button
                   type="button"
-                  onClick={() => {
-                    setFormData({...formData, image: '/images/pept.png'});
-                    setPreviewKey(Date.now());
-                  }}
+                  onClick={() => { setFormData({...formData, image: '/images/pept.png'}); setPreviewKey(Date.now()); }}
                   className="text-xs text-red-500 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50"
                 >
                   Reset
