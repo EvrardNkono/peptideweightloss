@@ -5,7 +5,7 @@ import {
   Search, Filter, X, Star, ShoppingCart, Eye, ChevronDown, 
   Grid3x3, List, SlidersHorizontal, FlaskConical, Beaker, 
   Activity, TrendingUp, Store, Pill, Syringe, 
-  Package, MapPin, Loader2
+  Package, MapPin, Loader2, Tag
 } from 'lucide-react';
 import axios from 'axios';
 import ProductCard from '../components/ProductCard';
@@ -26,7 +26,6 @@ console.log(`🔧 Marketplace - API URL: ${API_URL}`);
 const shuffleProductsWithCategoryConstraint = (products) => {
   if (!products || products.length <= 1) return products || [];
   
-  // Séparer les produits par catégorie
   const productsByCategory = {};
   products.forEach(product => {
     const category = product.category || product.type || 'Other';
@@ -36,7 +35,6 @@ const shuffleProductsWithCategoryConstraint = (products) => {
     productsByCategory[category].push(product);
   });
   
-  // Mélanger chaque catégorie individuellement
   Object.keys(productsByCategory).forEach(category => {
     for (let i = productsByCategory[category].length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -45,7 +43,6 @@ const shuffleProductsWithCategoryConstraint = (products) => {
     }
   });
   
-  // Obtenir les catégories avec leur nombre de produits
   const categoryCounts = Object.keys(productsByCategory).map(cat => ({
     category: cat,
     count: productsByCategory[cat].length,
@@ -53,29 +50,23 @@ const shuffleProductsWithCategoryConstraint = (products) => {
     index: 0
   }));
   
-  // Trier par ordre décroissant pour commencer par les catégories avec le plus de produits
   categoryCounts.sort((a, b) => b.count - a.count);
   
   const result = [];
   let lastCategory = null;
   
-  // Tant qu'il reste des produits à placer
   while (categoryCounts.some(cat => cat.index < cat.count)) {
-    // Filtrer les catégories qui ont encore des produits et qui ne sont pas la dernière utilisée
     let availableCategories = categoryCounts.filter(cat => 
       cat.index < cat.count && cat.category !== lastCategory
     );
     
-    // Si aucune catégorie disponible (uniquement la dernière catégorie reste), on prend celle-ci
     if (availableCategories.length === 0) {
       availableCategories = categoryCounts.filter(cat => cat.index < cat.count);
     }
     
-    // Choisir une catégorie aléatoirement parmi celles disponibles
     const randomIndex = Math.floor(Math.random() * availableCategories.length);
     const selectedCategory = availableCategories[randomIndex];
     
-    // Ajouter le prochain produit de cette catégorie
     result.push(selectedCategory.products[selectedCategory.index]);
     selectedCategory.index++;
     lastCategory = selectedCategory.category;
@@ -85,7 +76,7 @@ const shuffleProductsWithCategoryConstraint = (products) => {
 };
 
 const Marketplace = () => {
-  const { category } = useParams();
+  const { category } = useParams(); // ✅ RÉCUPÉRER LA CATÉGORIE DE L'URL
   const navigate = useNavigate();
   const [filterOpen, setFilterOpen] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
@@ -97,7 +88,9 @@ const Marketplace = () => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState([]); // ✅ CATÉGORIES DYNAMIQUES
 
+  // ✅ MAP DES CATÉGORIES (en dur + dynamiques)
   const categoryToTypeMap = {
     'sarms': 'sarm',
     'hgh': 'hgh',
@@ -107,7 +100,8 @@ const Marketplace = () => {
     'african-products': 'african',
   };
 
-  const productTypes = [
+  // ✅ PRODUCT TYPES DYNAMIQUES (en dur + venant de l'API)
+  const [productTypes, setProductTypes] = useState([
     { id: 'all', name: 'All Products', icon: <Store size={16} />, color: '#2563EB', slug: '' },
     { id: 'sarm', name: 'SARMs', icon: <FlaskConical size={16} />, color: '#8B5CF6', slug: 'sarms' },
     { id: 'hgh', name: 'HGH', icon: <Activity size={16} />, color: '#06B6D4', slug: 'hgh' },
@@ -115,7 +109,55 @@ const Marketplace = () => {
     { id: 'pct', name: 'Post Cycle Therapy', icon: <Package size={16} />, color: '#F59E0B', slug: 'pct' },
     { id: 'weight-loss', name: 'Weight Loss', icon: <TrendingUp size={16} />, color: '#10B981', slug: 'weight-loss' },
     { id: 'african', name: 'African Products', icon: <MapPin size={16} />, color: '#8B5CF6', slug: 'african-products' }
-  ];
+  ]);
+
+  // ✅ RÉCUPÉRER LES CATÉGORIES DEPUIS L'API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/categories?section=marketplace`);
+        if (res.data.success) {
+          const apiCategories = res.data.data || [];
+          setCategories(apiCategories);
+          
+          // Ajouter les catégories dynamiques aux productTypes
+          const dynamicTypes = apiCategories.map(cat => ({
+            id: cat.slug,
+            name: cat.name,
+            icon: <Tag size={16} style={{ color: cat.color || '#6B7280' }} />,
+            color: cat.color || '#6B7280',
+            slug: cat.slug,
+            isDynamic: true
+          }));
+          
+          // Fusionner les types en dur et dynamiques (éviter les doublons)
+          const existingSlugs = productTypes.map(t => t.slug);
+          const newTypes = dynamicTypes.filter(t => !existingSlugs.includes(t.slug));
+          
+          setProductTypes(prev => [...prev, ...newTypes]);
+        }
+      } catch (error) {
+        console.error('Erreur chargement catégories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // ✅ METTRE À JOUR selectedType quand l'URL change
+  useEffect(() => {
+    if (category && categoryToTypeMap[category]) {
+      setSelectedType(categoryToTypeMap[category]);
+    } else {
+      // Vérifier si la catégorie existe dans les catégories dynamiques
+      const matchingCategory = categories.find(c => c.slug === category);
+      if (matchingCategory) {
+        setSelectedType(category);
+      } else {
+        setSelectedType('all');
+      }
+    }
+    setVisibleCount(20);
+  }, [category, categories]);
 
   const getFullImageUrl = (imageUrl) => {
     if (!imageUrl || imageUrl === '/images/pept.png') return '/images/pept.png';
@@ -156,7 +198,6 @@ const Marketplace = () => {
         console.log('Produits formatés:', formattedProducts);
         setProducts(formattedProducts);
         
-        // ✅ Appliquer le mélange initial
         const shuffled = shuffleProductsWithCategoryConstraint(formattedProducts);
         console.log('Produits mélangés:', shuffled);
         setFilteredProducts(shuffled);
@@ -171,44 +212,45 @@ const Marketplace = () => {
     fetchProducts();
   }, []);
 
-  useEffect(() => {
-    if (category && categoryToTypeMap[category]) {
-      setSelectedType(categoryToTypeMap[category]);
-    } else {
-      setSelectedType('all');
-    }
-    setVisibleCount(20);
-  }, [category]);
-
-  // ✅ Effet pour le filtrage et le mélange (recalculé quand le type ou la recherche change)
+  // ✅ Effet pour le filtrage et le mélange
   useEffect(() => {
     if (products.length === 0) return;
     
     console.log('Filtrage et mélange - Type:', selectedType, 'Recherche:', searchQuery);
     
     let filtered = products.filter(product => {
-      if (selectedType !== 'all' && product.type !== selectedType) return false;
+      // ✅ Vérifier si selectedType est une catégorie dynamique
+      const isDynamicCategory = categories.some(c => c.slug === selectedType);
+      
+      if (selectedType !== 'all') {
+        if (isDynamicCategory) {
+          // Filtrer par catégorie dynamique
+          if (product.type !== selectedType && product.category !== selectedType) return false;
+        } else {
+          // Filtrer par type en dur
+          if (product.type !== selectedType) return false;
+        }
+      }
+      
       if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       return true;
     });
     
     console.log('Produits filtrés (avant mélange):', filtered.length);
     
-    // ✅ Mélanger avec contrainte de catégorie
     const shuffled = shuffleProductsWithCategoryConstraint(filtered);
     console.log('Produits après mélange:', shuffled.length);
     
     setFilteredProducts(shuffled);
     setVisibleCount(20);
-  }, [selectedType, searchQuery, products]);
+  }, [selectedType, searchQuery, products, categories]);
 
-  // ✅ Effet pour le tri (appliqué sur les produits déjà mélangés)
+  // ✅ Effet pour le tri
   useEffect(() => {
     if (filteredProducts.length === 0) return;
     
     console.log('Application du tri:', sortBy);
     
-    // On garde une copie des produits mélangés
     let sorted = [...filteredProducts];
     
     switch(sortBy) {
@@ -228,13 +270,12 @@ const Marketplace = () => {
         break;
     }
     
-    // ✅ On garde l'ordre trié sans remélanger
     setFilteredProducts(sorted);
   }, [sortBy]);
 
   const getTypeCount = (typeId) => {
     if (typeId === 'all') return products.length;
-    return products.filter(p => p.type === typeId).length;
+    return products.filter(p => p.type === typeId || p.category === typeId).length;
   };
 
   const handleTypeChange = (typeId, slug) => {
@@ -247,7 +288,6 @@ const Marketplace = () => {
     }
   };
 
-  // ✅ Fonction pour la vue rapide
   const handleQuickView = (product) => {
     console.log('Quick view:', product);
     navigate(`/product/${product._id}`);
@@ -280,9 +320,15 @@ const Marketplace = () => {
                     ? 'bg-[#2563EB] text-white shadow-md'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
+                style={selectedType === type.id && type.isDynamic ? { backgroundColor: type.color || '#2563EB' } : {}}
               >
                 {type.icon}
                 {type.name}
+                {type.isDynamic && (
+                  <span className="text-[8px] font-bold uppercase bg-white/30 text-white px-1.5 py-0.5 rounded-full ml-1">
+                    New
+                  </span>
+                )}
                 <span className={`text-xs px-1.5 py-0.5 rounded-full ${
                   selectedType === type.id ? 'bg-white/20' : 'bg-gray-200'
                 }`}>
