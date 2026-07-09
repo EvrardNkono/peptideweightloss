@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 // ✅ Les coordonnées en dur (pas besoin de fichier config)
-const CONTACT_EMAIL = 'info@peptidesweight-loss.com';
+const CONTACT_EMAIL = 'contact@peptidesweight-loss.com';
 const CONTACT_PHONE = '+1 (315) 746-7760';
 const CONTACT_PHONE_RAW = '+13157467760';
 const CONTACT_ADDRESS = '';
