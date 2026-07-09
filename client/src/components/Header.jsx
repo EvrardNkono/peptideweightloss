@@ -520,7 +520,7 @@ const Header = ({
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-2 text-xs sm:text-sm">
             <div className="text-gray-500">
-              <span className="hidden sm:inline text-[#10B981]">admin@</span>
+              <span className="hidden sm:inline text-[#10B981]">contactn@</span>
               <span className="text-[#2563EB]">peptideweightloss.com</span>
             </div>
             
