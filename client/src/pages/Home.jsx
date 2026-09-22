@@ -469,5 +469,5 @@ const testimonials = [
   { text: 'Amazing quality and fast shipping', name: 'Michael T.', result: 'Lost 10kg' },
   { text: 'The customer service is outstanding', name: 'Emma L.', result: 'Lost 12kg' },
 ];
-
+ 
 export default Home;
