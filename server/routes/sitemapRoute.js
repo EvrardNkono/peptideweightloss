@@ -2,27 +2,14 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
-const BlogPost = require('../models/BlogPost'); // adapte le nom exact
-const Category = require('../models/Category'); // adapte le nom exact
+const BlogPost = require('../models/BlogPost');
+const Category = require('../models/Category');
 
 router.get('/sitemap.xml', async (req, res) => {
   try {
     const products = await Product.find({ status: 'active' }).select('_id createdAt');
-    
-    let blogPosts = [];
-    let categories = [];
-    
-    try {
-      blogPosts = await BlogPost.find({ status: 'published' }).select('_id createdAt');
-    } catch (e) {
-      console.log('Blog model not found or error:', e.message);
-    }
-    
-    try {
-      categories = await Category.find().select('slug');
-    } catch (e) {
-      console.log('Category model not found or error:', e.message);
-    }
+    const blogPosts = await BlogPost.find({ status: 'published' }).select('_id createdAt');
+    const categories = await Category.find({ isActive: true }).select('slug section');
 
     const staticUrls = [
       { loc: 'https://peptidesweight-loss.com/', priority: '1.0', changefreq: 'daily' },
@@ -49,13 +36,31 @@ router.get('/sitemap.xml', async (req, res) => {
       lastmod: b.createdAt ? new Date(b.createdAt).toISOString().split('T')[0] : undefined
     }));
 
-    const categoryUrls = categories.map(c => ({
-      loc: `https://peptidesweight-loss.com/marketplace/${c.slug}`,
-      priority: '0.7',
-      changefreq: 'weekly'
-    }));
+    // Catégories "peptides" → /shop/peptides/:categorySlug
+    const peptideCategoryUrls = categories
+      .filter(c => c.section === 'peptides')
+      .map(c => ({
+        loc: `https://peptidesweight-loss.com/shop/peptides/${c.slug}`,
+        priority: '0.7',
+        changefreq: 'weekly'
+      }));
 
-    const allUrls = [...staticUrls, ...productUrls, ...blogUrls, ...categoryUrls];
+    // Catégories "marketplace" → /marketplace/:category
+    const marketplaceCategoryUrls = categories
+      .filter(c => c.section === 'marketplace')
+      .map(c => ({
+        loc: `https://peptidesweight-loss.com/marketplace/${c.slug}`,
+        priority: '0.7',
+        changefreq: 'weekly'
+      }));
+
+    const allUrls = [
+      ...staticUrls,
+      ...productUrls,
+      ...blogUrls,
+      ...peptideCategoryUrls,
+      ...marketplaceCategoryUrls
+    ];
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
