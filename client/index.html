@@ -6,41 +6,27 @@
     <link rel="icon" type="image/x-icon" href="/logo.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Primary SEO -->
-    <title>Peptides for Weight Loss: Complete 2026 Guide & Comparison</title>
-    <meta name="description" content="Compare the best peptides for weight loss in 2026 — effectiveness, safety, dosage, and side effects explained. Make an informed choice with our expert guide." />
-    <meta name="keywords" content="peptides for weight loss, weight loss peptides, fat loss peptides, peptide therapy weight loss, best peptides 2026" />
+    <!--
+      ⚠️ Title, meta description, canonical, keywords et Open Graph
+      title/description/url ont été retirés d'ici volontairement.
+      Ils sont désormais gérés exclusivement par react-helmet-async :
+      - DefaultSEO.jsx fournit les valeurs par défaut (homepage)
+      - Chaque page (Home, ProductDetail, BlogPost...) fournit ses
+        propres valeurs via son propre <Helmet>, qui écrase le défaut.
+      Garder ces balises ici causait un doublon (deux <title>,
+      deux canonical) sur chaque page qui a son propre Helmet.
+    -->
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="author" content="Peptides Weight Loss" />
-    <link rel="canonical" href="https://peptidesweight-loss.com/" />
 
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
+    <!-- Open Graph / Facebook - valeurs techniques restantes, non dupliquées par Helmet -->
     <meta property="og:site_name" content="Peptides Weight Loss" />
-    <meta property="og:title" content="Peptides for Weight Loss: Complete Guide & Comparison" />
-    <meta property="og:description" content="Compare the best peptides for weight loss — effectiveness, safety, and dosage explained in our complete 2026 guide." />
-    <meta property="og:image" content="https://peptidesweight-loss.com/og-image.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:url" content="https://peptidesweight-loss.com/" />
     <meta property="og:locale" content="en_US" />
 
-    <!-- Twitter Card -->
+    <!-- Twitter Card - technique, non géré par Helmet actuellement -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Peptides for Weight Loss: Complete Guide" />
-    <meta name="twitter:description" content="Compare the best peptides for weight loss — effectiveness, safety, and dosage explained." />
-    <meta name="twitter:image" content="https://peptidesweight-loss.com/og-image.jpg" />
-
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "Peptides Weight Loss",
-      "url": "https://peptidesweight-loss.com/",
-      "description": "Compare the best peptides for weight loss — effectiveness, safety, dosage, and side effects explained."
-    }
-    </script>
 
     <meta name="theme-color" content="#0f172a" />
 

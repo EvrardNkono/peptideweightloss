@@ -1,0 +1,3 @@
+[33m9d659e5[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Fix missing H1 (loading gate), add Organization schema, expand homepage content
+[33me9382b8[m Add sitemap rewrite before SPA catch-all
+[33m92be69b[m Add sitemap rewrite before SPA catch-all
