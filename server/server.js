@@ -135,6 +135,9 @@ app.use('/api/blog-posts', require('./routes/blog'));
 // ✅ CATEGORY ROUTES - NOUVEAU
 app.use('/api/categories', require('./routes/categoryRoutes'));
 
+// ✅ SITEMAP DYNAMIQUE — nouveau
+app.use('/', require('./routes/sitemapRoute'));
+
 // ✅ Image upload route avec Cloudinary
 app.post('/api/upload', upload.single('image'), (req, res) => {
   if (!req.file) {
