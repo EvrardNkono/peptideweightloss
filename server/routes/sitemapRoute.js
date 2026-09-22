@@ -5,11 +5,27 @@ const Product = require('../models/Product');
 const BlogPost = require('../models/BlogPost');
 const Category = require('../models/Category');
 
+// ✅ Cache en mémoire
+let sitemapCache = null;
+let cacheTimestamp = null;
+const CACHE_DURATION = 60 * 60 * 1000; // 1 heure en millisecondes
+
 router.get('/sitemap.xml', async (req, res) => {
   try {
-    const products = await Product.find({ status: 'active' }).select('_id createdAt');
-    const blogPosts = await BlogPost.find({ status: 'published' }).select('_id createdAt');
-    const categories = await Category.find({ isActive: true }).select('slug section');
+    const now = Date.now();
+
+    // ✅ Si le cache existe et n'a pas expiré, on le renvoie directement
+    if (sitemapCache && cacheTimestamp && (now - cacheTimestamp < CACHE_DURATION)) {
+      res.header('Content-Type', 'application/xml');
+      return res.send(sitemapCache);
+    }
+
+    // Sinon, on régénère
+    const [products, blogPosts, categories] = await Promise.all([
+      Product.find({ status: 'active' }).select('_id createdAt').lean(),
+      BlogPost.find({ status: 'published' }).select('_id createdAt').lean(),
+      Category.find({ isActive: true }).select('slug section').lean()
+    ]);
 
     const staticUrls = [
       { loc: 'https://peptidesweight-loss.com/', priority: '1.0', changefreq: 'daily' },
@@ -36,7 +52,6 @@ router.get('/sitemap.xml', async (req, res) => {
       lastmod: b.createdAt ? new Date(b.createdAt).toISOString().split('T')[0] : undefined
     }));
 
-    // Catégories "peptides" → /shop/peptides/:categorySlug
     const peptideCategoryUrls = categories
       .filter(c => c.section === 'peptides')
       .map(c => ({
@@ -45,7 +60,6 @@ router.get('/sitemap.xml', async (req, res) => {
         changefreq: 'weekly'
       }));
 
-    // Catégories "marketplace" → /marketplace/:category
     const marketplaceCategoryUrls = categories
       .filter(c => c.section === 'marketplace')
       .map(c => ({
@@ -70,6 +84,10 @@ ${allUrls.map(u => `  <url>
     <changefreq>${u.changefreq}</changefreq>${u.lastmod ? `\n    <lastmod>${u.lastmod}</lastmod>` : ''}
   </url>`).join('\n')}
 </urlset>`;
+
+    // ✅ On met à jour le cache
+    sitemapCache = xml;
+    cacheTimestamp = now;
 
     res.header('Content-Type', 'application/xml');
     res.send(xml);
