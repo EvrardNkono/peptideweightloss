@@ -1,6 +1,7 @@
 // src/pages/Home.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 import Hero from '../components/Hero';
 import ProductCard from '../components/ProductCard';
@@ -17,6 +18,24 @@ const getApiUrl = () => {
 
 const API_URL = getApiUrl();
 const BACKEND_URL = API_URL.replace('/api', '');
+const SITE_URL = 'https://peptidesweight-loss.com';
+
+// ✅ Organization Schema (Identity Schema) - une seule fois sur la homepage.
+// Idéalement à terme ce bloc migre vers un layout global (App.jsx) pour être
+// présent sur toutes les pages, mais le rapport SEO ne l'a signalé manquant
+// que sur "/", donc on le pose ici en priorité.
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Peptides Weight Loss",
+  "url": SITE_URL,
+  "logo": `${SITE_URL}/logo.ico`,
+  "description": "State-licensed, FDA-registered distributor of lab-tested, high-purity research peptides for weight loss.",
+  "sameAs": []
+  // ⚠️ Complète "sameAs" avec les URLs de tes profils sociaux une fois créés
+  // (LinkedIn, Instagram, X, YouTube...) : ça renforce le schema Identity
+  // et coche une des recommandations "Other" du rapport en même temps.
+};
 
 // ✅ FONCTION DE MÉLANGE AVEC CONTRAINTE DE CATÉGORIE
 const shuffleProductsWithCategoryConstraint = (products) => {
@@ -209,7 +228,37 @@ const Home = ({ onOpenMarketplace }) => {
 
   return (
     <div>
+      <Helmet>
+        <script type="application/ld+json">
+          {JSON.stringify(organizationSchema)}
+        </script>
+      </Helmet>
+
       <Hero onOpenMarketplace={onOpenMarketplace} />
+
+      {/* ✅ Section de contenu statique additionnelle : renforce le volume de texte
+          (thin content), la densité de mots-clés, et sert du texte lisible dès le
+          premier rendu (pas de dépendance API) pour les crawlers et LLM. */}
+      <section className="py-12 bg-white border-b border-gray-100">
+        <div className="max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4">
+            Peptides for Weight Loss: What You Need to Know
+          </h2>
+          <p className="text-gray-600 leading-relaxed mb-4">
+            Research peptides for weight loss, such as GLP-1 and GIP receptor agonists, have become
+            a central part of modern metabolic health protocols. Choosing a reliable source matters:
+            purity, accurate dosage, and third-party lab testing directly affect both safety and
+            results. Every batch we distribute is verified through high-performance liquid
+            chromatography (HPLC) to confirm a minimum of 99% purity before it ships.
+          </p>
+          <p className="text-gray-600 leading-relaxed">
+            As a state-licensed, FDA-registered corporate distributor, we work with clinics and
+            researchers worldwide to provide consistent, compliant access to peptide weight loss
+            products — backed by discreet, tracked delivery and a dedicated customer service team
+            available around the clock.
+          </p>
+        </div>
+      </section>
 
       {/* Features Section */}
       <section className="py-16 bg-white">

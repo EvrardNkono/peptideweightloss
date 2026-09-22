@@ -9,11 +9,18 @@ const API_URL = process.env.NODE_ENV === 'production'
 
 const BACKEND_URL = API_URL.replace('/api', '');
 
+// ✅ Valeurs par défaut affichées immédiatement, sans attendre le fetch.
+// Le H1 et le texte ne doivent JAMAIS dépendre d'un appel API pour apparaître
+// dans le DOM initial (sinon les crawlers qui n'attendent pas le JS le manquent).
+const DEFAULT_HERO = {
+  images: ['/images/pept.png']
+};
+
 // ✅ AJOUT DE LA PROP onOpenMarketplace
 const Hero = ({ onOpenMarketplace }) => {
-  const [heroData, setHeroData] = useState(null);
+  const [heroData, setHeroData] = useState(DEFAULT_HERO);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [imageLoading, setImageLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
 
   const getImageUrl = (imageUrl) => {
@@ -33,16 +40,14 @@ const Hero = ({ onOpenMarketplace }) => {
     const fetchHero = async () => {
       try {
         const response = await axios.get(`${API_URL}/hero`);
-        setHeroData(response.data.data);
+        if (response.data?.data?.images?.length) {
+          setHeroData(response.data.data);
+        }
       } catch (error) {
         console.error('Error fetching hero:', error);
-        setHeroData({
-          images: ['/images/pept.png'],
-          title: 'State-Licensed, FDA-Registered, CFS Certified',
-          subtitle: 'Your fully compliant corporate distributor for domestic and international operations. Trusted by over 290 clinics worldwide.'
-        });
+        // On garde DEFAULT_HERO, déjà affiché : aucune régression visuelle.
       } finally {
-        setLoading(false);
+        setImageLoading(false);
       }
     };
     fetchHero();
@@ -69,16 +74,6 @@ const Hero = ({ onOpenMarketplace }) => {
       setCurrentImageIndex((prev) => (prev - 1 + heroData.images.length) % heroData.images.length);
     }
   };
-
-  if (loading) {
-    return (
-      <section className="relative bg-white overflow-hidden py-20">
-        <div className="max-w-[1400px] mx-auto px-4 text-center">
-          <div className="w-12 h-12 border-4 border-[#2563EB] border-t-transparent rounded-full animate-spin mx-auto"></div>
-        </div>
-      </section>
-    );
-  }
 
   const images = heroData?.images || ['/images/pept.png'];
   const currentImage = getImageUrl(images[currentImageIndex] || '/images/pept.png');
@@ -108,15 +103,19 @@ const Hero = ({ onOpenMarketplace }) => {
               </div>
 
               <div className="relative flex items-center justify-center h-[420px]">
-                <img
-                  src={currentImage}
-                  alt="Premium Peptides"
-                  loading="eager"
-                  className="w-full h-full object-contain drop-shadow-2xl transition-opacity duration-500"
-                  onError={(e) => { e.target.src = '/images/pept.png'; }}
-                />
-                
-                {images.length > 1 && (
+                {imageLoading ? (
+                  <div className="w-12 h-12 border-4 border-[#2563EB] border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <img
+                    src={currentImage}
+                    alt="Premium research peptides for weight loss, lab tested and 99% pure"
+                    loading="eager"
+                    className="w-full h-full object-contain drop-shadow-2xl transition-opacity duration-500"
+                    onError={(e) => { e.target.src = '/images/pept.png'; }}
+                  />
+                )}
+
+                {!imageLoading && images.length > 1 && (
                   <>
                     <button
                       onClick={prevImage}
@@ -134,7 +133,7 @@ const Hero = ({ onOpenMarketplace }) => {
                 )}
               </div>
 
-              {images.length > 1 && (
+              {!imageLoading && images.length > 1 && (
                 <div className="flex justify-center gap-2 mt-4">
                   {images.map((_, index) => (
                     <button
@@ -150,7 +149,7 @@ const Hero = ({ onOpenMarketplace }) => {
                 </div>
               )}
 
-              {images.length > 1 && !isPaused && (
+              {!imageLoading && images.length > 1 && !isPaused && (
                 <div className="w-full h-0.5 bg-gray-200 rounded-full mt-2 overflow-hidden">
                   <div 
                     className="h-full bg-gradient-to-r from-[#2563EB] to-[#10B981] rounded-full"
@@ -170,20 +169,23 @@ const Hero = ({ onOpenMarketplace }) => {
             </div>
           </div>
 
-          {/* TEXTE */}
+          {/* TEXTE - toujours présent dans le DOM initial, indépendant du fetch */}
           <div className="order-1 lg:order-2">
+            {/* ✅ H1 unique de la page, enrichi des mots-clés cibles (peptides / weight loss) */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-4">
-              <span className="text-gray-900">State-Licensed,</span>
+              <span className="text-gray-900">Premium Peptides for</span>
               <br />
               <span className="bg-gradient-to-r from-[#2563EB] via-[#10B981] to-[#F59E0B] bg-clip-text text-transparent">
-                FDA-Registered,
+                Weight Loss
               </span>
               <br />
-              <span className="text-gray-800">CFS Certified</span>
+              <span className="text-gray-800">State-Licensed &amp; FDA-Registered</span>
             </h1>
 
             <p className="text-gray-500 leading-relaxed mb-6 max-w-md">
-              Your fully compliant corporate distributor for domestic and international operations. Trusted by over 290 clinics worldwide.
+              Your fully compliant corporate distributor of premium, lab-tested peptides for weight loss —
+              serving domestic and international operations. Trusted by over 290 clinics worldwide for
+              consistent purity, dosage accuracy, and reliable delivery.
             </p>
 
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-8">
