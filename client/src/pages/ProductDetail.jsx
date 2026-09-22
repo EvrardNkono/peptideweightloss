@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
+import { Helmet } from 'react-helmet-async';
 import {
   ArrowLeft,
   Star,
@@ -34,6 +35,7 @@ const getApiUrl = () => {
 };
 
 const API_URL = getApiUrl();
+const SITE_URL = 'https://peptidesweight-loss.com';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -318,8 +320,62 @@ const ProductDetail = () => {
     );
   }
 
+  // ✅ Valeurs SEO calculées une fois le produit chargé
+  const metaTitle = `${product.name} - Peptides Weight Loss`;
+  const metaDescription = product.description
+    ? product.description.slice(0, 155)
+    : `${product.name} - Premium research peptide. ${product.purity} purity, lab-tested. Shop now at Peptides Weight Loss.`;
+  const productUrl = `${SITE_URL}/product/${product._id}`;
+  const absoluteImage = product.image?.startsWith('http')
+    ? product.image
+    : `${SITE_URL}${product.image}`;
+
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": product.name,
+    "image": absoluteImage,
+    "description": product.description || `${product.name} - Premium research peptide, ${product.purity} purity.`,
+    "sku": product._id,
+    "offers": {
+      "@type": "Offer",
+      "url": productUrl,
+      "priceCurrency": "USD",
+      "price": product.price,
+      "availability": product.stock > 0
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock"
+    },
+    ...(product.reviews > 0 && {
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": product.rating,
+        "reviewCount": product.reviews
+      }
+    })
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
+
+      <Helmet>
+        <title>{metaTitle}</title>
+        <meta name="description" content={metaDescription} />
+        <link rel="canonical" href={productUrl} />
+
+        {/* Open Graph pour les partages sociaux */}
+        <meta property="og:title" content={metaTitle} />
+        <meta property="og:description" content={metaDescription} />
+        <meta property="og:image" content={absoluteImage} />
+        <meta property="og:url" content={productUrl} />
+        <meta property="og:type" content="product" />
+
+        {/* Schema Product JSON-LD */}
+        <script type="application/ld+json">
+          {JSON.stringify(productSchema)}
+        </script>
+      </Helmet>
+
       <div className="max-w-7xl mx-auto px-4">
 
         {/* Breadcrumb */}

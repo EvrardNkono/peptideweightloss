@@ -1,6 +1,7 @@
 // src/App.jsx
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { CartProvider } from './context/CartContext';
 import { ProductProvider } from './context/ProductContext';
 import Header from './components/Header';
@@ -118,13 +119,15 @@ const NotFound = () => (
 
 function App() {
   return (
-    <CartProvider>
-      <ProductProvider>
-        <Router>
-          <AppContent />
-        </Router>
-      </ProductProvider>
-    </CartProvider>
+    <HelmetProvider>
+      <CartProvider>
+        <ProductProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </ProductProvider>
+      </CartProvider>
+    </HelmetProvider>
   );
 }
 
