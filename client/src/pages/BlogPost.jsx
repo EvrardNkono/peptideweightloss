@@ -1,6 +1,7 @@
 // src/pages/BlogPost.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import {
   ArrowLeft,
   Calendar,
@@ -21,6 +22,7 @@ const getApiUrl = () => {
 };
 
 const API_URL = getApiUrl();
+const SITE_URL = 'https://peptidesweight-loss.com';
 
 const BlogPost = () => {
   const { id } = useParams();
@@ -92,8 +94,65 @@ const BlogPost = () => {
     );
   }
 
+  // ✅ Valeurs SEO calculées une fois l'article chargé
+  const postUrl = `${SITE_URL}/blog/${post._id || id}`;
+  const metaTitle = `${post.title} - Peptides Weight Loss Blog`;
+  const rawExcerpt = post.excerpt || post.content || '';
+  const metaDescription = rawExcerpt.replace(/\s+/g, ' ').trim().slice(0, 155);
+  const publishedDate = post.createdAt || post.date || new Date().toISOString();
+  const absoluteImage = post.image
+    ? (post.image.startsWith('http') ? post.image : `${SITE_URL}${post.image}`)
+    : `${SITE_URL}/og-image.jpg`;
+
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": post.title,
+    "image": absoluteImage,
+    "author": {
+      "@type": "Person",
+      "name": post.author || "Peptides Weight Loss"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Peptides Weight Loss",
+      "logo": {
+        "@type": "ImageObject",
+        "url": `${SITE_URL}/og-image.jpg`
+      }
+    },
+    "datePublished": publishedDate,
+    "dateModified": post.updatedAt || publishedDate,
+    "description": metaDescription,
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": postUrl
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
+
+      <Helmet>
+        <title>{metaTitle}</title>
+        <meta name="description" content={metaDescription} />
+        <link rel="canonical" href={postUrl} />
+
+        {/* Open Graph pour les partages sociaux */}
+        <meta property="og:title" content={metaTitle} />
+        <meta property="og:description" content={metaDescription} />
+        <meta property="og:image" content={absoluteImage} />
+        <meta property="og:url" content={postUrl} />
+        <meta property="og:type" content="article" />
+        <meta property="article:published_time" content={publishedDate} />
+        {post.author && <meta property="article:author" content={post.author} />}
+
+        {/* Schema Article JSON-LD */}
+        <script type="application/ld+json">
+          {JSON.stringify(articleSchema)}
+        </script>
+      </Helmet>
+
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-slate-900 via-[#0F172A] to-[#1E1B4B] pt-32 pb-16 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
