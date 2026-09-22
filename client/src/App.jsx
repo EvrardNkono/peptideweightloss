@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { HelmetProvider } from 'react-helmet-async';
 import { CartProvider } from './context/CartContext';
 import { ProductProvider } from './context/ProductContext';
+import DefaultSEO from './components/DefaultSEO';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import WhatsAppButton from './components/WhatsAppButton';
@@ -50,6 +51,14 @@ const AppContent = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
+      {/* ✅ Valeurs SEO par défaut (title/description/canonical/OG/schema
+          WebSite). Rendu au sommet de l'arbre, avant toute page : chaque
+          page avec son propre <Helmet> (Home, ProductDetail, BlogPost...)
+          écrase automatiquement ces valeurs. Les pages qui n'ont pas encore
+          leur propre Helmet (marketplace, faq, knowledge, account...)
+          gardent ces valeurs par défaut au lieu de n'avoir aucun title/canonical. */}
+      <DefaultSEO />
+
       <Header 
         isMobileMenuOpen={isMobileMenuOpen}
         setIsMobileMenuOpen={setIsMobileMenuOpen}
