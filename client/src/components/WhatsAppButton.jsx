@@ -7,7 +7,7 @@ const WhatsAppButton = () => {
   const [showTooltip, setShowTooltip] = useState(false);
   
   // ✅ Phone number (international format without the +)
-  const phoneNumber = "18069221862";
+  const phoneNumber = "16194831046";
   const whatsappUrl = `https://wa.me/${phoneNumber}`;
   
   // ✅ Default message in English
