@@ -1,52 +1,55 @@
 // src/components/DefaultSEO.jsx
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useLocation } from 'react-router-dom';
+import {
+  SITE_URL,
+  DEFAULT_IMAGE,
+  DEFAULT_DESCRIPTION,
+  getPageSeo,
+  isNoIndexPath,
+  normalizePath,
+} from '../seo/staticPages';
 
-const SITE_URL = 'https://peptidesweight-loss.com';
-
-// ✅ Valeurs SEO par défaut de tout le site, rendues UNE SEULE FOIS
-// au niveau racine (App.jsx), avant les <Routes>.
-//
-// Comment ça marche avec react-helmet-async :
-// pour les balises "singleton" (title, canonical, meta description),
-// le dernier <Helmet> monté dans l'arbre React gagne. Comme ce
-// composant est rendu au-dessus des pages, toute page qui a son
-// propre <Helmet> (Home, ProductDetail, BlogPost...) écrase
-// automatiquement ces valeurs par défaut. Les pages qui n'ont pas
-// encore leur propre <Helmet> (marketplace, faq, knowledge, account...)
-// conservent ces valeurs par défaut au lieu de n'avoir AUCUN title/canonical.
+// Valeurs SEO par défaut, rendues une seule fois au niveau racine (App.jsx).
+// Toute page avec son propre <Helmet> (ProductDetail, BlogPost...) écrase ces valeurs.
+// Le titre, la description et le canonical suivent maintenant l'URL courante :
+// les pages sans Helmet propre (shop, about, contact...) ne pointent plus vers l'accueil.
+// Les mêmes valeurs sont utilisées par scripts/prerender.mjs pour le HTML généré au build.
 const DefaultSEO = () => {
-  const defaultTitle = 'Peptides for Weight Loss: Complete 2026 Guide & Comparison';
-  const defaultDescription =
-    'Compare the best peptides for weight loss in 2026 — effectiveness, safety, dosage, and side effects explained. Make an informed choice with our expert guide.';
+  const { pathname } = useLocation();
+  const path = normalizePath(pathname);
+  const { title, description } = getPageSeo(path);
+  const canonical = `${SITE_URL}${path === '/' ? '/' : path}`;
 
   const websiteSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'Peptides Weight Loss',
     url: `${SITE_URL}/`,
-    description: defaultDescription
+    description: DEFAULT_DESCRIPTION
   };
 
   return (
     <Helmet>
-      <title>{defaultTitle}</title>
-      <meta name="description" content={defaultDescription} />
+      <title>{title}</title>
+      <meta name="description" content={description} />
       <meta
         name="keywords"
         content="peptides for weight loss, weight loss peptides, fat loss peptides, peptide therapy weight loss, best peptides 2026"
       />
-      <link rel="canonical" href={`${SITE_URL}/`} />
+      <link rel="canonical" href={canonical} />
+      {isNoIndexPath(path) && <meta name="robots" content="noindex, follow" />}
 
       <meta property="og:type" content="website" />
-      <meta property="og:title" content={defaultTitle} />
-      <meta property="og:description" content={defaultDescription} />
-      <meta property="og:image" content={`${SITE_URL}/og-image.jpg`} />
-      <meta property="og:url" content={`${SITE_URL}/`} />
+      <meta property="og:title" content={title} />
+      <meta property="og:description" content={description} />
+      <meta property="og:image" content={DEFAULT_IMAGE} />
+      <meta property="og:url" content={canonical} />
 
-      <meta name="twitter:title" content={defaultTitle} />
-      <meta name="twitter:description" content={defaultDescription} />
-      <meta name="twitter:image" content={`${SITE_URL}/og-image.jpg`} />
+      <meta name="twitter:title" content={title} />
+      <meta name="twitter:description" content={description} />
+      <meta name="twitter:image" content={DEFAULT_IMAGE} />
 
       <script type="application/ld+json">
         {JSON.stringify(websiteSchema)}
