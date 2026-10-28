@@ -20,6 +20,7 @@ import {
   DEFAULT_IMAGE,
   STATIC_PAGES,
   getPageSeo,
+  buildTitle,
 } from '../src/seo/staticPages.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -218,7 +219,7 @@ async function main() {
   for (const p of products) {
     const route = `/product/${p._id}`;
     const url = `${SITE_URL}${route}`;
-    const title = `${p.name} - ${SITE_NAME}`;
+    const title = buildTitle(p.name, SITE_NAME);
     const description = p.description
       ? p.description.slice(0, 155)
       : `${p.name} - Premium research peptide. ${p.purity} purity, lab-tested. Shop now at Peptides Weight Loss.`;
@@ -259,7 +260,7 @@ async function main() {
   for (const post of posts) {
     const route = `/blog/${post._id}`;
     const url = `${SITE_URL}${route}`;
-    const title = `${post.title} - Peptides Weight Loss Blog`;
+    const title = buildTitle(post.title, `${SITE_NAME} Blog`);
     const description = truncate(post.excerpt || post.content, 155);
     const image = absUrl(post.image);
     const published = post.createdAt || post.date || new Date().toISOString();

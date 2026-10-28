@@ -26,6 +26,7 @@ import {
   X
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { buildTitle } from '../seo/staticPages';
 
 const getApiUrl = () => {
   if (process.env.NODE_ENV === 'production') {
@@ -334,7 +335,7 @@ const ProductDetail = () => {
   }
 
   // ✅ Valeurs SEO calculées une fois le produit chargé
-  const metaTitle = `${product.name} - Peptides Weight Loss`;
+  const metaTitle = buildTitle(product.name, 'Peptides Weight Loss');
   const metaDescription = product.description
     ? product.description.slice(0, 155)
     : `${product.name} - Premium research peptide. ${product.purity} purity, lab-tested. Shop now at Peptides Weight Loss.`;

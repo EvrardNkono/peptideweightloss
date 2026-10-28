@@ -13,6 +13,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import axios from 'axios';
+import { buildTitle } from '../seo/staticPages';
 
 const getApiUrl = () => {
   if (process.env.NODE_ENV === 'production') {
@@ -96,7 +97,7 @@ const BlogPost = () => {
 
   // ✅ Valeurs SEO calculées une fois l'article chargé
   const postUrl = `${SITE_URL}/blog/${post._id || id}`;
-  const metaTitle = `${post.title} - Peptides Weight Loss Blog`;
+  const metaTitle = buildTitle(post.title, 'Peptides Weight Loss Blog');
   const rawExcerpt = post.excerpt || post.content || '';
   const metaDescription = rawExcerpt.replace(/\s+/g, ' ').trim().slice(0, 155);
   const publishedDate = post.createdAt || post.date || new Date().toISOString();

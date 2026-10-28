@@ -99,3 +99,22 @@ export const getPageSeo = (pathname) => {
   }
   return { title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION, h1: DEFAULT_TITLE };
 };
+
+// ---------------------------------------------------------------------------
+// Titres de pages dynamiques (produits, articles) limités à 60 caractères.
+// Ordre de préférence : "Nom - Marque" > "Nom" seul > "Nom" coupé proprement.
+// Partagé entre le script de build et les pages React pour rester identique.
+// ---------------------------------------------------------------------------
+export const MAX_TITLE_LENGTH = 60;
+
+export const buildTitle = (name, suffix = SITE_NAME, max = MAX_TITLE_LENGTH) => {
+  const clean = String(name ?? '').replace(/\s+/g, ' ').trim();
+  if (!clean) return suffix;
+  const withSuffix = `${clean} - ${suffix}`;
+  if (withSuffix.length <= max) return withSuffix;
+  if (clean.length <= max) return clean;
+  const cut = clean.slice(0, max - 1);
+  const lastSpace = cut.lastIndexOf(' ');
+  const base = lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut;
+  return `${base.replace(/[\s\-–—:,;(\[/]+$/, '')}…`;
+};
