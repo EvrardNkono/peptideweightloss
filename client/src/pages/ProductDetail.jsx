@@ -293,6 +293,14 @@ const ProductDetail = () => {
   if (loading) {
     return (
       <div className="min-h-[60vh] bg-gray-50 flex items-center justify-center">
+        {/* SEO : pendant le chargement, le canonical pointe sur CETTE page
+            (et non sur l'accueil via DefaultSEO), pour eviter que Google
+            ne consolide les fiches produits vers la page d'accueil. */}
+        <Helmet>
+          <title>Product - Peptides Weight Loss</title>
+          <link rel="canonical" href={`${SITE_URL}/product/${id}`} />
+        </Helmet>
+        <h1 className="sr-only">Product details</h1>
         <div className="text-center">
           <Loader2 size={48} className="animate-spin text-[#2563EB] mx-auto mb-4" />
           <p className="text-gray-500">Loading product details...</p>
@@ -304,6 +312,11 @@ const ProductDetail = () => {
   if (error || !product) {
     return (
       <div className="min-h-[60vh] bg-gray-50 flex items-center justify-center">
+        {/* SEO : produit introuvable -> ne pas indexer cette URL */}
+        <Helmet>
+          <title>Product Not Found - Peptides Weight Loss</title>
+          <meta name="robots" content="noindex, follow" />
+        </Helmet>
         <div className="text-center max-w-md px-4">
           <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-gray-800 mb-2">Product Not Found</h2>
