@@ -1,30 +1,46 @@
 export const config = {
-  matcher: '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  // Pages uniquement : exclut /api, /assets et tout chemin avec une extension (.js, .css, .xml, .ico, .png...)
+  matcher: '/((?!api/|assets/|.*\\..*).*)',
 };
 
 const PRERENDER_TOKEN = 'Jofnw5oMoDLdsjRmW3aX';
+
 const BOT_USER_AGENTS = [
-  'googlebot', 'bingbot', 'yandex', 'baiduspider',
+  'googlebot', 'google-inspectiontool', 'bingbot', 'yandex', 'baiduspider',
   'facebookexternalhit', 'twitterbot', 'linkedinbot',
-  'gptbot', 'chatgpt-user', 'claudebot', 'ccbot'
+  'gptbot', 'chatgpt-user', 'claudebot', 'ccbot', 'ahrefsbot'
 ];
 
 export default async function middleware(request) {
-  const userAgent = request.headers.get('user-agent')?.toLowerCase() || '';
-  const isBot = BOT_USER_AGENTS.some(bot => userAgent.includes(bot));
+  const ua = request.headers.get('user-agent')?.toLowerCase() || '';
+  const isBot = BOT_USER_AGENTS.some((bot) => ua.includes(bot));
 
-  if (isBot) {
-    const targetUrl = `https://service.prerender.io/${request.url}`;
+  // Visiteur normal : on ne touche a rien, le site SPA est servi tel quel.
+  if (!isBot) return;
 
-    const prerenderedResponse = await fetch(targetUrl, {
-      headers: { 'X-Prerender-Token': PRERENDER_TOKEN }
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+
+    const res = await fetch(`https://service.prerender.io/${request.url}`, {
+      headers: { 'X-Prerender-Token': PRERENDER_TOKEN },
+      signal: controller.signal,
+      redirect: 'manual',
     });
+    clearTimeout(timer);
 
-    const html = await prerenderedResponse.text();
+    // Si Prerender.io echoue (503, quota, timeout...), on ne bloque JAMAIS le bot :
+    // il recoit le site normal et execute le JavaScript lui-meme.
+    if (res.status !== 200) return;
+
+    const html = await res.text();
+    if (!html || html.length < 3000) return;
 
     return new Response(html, {
-      status: prerenderedResponse.status,
-      headers: { 'content-type': 'text/html' }
+      status: 200,
+      headers: { 'content-type': 'text/html; charset=utf-8' },
     });
+  } catch {
+    return;
   }
 }
