@@ -21,6 +21,16 @@ import {
   STATIC_PAGES,
   getPageSeo,
   buildTitle,
+  CONTACT_EMAIL,
+  CONTACT_PHONE,
+  CONTACT_PHONE_RAW,
+  CONTACT_HOURS,
+  CONTACT_FAQS,
+  KNOWLEDGE_ITEMS,
+  LAB_LIST,
+  STATIC_INTRO,
+  buildOrganizationSchema,
+  buildFaqSchema,
 } from '../src/seo/staticPages.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -164,6 +174,23 @@ async function main() {
     const seo = getPageSeo(route);
     const canonical = `${SITE_URL}${route === '/' ? '/' : route}`;
     let body = `<p>${esc(seo.description)}</p>`;
+    for (const para of STATIC_INTRO[route] || []) body += `<p>${esc(para)}</p>`;
+
+    if (route === '/contact') {
+      body +=
+        `<h2>Contact details</h2><ul>` +
+        `<li>Email: <a href="mailto:${esc(CONTACT_EMAIL)}">${esc(CONTACT_EMAIL)}</a></li>` +
+        `<li>Phone: <a href="tel:${esc(CONTACT_PHONE_RAW)}">${esc(CONTACT_PHONE)}</a></li>` +
+        `<li>Hours: ${esc(CONTACT_HOURS)}</li></ul>` +
+        `<h2>Frequently Asked Questions</h2>` +
+        CONTACT_FAQS.map((f) => `<h3>${esc(f.question)}</h3><p>${esc(f.answer)}</p>`).join('');
+    }
+    if (route === '/knowledge') {
+      body += `<h2>Articles</h2><ul>${KNOWLEDGE_ITEMS.map((a) => `<li><strong>${esc(a.title)}</strong><br>${esc(a.excerpt)}</li>`).join('')}</ul>`;
+    }
+    if (route === '/labs') {
+      body += `<h2>Our laboratories</h2><ul>${LAB_LIST.map((l) => `<li><a href="/labs/${esc(l.slug)}">${esc(l.name)}</a>${l.description ? ` – ${esc(l.description)}` : ''}</li>`).join('')}</ul>`;
+    }
 
     if (route === '/' || route === '/shop' || route === '/marketplace' || route === '/shop/peptides' || route === '/shop/blends') {
       const cats = categories
@@ -196,8 +223,13 @@ async function main() {
       image: DEFAULT_IMAGE,
       schema:
         route === '/'
-          ? { '@context': 'https://schema.org', '@type': 'WebSite', name: SITE_NAME, url: `${SITE_URL}/`, description: seo.description }
-          : undefined,
+          ? [
+              { '@context': 'https://schema.org', '@type': 'WebSite', name: SITE_NAME, url: `${SITE_URL}/`, description: seo.description },
+              buildOrganizationSchema(),
+            ]
+          : route === '/contact'
+            ? buildFaqSchema()
+            : undefined,
     });
     await done(route, render(head, layout(seo.h1, body)));
   }
@@ -210,6 +242,8 @@ async function main() {
       (p) => p.category && [c.slug, c.name].filter(Boolean).some((v) => String(p.category).toLowerCase() === String(v).toLowerCase())
     );
     let body = `<p>${esc(truncate(c.description, 300) || seo.description)}</p>`;
+    body += `<p>${esc(c.name || seo.h1)} products at ${esc(SITE_NAME)} are sold for research purposes only. Each product page lists the full description and price, and orders ship worldwide with tracking. Use the list below to open a product, or browse the full shop and marketplace from the main menu.</p>`;
+    body += `<p>Compare the products in this category by name and price, then open a product page for its full description. For guidance on storage, solubility and reconstitution, read the Knowledge Center, and see the Lab Testing section to learn how quality is verified. If you cannot find what you need, contact our support team and we will help you choose the right product for your research.</p>`;
     body += `<h2>${esc(c.name)} products</h2>${productLinks(mine.length ? mine : products)}`;
     const head = headTags({ title: seo.title, description: seo.description, canonical: `${SITE_URL}${route}`, image: DEFAULT_IMAGE });
     await done(route, render(head, layout(c.name || seo.h1, body)));

@@ -1,5 +1,6 @@
 // src/pages/Contact.jsx
 import React, { useState } from 'react';
+import { CONTACT_EMAIL, CONTACT_PHONE, CONTACT_PHONE_RAW, CONTACT_FAQS } from '../seo/staticPages';
 import { 
   Mail, 
   Phone, 
@@ -15,9 +16,6 @@ import {
 } from 'lucide-react';
 
 // ✅ Les coordonnées en dur (pas besoin de fichier config)
-const CONTACT_EMAIL = 'contact@peptidesweight-loss.com';
-const CONTACT_PHONE = '+1 (619) 483-1046';
-const CONTACT_PHONE_RAW = '+16194831046';
 const CONTACT_ADDRESS = '';
 
 const Contact = () => {
@@ -135,12 +133,7 @@ const Contact = () => {
     }
   ];
 
-  const faqs = [
-    { question: 'What is your shipping policy?', answer: 'We offer discreet worldwide shipping with tracking. Orders are processed within 24-48 hours.' },
-    { question: 'Do you offer bulk pricing?', answer: 'Yes, for research institutions and volume orders, please contact our sales team directly.' },
-    { question: 'How do I track my order?', answer: 'Once shipped, you will receive a tracking number via email.' },
-    { question: 'What is your return policy?', answer: 'We offer a 30-day satisfaction guarantee for unopened products.' }
-  ];
+  const faqs = CONTACT_FAQS;
 
   return (
     <div className="min-h-screen bg-white overflow-hidden">

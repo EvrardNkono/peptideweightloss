@@ -9,6 +9,8 @@ import {
   getPageSeo,
   isNoIndexPath,
   normalizePath,
+  buildOrganizationSchema,
+  buildFaqSchema,
 } from '../seo/staticPages';
 
 // Valeurs SEO par défaut, rendues une seule fois au niveau racine (App.jsx).
@@ -54,6 +56,12 @@ const DefaultSEO = () => {
       <script type="application/ld+json">
         {JSON.stringify(websiteSchema)}
       </script>
+      {path === '/' && (
+        <script type="application/ld+json">{JSON.stringify(buildOrganizationSchema())}</script>
+      )}
+      {path === '/contact' && (
+        <script type="application/ld+json">{JSON.stringify(buildFaqSchema())}</script>
+      )}
     </Helmet>
   );
 };
