@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /cart
+Disallow: /checkout
+Disallow: /account
+Disallow: /my-prescriptions
+Disallow: /prescription
+
+Sitemap: https://peptidesweight-loss.com/sitemap.xml
