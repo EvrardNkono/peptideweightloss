@@ -242,21 +242,23 @@ async function main() {
     const mine = products.filter(
       (p) => p.category && [c.slug, c.name].filter(Boolean).some((v) => String(p.category).toLowerCase() === String(v).toLowerCase())
     );
-    let body = `<p>${esc(truncate(c.description, 300) || seo.description)}</p>`;
-    body += `<p>${esc(c.name || seo.h1)} products at ${esc(SITE_NAME)} are sold for research purposes only. Each product page lists the full description and price, and orders ship worldwide with tracking. Use the list below to open a product, or browse the full shop and marketplace from the main menu.</p>`;
+    const displayName = c.name && c.name !== c.name.toLowerCase() ? c.name : seo.h1;
+    const rawDesc = truncate(c.description, 300);
+    let body = `<p>${esc(rawDesc && rawDesc.length >= 40 ? rawDesc : seo.description)}</p>`;
+    body += `<p>${esc(displayName)} products at ${esc(SITE_NAME)} are sold for research purposes only. Each product page lists the full description and price, and orders ship worldwide with tracking. Use the list below to open a product, or browse the full shop and marketplace from the main menu.</p>`;
     body += `<p>Compare the products in this category by name and price, then open a product page for its full description. For guidance on storage, solubility and reconstitution, read the Knowledge Center, and see the Lab Testing section to learn how quality is verified. If you cannot find what you need, contact our support team and we will help you choose the right product for your research.</p>`;
-    body += `<h2>${esc(c.name)} products</h2>${productLinks(mine.length ? mine : products)}`;
+    body += `<h2>${esc(displayName)} products</h2>${productLinks(mine.length ? mine : products)}`;
     const listed = (mine.length ? mine : products).slice(0, 50);
     const itemList = listed.length
       ? {
           '@context': 'https://schema.org',
           '@type': 'ItemList',
-          name: c.name || seo.h1,
+          name: displayName,
           itemListElement: listed.map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: `${SITE_URL}/product/${p._id}`, name: p.name })),
         }
       : undefined;
     const head = headTags({ title: seo.title, description: seo.description, canonical: `${SITE_URL}${route}`, image: DEFAULT_IMAGE, schema: itemList });
-    await done(route, render(head, layout(c.name || seo.h1, body)));
+    await done(route, render(head, layout(displayName, body)));
   }
 
   // ----- profils de laboratoires (/labs/:slug) : contenu repris de Labs.jsx -----

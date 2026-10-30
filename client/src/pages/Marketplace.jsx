@@ -75,6 +75,13 @@ const shuffleProductsWithCategoryConstraint = (products) => {
   return result;
 };
 
+// Un produit correspond à un filtre si son `type` OU sa `category` égale l'une des clés (casse ignorée).
+// Les produits de la base ont souvent category = 'sarms' alors que type garde sa valeur par défaut.
+const productMatchesKeys = (product, keys) => {
+  const wanted = keys.filter(Boolean).map((v) => String(v).toLowerCase());
+  return [product.type, product.category].some((v) => v && wanted.includes(String(v).toLowerCase()));
+};
+
 const Marketplace = () => {
   const { category } = useParams(); // ✅ RÉCUPÉRER LA CATÉGORIE DE L'URL
   const navigate = useNavigate();
@@ -220,16 +227,10 @@ const Marketplace = () => {
     
     let filtered = products.filter(product => {
       // ✅ Vérifier si selectedType est une catégorie dynamique
-      const isDynamicCategory = categories.some(c => c.slug === selectedType);
-      
       if (selectedType !== 'all') {
-        if (isDynamicCategory) {
-          // Filtrer par catégorie dynamique
-          if (product.type !== selectedType && product.category !== selectedType) return false;
-        } else {
-          // Filtrer par type en dur
-          if (product.type !== selectedType) return false;
-        }
+        const typeSlug = productTypes.find((x) => x.id === selectedType)?.slug;
+        const urlSlug = category && selectedType === (categoryToTypeMap[category] || category) ? category : null;
+        if (!productMatchesKeys(product, [selectedType, typeSlug, urlSlug])) return false;
       }
       
       if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
@@ -243,7 +244,7 @@ const Marketplace = () => {
     
     setFilteredProducts(shuffled);
     setVisibleCount(20);
-  }, [selectedType, searchQuery, products, categories]);
+  }, [selectedType, searchQuery, products, categories, category, productTypes]);
 
   // ✅ Effet pour le tri
   useEffect(() => {
@@ -275,7 +276,8 @@ const Marketplace = () => {
 
   const getTypeCount = (typeId) => {
     if (typeId === 'all') return products.length;
-    return products.filter(p => p.type === typeId || p.category === typeId).length;
+    const typeSlug = productTypes.find((x) => x.id === typeId)?.slug;
+    return products.filter(p => productMatchesKeys(p, [typeId, typeSlug])).length;
   };
 
   const handleTypeChange = (typeId, slug) => {
