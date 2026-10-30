@@ -31,6 +31,7 @@ import {
   STATIC_INTRO,
   buildOrganizationSchema,
   buildFaqSchema,
+  labSeo,
 } from '../src/seo/staticPages.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -245,8 +246,36 @@ async function main() {
     body += `<p>${esc(c.name || seo.h1)} products at ${esc(SITE_NAME)} are sold for research purposes only. Each product page lists the full description and price, and orders ship worldwide with tracking. Use the list below to open a product, or browse the full shop and marketplace from the main menu.</p>`;
     body += `<p>Compare the products in this category by name and price, then open a product page for its full description. For guidance on storage, solubility and reconstitution, read the Knowledge Center, and see the Lab Testing section to learn how quality is verified. If you cannot find what you need, contact our support team and we will help you choose the right product for your research.</p>`;
     body += `<h2>${esc(c.name)} products</h2>${productLinks(mine.length ? mine : products)}`;
-    const head = headTags({ title: seo.title, description: seo.description, canonical: `${SITE_URL}${route}`, image: DEFAULT_IMAGE });
+    const listed = (mine.length ? mine : products).slice(0, 50);
+    const itemList = listed.length
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'ItemList',
+          name: c.name || seo.h1,
+          itemListElement: listed.map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: `${SITE_URL}/product/${p._id}`, name: p.name })),
+        }
+      : undefined;
+    const head = headTags({ title: seo.title, description: seo.description, canonical: `${SITE_URL}${route}`, image: DEFAULT_IMAGE, schema: itemList });
     await done(route, render(head, layout(c.name || seo.h1, body)));
+  }
+
+  // ----- profils de laboratoires (/labs/:slug) : contenu repris de Labs.jsx -----
+  for (const lab of LAB_LIST) {
+    const route = `/labs/${lab.slug}`;
+    const seo = labSeo(lab);
+    let body = `<p>${esc(lab.description)}</p>`;
+    const facts = [];
+    if (lab.founded) facts.push(`founded in ${lab.founded}`);
+    if (lab.headquarters) facts.push(`headquartered in ${lab.headquarters}`);
+    if (facts.length) body += `<p>${esc(lab.fullName)} is ${esc(facts.join(' and '))}${lab.facilities.length ? `, with facilities in ${esc(lab.facilities.join(', '))}` : ''}.</p>`;
+    if (lab.specialties.length) body += `<h2>Specialties</h2><ul>${lab.specialties.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
+    if (lab.products.length) body += `<h2>Featured products</h2><ul>${lab.products.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
+    body += `<p>This profile is part of the Lab Testing section of ${esc(SITE_NAME)}, which presents the laboratories behind our catalog so that researchers can see where a product comes from before they order. Compare it with the other laboratory profiles, and use the product pages for descriptions and prices.</p>`;
+    body += `<p>When you compare laboratories, look at the specialties and the products listed in each profile, then open the matching product pages to check descriptions and prices. Researchers who need support can reach our team by email or phone, and volume orders for research institutions are handled directly by our sales team.</p>`;
+    body += `<p>All products are sold for research purposes only and ship worldwide with tracking. For guidance on storage, solubility and reconstitution, read the Knowledge Center, and if you have a question about a product or an order, contact our support team and we will help you.</p>`;
+    body += `<p><a href="/labs">See all laboratories</a> · <a href="/shop">Browse the shop</a> · <a href="/marketplace">Browse the marketplace</a> · <a href="/contact">Contact us</a></p>`;
+    const head = headTags({ title: seo.title, description: seo.description, canonical: `${SITE_URL}${route}`, image: DEFAULT_IMAGE });
+    await done(route, render(head, layout(lab.fullName, body)));
   }
 
   // ----- fiches produit (mêmes valeurs que ProductDetail.jsx) -----

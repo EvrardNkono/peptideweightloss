@@ -87,6 +87,13 @@ export const getPageSeo = (pathname) => {
   const p = normalizePath(pathname);
   if (STATIC_PAGES[p]) return STATIC_PAGES[p];
 
+  // Profils de laboratoires : /labs/:slug
+  const lm = p.match(/^\/labs\/([^/]+)$/);
+  if (lm) {
+    const lab = LAB_LIST.find((x) => x.slug === lm[1]);
+    if (lab) return labSeo(lab);
+  }
+
   // Pages catégories : /shop/peptides/:slug, /marketplace/:slug, /shop/:slug
   const m = p.match(/^\/(?:shop\/peptides|marketplace|shop)\/([^/]+)$/);
   if (m) {
@@ -178,52 +185,223 @@ export const LAB_LIST = [
   {
     "slug": "quanta",
     "name": "Quanta",
-    "description": "Gold Standard in peptide research and development. Industry leader in quality control and third-party verification."
+    "fullName": "Quanta Biosciences",
+    "description": "Gold Standard in peptide research and development. Industry leader in quality control and third-party verification.",
+    "founded": 2008,
+    "headquarters": "Basel, Switzerland",
+    "facilities": [
+      "Switzerland",
+      "USA",
+      "Germany"
+    ],
+    "specialties": [
+      "Research Peptides",
+      "GLP-1 Agonists",
+      "Growth Hormone Secretagogues"
+    ],
+    "products": [
+      "Semaglutide",
+      "Tirzepatide",
+      "Retatrutide",
+      "Tesamorelin"
+    ]
   },
   {
     "slug": "viogen",
     "name": "Viogen",
-    "description": "Cult Favorite among researchers. Known for innovation and customer-centric approach."
+    "fullName": "Viogen Laboratories",
+    "description": "Cult Favorite among researchers. Known for innovation and customer-centric approach.",
+    "founded": 2012,
+    "headquarters": "Vienna, Austria",
+    "facilities": [
+      "Austria",
+      "Netherlands"
+    ],
+    "specialties": [
+      "Peptide Blends",
+      "Custom Synthesis",
+      "Research Kits"
+    ],
+    "products": [
+      "BPC-157 + TB-500",
+      "CJC-1295 + Ipamorelin",
+      "GHRP-2/GHRP-6"
+    ]
   },
   {
     "slug": "deus-medical",
     "name": "Deus Medical",
-    "description": "The Consistent Performer. Reliable quality with exceptional consistency across all batches."
+    "fullName": "Deus Medical Research",
+    "description": "The Consistent Performer. Reliable quality with exceptional consistency across all batches.",
+    "founded": 2010,
+    "headquarters": "Madrid, Spain",
+    "facilities": [
+      "Spain",
+      "Portugal"
+    ],
+    "specialties": [
+      "Metabolic Peptides",
+      "Research Standards",
+      "Clinical Grade"
+    ],
+    "products": [
+      "Semaglutide",
+      "Tirzepatide",
+      "MOTS-c",
+      "SS-31"
+    ]
   },
   {
     "slug": "balkan",
     "name": "Balkan Pharmaceuticals",
-    "description": "Pharma-Grade Quality. Pharmaceutical standards applied to research peptides."
+    "fullName": "Balkan Pharmaceuticals",
+    "description": "Pharma-Grade Quality. Pharmaceutical standards applied to research peptides.",
+    "founded": 2005,
+    "headquarters": "Chisinau, Moldova",
+    "facilities": [
+      "Moldova",
+      "Romania"
+    ],
+    "specialties": [
+      "Pharmaceutical Grade",
+      "Clinical Research",
+      "API Manufacturing"
+    ],
+    "products": [
+      "Semaglutide",
+      "Tirzepatide",
+      "HGH Fragments"
+    ]
   },
   {
     "slug": "pharmacom",
     "name": "Pharmacom",
-    "description": "Legacy Name in peptide research. Two decades of experience and expertise."
+    "fullName": "Pharmacom Labs",
+    "description": "Legacy Name in peptide research. Two decades of experience and expertise.",
+    "founded": 2006,
+    "headquarters": "Hong Kong",
+    "facilities": [
+      "Hong Kong",
+      "China"
+    ],
+    "specialties": [
+      "Comprehensive Catalog",
+      "Research Support",
+      "Technical Documentation"
+    ],
+    "products": [
+      "Complete peptide line",
+      "SARMs",
+      "Research Chemicals"
+    ]
   },
   {
     "slug": "pharmaqo",
     "name": "Pharmaqo",
-    "description": "The New Contender. Modern facilities with cutting-edge technology."
+    "fullName": "Pharmaqo Labs",
+    "description": "The New Contender. Modern facilities with cutting-edge technology.",
+    "founded": 2015,
+    "headquarters": "Manchester, UK",
+    "facilities": [
+      "United Kingdom",
+      "Ireland"
+    ],
+    "specialties": [
+      "Next-Generation Peptides",
+      "Novel Compounds",
+      "Research Innovation"
+    ],
+    "products": [
+      "New peptide sequences",
+      "Advanced blends",
+      "Research standards"
+    ]
   },
   {
     "slug": "intex-pharma",
     "name": "Intex Pharma",
-    "description": "The Specialist. Focused on high-purity compounds and specialized peptides."
+    "fullName": "Intex Pharmaceuticals",
+    "description": "The Specialist. Focused on high-purity compounds and specialized peptides.",
+    "founded": 2014,
+    "headquarters": "Prague, Czech Republic",
+    "facilities": [
+      "Czech Republic"
+    ],
+    "specialties": [
+      "High-Purity Peptides",
+      "Specialty Compounds",
+      "Custom Synthesis"
+    ],
+    "products": [
+      "AOD-9604",
+      "MOTS-c",
+      "SS-31",
+      "Humanin"
+    ]
   },
   {
     "slug": "status",
     "name": "Status",
-    "description": "The Underrated Pick. Exceptional value with quality that exceeds expectations."
+    "fullName": "Status Research Labs",
+    "description": "The Underrated Pick. Exceptional value with quality that exceeds expectations.",
+    "founded": 2016,
+    "headquarters": "Tallinn, Estonia",
+    "facilities": [
+      "Estonia",
+      "Latvia"
+    ],
+    "specialties": [
+      "Value Research Peptides",
+      "Essential Compounds",
+      "Quality Assurance"
+    ],
+    "products": [
+      "Essential peptide line",
+      "Research basics",
+      "Core compounds"
+    ]
   },
   {
     "slug": "atech",
     "name": "A-Tech Labs",
-    "description": "The Transparent One. Full disclosure and complete testing transparency."
+    "fullName": "A-Tech Laboratories",
+    "description": "The Transparent One. Full disclosure and complete testing transparency.",
+    "founded": 2017,
+    "headquarters": "Warsaw, Poland",
+    "facilities": [
+      "Poland"
+    ],
+    "specialties": [
+      "Transparent Testing",
+      "Documented Quality",
+      "Research Support"
+    ],
+    "products": [
+      "Full testing documentation",
+      "Verified peptides",
+      "Research standards"
+    ]
   },
   {
     "slug": "morph",
     "name": "Morph",
-    "description": "High Potential. Emerging leader with strong quality metrics."
+    "fullName": "Morph Research Labs",
+    "description": "High Potential. Emerging leader with strong quality metrics.",
+    "founded": 2019,
+    "headquarters": "Ljubljana, Slovenia",
+    "facilities": [
+      "Slovenia"
+    ],
+    "specialties": [
+      "Emerging Standards",
+      "Quality Focus",
+      "Customer Service"
+    ],
+    "products": [
+      "Core peptide line",
+      "Essential compounds",
+      "Quality research materials"
+    ]
   }
 ];
 
@@ -276,3 +454,14 @@ export const buildFaqSchema = (faqs = CONTACT_FAQS) => ({
     acceptedAnswer: { '@type': 'Answer', text: f.answer },
   })),
 });
+
+// SEO d'un profil de laboratoire (/labs/:slug) : même calcul côté build et côté React.
+export function labSeo(lab) {
+  const base = `${lab.fullName}: ${lab.description} Laboratory profile, specialties and products at ${SITE_NAME}.`;
+  let description = base;
+  if (base.length > 160) {
+    const cut = base.slice(0, 159);
+    description = `${cut.slice(0, cut.lastIndexOf(' ')).replace(/[\s,;:.-]+$/, '')}…`;
+  }
+  return { title: buildTitle(lab.fullName, SITE_NAME), description, h1: lab.fullName };
+}

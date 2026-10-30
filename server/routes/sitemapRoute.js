@@ -38,6 +38,14 @@ router.get('/sitemap.xml', async (req, res) => {
       { loc: 'https://peptidesweight-loss.com/blog', priority: '0.8', changefreq: 'weekly' },
     ];
 
+    // Profils de laboratoires (/labs/:slug) : liste fixe, à garder identique à labsData dans client/src/pages/Labs.jsx
+    const LAB_SLUGS = ['quanta', 'viogen', 'deus-medical', 'balkan', 'pharmacom', 'pharmaqo', 'intex-pharma', 'status', 'atech', 'morph'];
+    const labUrls = LAB_SLUGS.map(slug => ({
+      loc: `https://peptidesweight-loss.com/labs/${slug}`,
+      priority: '0.5',
+      changefreq: 'monthly'
+    }));
+
     const productUrls = products.map(p => ({
       loc: `https://peptidesweight-loss.com/product/${p._id}`,
       priority: '0.8',
@@ -70,6 +78,7 @@ router.get('/sitemap.xml', async (req, res) => {
 
     const allUrls = [
       ...staticUrls,
+      ...labUrls,
       ...productUrls,
       ...blogUrls,
       ...peptideCategoryUrls,
